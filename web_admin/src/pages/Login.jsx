@@ -1,12 +1,24 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { signIn } from '../services/auth'
+
+const SAVED_EMAIL_KEY = 'admin_saved_email'
 
 export default function Login() {
   const navigate = useNavigate()
   const [form, setForm] = useState({ email: '', password: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [rememberMe, setRememberMe] = useState(false)
+
+  useEffect(() => {
+    const savedEmail = localStorage.getItem(SAVED_EMAIL_KEY)
+    if (savedEmail) {
+      setForm((prev) => ({ ...prev, email: savedEmail }))
+      setRememberMe(true)
+    }
+  }, [])
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
@@ -22,6 +34,11 @@ export default function Login() {
     setLoading(true)
     try {
       await signIn(form.email, form.password)
+      if (rememberMe) {
+        localStorage.setItem(SAVED_EMAIL_KEY, form.email)
+      } else {
+        localStorage.removeItem(SAVED_EMAIL_KEY)
+      }
       navigate('/', { replace: true })
     } catch (err) {
       setError(err.message)
@@ -59,15 +76,37 @@ export default function Login() {
 
           <div style={styles.field}>
             <label style={styles.label}>Mật khẩu</label>
-            <input
-              type="password"
-              name="password"
-              value={form.password}
-              onChange={handleChange}
-              placeholder="••••••••"
-              style={styles.input}
-              autoComplete="current-password"
-            />
+            <div style={styles.passwordWrapper}>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                value={form.password}
+                onChange={handleChange}
+                placeholder="••••••••"
+                style={{ ...styles.input, paddingRight: '44px' }}
+                autoComplete="current-password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                style={styles.eyeBtn}
+                tabIndex={-1}
+              >
+                {showPassword ? '🙈' : '👁️'}
+              </button>
+            </div>
+          </div>
+
+          <div style={styles.rememberRow}>
+            <label style={styles.rememberLabel}>
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                style={{ marginRight: '6px', cursor: 'pointer' }}
+              />
+              Nhớ tài khoản
+            </label>
           </div>
 
           {error && <p style={styles.error}>{error}</p>}
@@ -129,7 +168,36 @@ const styles = {
     borderRadius: '8px',
     fontSize: '15px',
     outline: 'none',
+    width: '100%',
+    boxSizing: 'border-box',
     transition: 'border-color 0.2s',
+  },
+  passwordWrapper: {
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'center',
+  },
+  eyeBtn: {
+    position: 'absolute',
+    right: '12px',
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: '18px',
+    padding: '0',
+    lineHeight: 1,
+  },
+  rememberRow: {
+    display: 'flex',
+    alignItems: 'center',
+  },
+  rememberLabel: {
+    display: 'flex',
+    alignItems: 'center',
+    fontSize: '14px',
+    color: '#374151',
+    cursor: 'pointer',
+    userSelect: 'none',
   },
   error: {
     color: '#dc2626',

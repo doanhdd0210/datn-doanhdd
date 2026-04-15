@@ -1,0 +1,21 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.DotSettings
+
+## Sensitive
+**/firebase-service-account.json
+**/.env
+**/.env.local
+
+## Build
+/publish/
+*.nupkg
+
+## IDE
+.idea/
+.vscode/
+*.swp

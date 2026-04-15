@@ -1,0 +1,35 @@
+# .NET
+BE/bin/
+BE/obj/
+BE/**/.vs/
+BE/**/*.user
+
+# Firebase credentials — KHÔNG COMMIT
+**/firebase-service-account.json
+**/google-services.json
+**/GoogleService-Info.plist
+
+# Env files
+**/.env
+**/.env.local
+**/.env.*.local
+
+# Node
+node_modules/
+dist/
+.vite/
+
+# Flutter
+mobile/.dart_tool/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/build/
+mobile/.packages
+mobile/pubspec.lock
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store

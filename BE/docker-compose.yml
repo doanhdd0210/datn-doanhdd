@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      # Mount service account JSON at runtime (never commit this file)
+      - ./DatnBackend.Api/firebase-service-account.json:/app/firebase-service-account.json:ro
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - Firebase__ProjectId=YOUR_PROJECT_ID
+      - Firebase__ServiceAccountPath=/app/firebase-service-account.json
+    restart: unless-stopped

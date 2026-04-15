@@ -60,7 +60,13 @@ var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<stri
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
-        policy.WithOrigins(allowedOrigins)
+        policy.SetIsOriginAllowed(origin =>
+            {
+                // Cho phép tất cả *.vercel.app (bao gồm preview URLs)
+                if (origin.EndsWith(".vercel.app", StringComparison.OrdinalIgnoreCase)) return true;
+                // Cho phép các origin đã cấu hình
+                return allowedOrigins.Contains(origin, StringComparer.OrdinalIgnoreCase);
+            })
               .AllowAnyHeader()
               .AllowAnyMethod());
 });

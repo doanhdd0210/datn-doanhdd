@@ -26,8 +26,9 @@ public class FirebaseAuthMiddleware
     {
         var path = context.Request.Path.Value ?? "";
 
-        // Bỏ qua Swagger UI và health check
+        // Bỏ qua Swagger UI, health check và bootstrap
         if (path.StartsWith("/swagger", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/bootstrap", StringComparison.OrdinalIgnoreCase)
             || PublicPaths.Contains(path))
         {
             await _next(context);

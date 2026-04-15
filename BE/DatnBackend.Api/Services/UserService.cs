@@ -158,11 +158,11 @@ public class UserService : IUserService
             Disabled = record.Disabled,
             EmailVerified = record.EmailVerified,
             IsAdmin = isAdmin,
-            CreatedAt = record.UserMetaData?.CreationTimestamp > 0
-                ? DateTimeOffset.FromUnixTimeMilliseconds(record.UserMetaData.CreationTimestamp).UtcDateTime
+            CreatedAt = record.UserMetaData?.CreationTimestamp is DateTime createdAt
+                ? createdAt
                 : DateTime.UtcNow,
-            LastSignInAt = record.UserMetaData?.LastSignInTimestamp > 0
-                ? DateTimeOffset.FromUnixTimeMilliseconds(record.UserMetaData.LastSignInTimestamp).UtcDateTime
+            LastSignInAt = record.UserMetaData?.LastSignInTimestamp is DateTime lastSignIn
+                ? lastSignIn
                 : null,
             Provider = record.ProviderData?.FirstOrDefault()?.ProviderId,
         };

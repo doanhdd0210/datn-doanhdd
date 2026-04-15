@@ -71,8 +71,7 @@ public class NotificationService : INotificationService
     public async Task<string> BroadcastAsync(SendNotificationRequest request)
     {
         // Yêu cầu mobile app subscribe topic "all" khi khởi động
-        var broadcastReq = request with { Topic = "all" };
-        var msg = BuildMessage(broadcastReq);
+        var msg = BuildMessage(request);
         msg.Topic = "all";
         var id = await _messaging.SendAsync(msg);
         await SaveHistoryAsync(request, "all", null, true);

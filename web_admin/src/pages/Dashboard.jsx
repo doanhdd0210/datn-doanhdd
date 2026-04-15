@@ -68,6 +68,7 @@ export default function Dashboard() {
             🚪
           </button>
         </div>
+        <div style={styles.version}>v1.0.1</div>
       </aside>
 
       {/* Main content */}
@@ -191,6 +192,7 @@ const styles = {
   },
   sidebarIcon: { fontSize: 24 },
   sidebarTitle: { fontWeight: 700, fontSize: 18 },
+  version: { textAlign: 'center', fontSize: 11, color: '#475569', padding: '8px 0' },
   nav: { flex: 1, padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: 4 },
   navItem: {
     display: 'flex',

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { signIn } from '../services/auth'
 
 const SAVED_EMAIL_KEY = 'admin_saved_email'
+const SAVED_PASS_KEY = 'admin_saved_pass'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -14,8 +15,9 @@ export default function Login() {
 
   useEffect(() => {
     const savedEmail = localStorage.getItem(SAVED_EMAIL_KEY)
+    const savedPass = localStorage.getItem(SAVED_PASS_KEY)
     if (savedEmail) {
-      setForm((prev) => ({ ...prev, email: savedEmail }))
+      setForm({ email: savedEmail, password: savedPass ?? '' })
       setRememberMe(true)
     }
   }, [])
@@ -36,8 +38,10 @@ export default function Login() {
       await signIn(form.email, form.password)
       if (rememberMe) {
         localStorage.setItem(SAVED_EMAIL_KEY, form.email)
+        localStorage.setItem(SAVED_PASS_KEY, form.password)
       } else {
         localStorage.removeItem(SAVED_EMAIL_KEY)
+        localStorage.removeItem(SAVED_PASS_KEY)
       }
       navigate('/', { replace: true })
     } catch (err) {

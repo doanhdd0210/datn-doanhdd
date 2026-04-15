@@ -132,7 +132,7 @@ app.MapGet("/health", () => Results.Ok(new
 app.MapGet("/", () => Results.Redirect("/swagger"));
 
 // Bootstrap: grant admin cho UID đầu tiên — chỉ dùng 1 lần, bảo vệ bằng BOOTSTRAP_SECRET
-app.MapPost("/bootstrap/admin/{uid}", async (string uid, string? secret, FirebaseAdmin.Auth.FirebaseAuth firebaseAuth) =>
+app.MapPost("/bootstrap/admin/{uid}", async (string uid, string? secret) =>
 {
     var bootstrapSecret = Environment.GetEnvironmentVariable("BOOTSTRAP_SECRET");
     if (string.IsNullOrEmpty(bootstrapSecret) || secret != bootstrapSecret)

@@ -1,7 +1,7 @@
 import { auth } from '../firebase'
 
-// URL backend .NET — đặt trong .env.local: VITE_API_URL=http://localhost:5000
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+// URL backend .NET — đặt trong .env.local: VITE_API_BASE_URL=http://localhost:5000
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'
 
 async function getToken() {
   const user = auth.currentUser

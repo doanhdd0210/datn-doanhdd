@@ -250,9 +250,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         child: Icon(icon, color: AppColors.primary, size: 20),
       ),
-      title: Text(label, style: AppTextStyles.body1),
+      title: Text(label, style: AppTextStyles.bodyLarge),
       subtitle: value != null
-          ? Text(value, style: AppTextStyles.body2.copyWith(color: AppColors.textGray))
+          ? Text(value, style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textGray))
           : null,
       trailing: onTap != null
           ? const Icon(Icons.chevron_right, color: AppColors.textGray)
@@ -277,7 +277,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         child: Icon(icon, color: AppColors.primary, size: 20),
       ),
-      title: Text(label, style: AppTextStyles.body1),
+      title: Text(label, style: AppTextStyles.bodyLarge),
       trailing: Switch(
         value: value,
         onChanged: onChanged,
@@ -304,7 +304,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: const Icon(Icons.dns_outlined, color: AppColors.blue, size: 20),
               ),
               const SizedBox(width: 12),
-              Text('Địa chỉ server API', style: AppTextStyles.body1),
+              Text('Địa chỉ server API', style: AppTextStyles.bodyLarge),
             ],
           ),
           const SizedBox(height: 12),

@@ -166,13 +166,13 @@ class _CreateQaScreenState extends State<CreateQaScreen> {
       children: [
         Text(
           'Tiêu đề câu hỏi *',
-          style: AppTextStyles.body1.copyWith(fontWeight: FontWeight.w600),
+          style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 8),
         TextFormField(
           controller: _titleController,
           maxLength: 150,
-          style: AppTextStyles.body1,
+          style: AppTextStyles.bodyLarge,
           decoration: InputDecoration(
             hintText: 'VD: Sự khác nhau giữa ArrayList và LinkedList?',
             hintStyle: TextStyle(color: AppColors.textGray, fontSize: 14),
@@ -208,14 +208,14 @@ class _CreateQaScreenState extends State<CreateQaScreen> {
       children: [
         Text(
           'Nội dung chi tiết *',
-          style: AppTextStyles.body1.copyWith(fontWeight: FontWeight.w600),
+          style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 8),
         TextFormField(
           controller: _contentController,
           maxLines: 8,
           maxLength: 2000,
-          style: AppTextStyles.body2,
+          style: AppTextStyles.bodyMedium,
           decoration: InputDecoration(
             hintText: 'Mô tả chi tiết vấn đề bạn gặp phải, đính kèm code nếu có...',
             hintStyle: TextStyle(color: AppColors.textGray, fontSize: 14),
@@ -252,7 +252,7 @@ class _CreateQaScreenState extends State<CreateQaScreen> {
       children: [
         Text(
           'Tags (tối đa 5)',
-          style: AppTextStyles.body1.copyWith(fontWeight: FontWeight.w600),
+          style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 8),
         // Current tags

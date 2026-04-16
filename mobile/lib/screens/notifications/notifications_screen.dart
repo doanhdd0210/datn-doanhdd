@@ -135,12 +135,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           const SizedBox(height: 16),
           Text(
             'Chưa có thông báo nào',
-            style: AppTextStyles.body1.copyWith(color: AppColors.textGray),
+            style: AppTextStyles.bodyLarge.copyWith(color: AppColors.textGray),
           ),
           const SizedBox(height: 8),
           Text(
             'Các thông báo mới sẽ hiển thị ở đây',
-            style: AppTextStyles.body2.copyWith(color: AppColors.textGray),
+            style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textGray),
           ),
         ],
       ),
@@ -174,7 +174,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         ),
         title: Text(
           title,
-          style: AppTextStyles.body1.copyWith(fontWeight: FontWeight.w600),
+          style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.w600),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -185,7 +185,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               const SizedBox(height: 4),
               Text(
                 body,
-                style: AppTextStyles.body2.copyWith(color: AppColors.textGray),
+                style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textGray),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),

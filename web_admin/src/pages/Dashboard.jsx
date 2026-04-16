@@ -2,16 +2,28 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { signOut } from '../services/auth'
 import { useAuth } from '../context/AuthContext'
-import { usersApi } from '../services/api'
+import { usersApi, topicsApi, lessonsApi } from '../services/api'
 import UsersPage from './UsersPage'
 import NotificationsPage from './NotificationsPage'
 import SettingsPage from './SettingsPage'
+import TopicsPage from './TopicsPage'
+import LessonsPage from './LessonsPage'
+import QuestionsPage from './QuestionsPage'
+import CodeSnippetsPage from './CodeSnippetsPage'
+import QaManagementPage from './QaManagementPage'
+import LeaderboardPage from './LeaderboardPage'
 
 const NAV_ITEMS = [
-  { id: 'overview',       label: 'Tổng quan',     icon: '📊' },
-  { id: 'users',          label: 'Người dùng',    icon: '👥' },
-  { id: 'notifications',  label: 'Thông báo',     icon: '🔔' },
-  { id: 'settings',       label: 'Cài đặt',       icon: '⚙️' },
+  { id: 'overview',      label: 'Tổng quan',     icon: '📊' },
+  { id: 'users',         label: 'Người dùng',    icon: '👥' },
+  { id: 'topics',        label: 'Chủ đề',        icon: '📚' },
+  { id: 'lessons',       label: 'Bài học',       icon: '📖' },
+  { id: 'questions',     label: 'Câu hỏi Quiz',  icon: '❓' },
+  { id: 'snippets',      label: 'Demo Code',     icon: '💻' },
+  { id: 'qa',            label: 'QA Cộng đồng',  icon: '💬' },
+  { id: 'leaderboard',   label: 'Bảng xếp hạng', icon: '🏆' },
+  { id: 'notifications', label: 'Thông báo',     icon: '🔔' },
+  { id: 'settings',      label: 'Cài đặt',       icon: '⚙️' },
 ]
 
 export default function Dashboard() {
@@ -83,6 +95,12 @@ export default function Dashboard() {
         <div style={styles.content}>
           {activeNav === 'overview'      && <OverviewCards />}
           {activeNav === 'users'         && <UsersPage />}
+          {activeNav === 'topics'        && <TopicsPage />}
+          {activeNav === 'lessons'       && <LessonsPage />}
+          {activeNav === 'questions'     && <QuestionsPage />}
+          {activeNav === 'snippets'      && <CodeSnippetsPage />}
+          {activeNav === 'qa'            && <QaManagementPage />}
+          {activeNav === 'leaderboard'   && <LeaderboardPage />}
           {activeNav === 'notifications' && <NotificationsPage />}
           {activeNav === 'settings'      && <SettingsPage />}
         </div>
@@ -114,28 +132,40 @@ export default function Dashboard() {
 // ─── Overview Cards ────────────────────────────────────────────────────────
 
 function OverviewCards() {
-  const [stats, setStats] = useState({ total: '…', admins: '…', disabled: '…', active: '…' })
+  const [stats, setStats] = useState({
+    totalUsers: '…', activeUsers: '…', admins: '…', disabled: '…',
+    totalTopics: '…', totalLessons: '…', totalQuestions: '…',
+  })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    usersApi.list(1000)
-      .then((users) => {
-        setStats({
-          total: users.length,
-          active: users.filter((u) => !u.disabled).length,
-          admins: users.filter((u) => u.isAdmin).length,
-          disabled: users.filter((u) => u.disabled).length,
-        })
+    Promise.allSettled([
+      usersApi.list(1000),
+      topicsApi.list(),
+      lessonsApi.list(),
+    ]).then(([usersRes, topicsRes, lessonsRes]) => {
+      const users = usersRes.status === 'fulfilled' ? (usersRes.value ?? []) : []
+      const topics = topicsRes.status === 'fulfilled' ? (topicsRes.value ?? []) : []
+      const lessons = lessonsRes.status === 'fulfilled' ? (lessonsRes.value ?? []) : []
+      setStats({
+        totalUsers: users.length,
+        activeUsers: users.filter((u) => !u.disabled).length,
+        admins: users.filter((u) => u.isAdmin).length,
+        disabled: users.filter((u) => u.disabled).length,
+        totalTopics: topics.length,
+        totalLessons: lessons.length,
+        totalQuestions: '—',
       })
-      .catch(() => setStats({ total: 'Lỗi', admins: '—', disabled: '—', active: '—' }))
-      .finally(() => setLoading(false))
+    }).finally(() => setLoading(false))
   }, [])
 
   const cards = [
-    { label: 'Tổng người dùng',  value: loading ? '…' : stats.total,    icon: '👥', color: '#e8f0fe' },
-    { label: 'Đang hoạt động',   value: loading ? '…' : stats.active,   icon: '✅', color: '#e6f4ea' },
-    { label: 'Tài khoản Admin',  value: loading ? '…' : stats.admins,   icon: '🛡️', color: '#ede9fe' },
-    { label: 'Bị khoá',         value: loading ? '…' : stats.disabled,  icon: '🔒', color: '#fce8e6' },
+    { label: 'Tổng người dùng',  value: loading ? '…' : stats.totalUsers,    icon: '👥', color: '#e8f0fe' },
+    { label: 'Đang hoạt động',   value: loading ? '…' : stats.activeUsers,   icon: '✅', color: '#e6f4ea' },
+    { label: 'Chủ đề',           value: loading ? '…' : stats.totalTopics,   icon: '📚', color: '#fef9c3' },
+    { label: 'Bài học',          value: loading ? '…' : stats.totalLessons,  icon: '📖', color: '#f3e8ff' },
+    { label: 'Tài khoản Admin',  value: loading ? '…' : stats.admins,        icon: '🛡️', color: '#ede9fe' },
+    { label: 'Bị khoá',          value: loading ? '…' : stats.disabled,      icon: '🔒', color: '#fce8e6' },
   ]
 
   return (
@@ -154,6 +184,8 @@ function OverviewCards() {
         <h3 style={{ margin: '0 0 12px', fontSize: 16, color: '#1e293b' }}>Truy cập nhanh</h3>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
           <QuickBtn label="Quản lý người dùng" icon="👥" desc="Thêm, sửa, xoá, khoá tài khoản" color="#e8f0fe" />
+          <QuickBtn label="Chủ đề &amp; Bài học"   icon="📚" desc="Quản lý nội dung học tập" color="#fef9c3" />
+          <QuickBtn label="Câu hỏi Quiz"        icon="❓" desc="Quiz theo từng bài học" color="#f3e8ff" />
           <QuickBtn label="Gửi thông báo"       icon="🔔" desc="Push notification đến người dùng" color="#fff7ed" />
         </div>
       </div>

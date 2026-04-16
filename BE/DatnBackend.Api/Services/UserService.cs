@@ -1,5 +1,6 @@
 using FirebaseAdmin.Auth;
-using Google.Cloud.Firestore;
+using Microsoft.EntityFrameworkCore;
+using DatnBackend.Api.Data;
 using DatnBackend.Api.Models;
 
 namespace DatnBackend.Api.Services;
@@ -7,10 +8,10 @@ namespace DatnBackend.Api.Services;
 public class UserService : IUserService
 {
     private readonly FirebaseAuth _auth;
-    private readonly FirestoreDb _db;
+    private readonly AppDbContext _db;
     private readonly ILogger<UserService> _logger;
 
-    public UserService(FirestoreDb db, ILogger<UserService> logger)
+    public UserService(AppDbContext db, ILogger<UserService> logger)
     {
         _auth = FirebaseAuth.DefaultInstance;
         _db = db;
@@ -35,10 +36,9 @@ public class UserService : IUserService
             var record = await _auth.GetUserAsync(uid);
             var user = MapUser(record);
 
-            // Đọc FCM tokens từ Firestore
-            var doc = await _db.Collection("users").Document(uid).GetSnapshotAsync();
-            if (doc.Exists && doc.TryGetValue<List<string>>("fcmTokens", out var tokens))
-                user.FcmTokens = tokens ?? [];
+            var profile = await _db.UserProfiles.FirstOrDefaultAsync(p => p.Uid == uid);
+            if (profile != null)
+                user.FcmTokens = profile.FcmTokens;
 
             return user;
         }
@@ -65,21 +65,19 @@ public class UserService : IUserService
         if (request.IsAdmin)
             await SetAdminClaimAsync(record.Uid, true);
 
-        // Tạo doc Firestore cho user mới
-        await _db.Collection("users").Document(record.Uid).SetAsync(new Dictionary<string, object>
+        var profile = new UserProfile
         {
-            ["uid"] = record.Uid,
-            ["email"] = request.Email,
-            ["displayName"] = request.DisplayName ?? "",
-            ["createdAt"] = Timestamp.GetCurrentTimestamp(),
-            ["fcmTokens"] = new List<string>(),
-            ["isAdmin"] = request.IsAdmin,
-            ["totalXp"] = 0,
-            ["currentStreak"] = 0,
-            ["longestStreak"] = 0,
-            ["lessonsCompleted"] = 0,
-            ["rank"] = "Beginner",
-        });
+            Uid = record.Uid,
+            DisplayName = request.DisplayName ?? "",
+            TotalXp = 0,
+            CurrentStreak = 0,
+            LongestStreak = 0,
+            LessonsCompleted = 0,
+            Rank = "Beginner",
+            FcmTokens = new List<string>(),
+        };
+        _db.UserProfiles.Add(profile);
+        await _db.SaveChangesAsync();
 
         return MapUser(record);
     }
@@ -99,22 +97,11 @@ public class UserService : IUserService
         if (request.IsAdmin.HasValue)
             await SetAdminClaimAsync(uid, request.IsAdmin.Value);
 
-        // Cập nhật Firestore
-        var updates = new Dictionary<string, object>
+        var profile = await _db.UserProfiles.FirstOrDefaultAsync(p => p.Uid == uid);
+        if (profile != null)
         {
-            ["updatedAt"] = Timestamp.GetCurrentTimestamp(),
-        };
-        if (request.DisplayName != null) updates["displayName"] = request.DisplayName;
-        if (request.Email != null) updates["email"] = request.Email;
-        if (request.IsAdmin.HasValue) updates["isAdmin"] = request.IsAdmin.Value;
-
-        try
-        {
-            await _db.Collection("users").Document(uid).UpdateAsync(updates);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Firestore update skipped for {Uid}", uid);
+            if (request.DisplayName != null) profile.DisplayName = request.DisplayName;
+            await _db.SaveChangesAsync();
         }
 
         return MapUser(record);
@@ -123,8 +110,13 @@ public class UserService : IUserService
     public async Task DeleteUserAsync(string uid)
     {
         await _auth.DeleteUserAsync(uid);
-        try { await _db.Collection("users").Document(uid).DeleteAsync(); }
-        catch (Exception ex) { _logger.LogWarning(ex, "Firestore delete skipped for {Uid}", uid); }
+
+        var profile = await _db.UserProfiles.FirstOrDefaultAsync(p => p.Uid == uid);
+        if (profile != null)
+        {
+            _db.UserProfiles.Remove(profile);
+            await _db.SaveChangesAsync();
+        }
     }
 
     public async Task<AppUser> SetDisabledAsync(string uid, bool disabled)
@@ -150,49 +142,28 @@ public class UserService : IUserService
 
     public async Task<UserProfile?> GetUserProfileAsync(string uid)
     {
-        try
-        {
-            var doc = await _db.Collection("users").Document(uid).GetSnapshotAsync();
-            if (!doc.Exists) return null;
-
-            return new UserProfile
-            {
-                Uid = uid,
-                DisplayName = doc.ContainsField("displayName") ? doc.GetValue<string>("displayName") : "",
-                PhotoUrl = doc.ContainsField("photoUrl") ? doc.GetValue<string>("photoUrl") : null,
-                TotalXp = doc.ContainsField("totalXp") ? doc.GetValue<int>("totalXp") : 0,
-                CurrentStreak = doc.ContainsField("currentStreak") ? doc.GetValue<int>("currentStreak") : 0,
-                LongestStreak = doc.ContainsField("longestStreak") ? doc.GetValue<int>("longestStreak") : 0,
-                LessonsCompleted = doc.ContainsField("lessonsCompleted") ? doc.GetValue<int>("lessonsCompleted") : 0,
-                Rank = doc.ContainsField("rank") ? doc.GetValue<string>("rank") : "Beginner",
-            };
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to get profile for {Uid}", uid);
-            return null;
-        }
+        return await _db.UserProfiles.FirstOrDefaultAsync(p => p.Uid == uid);
     }
 
     public async Task<UserProfile> UpsertUserProfileAsync(string uid, UserProfile profile)
     {
-        var data = new Dictionary<string, object>
+        var existing = await _db.UserProfiles.FirstOrDefaultAsync(p => p.Uid == uid);
+        if (existing == null)
         {
-            ["displayName"] = profile.DisplayName,
-            ["totalXp"] = profile.TotalXp,
-            ["currentStreak"] = profile.CurrentStreak,
-            ["longestStreak"] = profile.LongestStreak,
-            ["lessonsCompleted"] = profile.LessonsCompleted,
-            ["rank"] = profile.Rank,
-        };
-
-        if (profile.PhotoUrl != null)
-            data["photoUrl"] = profile.PhotoUrl;
-
-        var docRef = _db.Collection("users").Document(uid);
-        try { await docRef.UpdateAsync(data); }
-        catch { await docRef.SetAsync(data, SetOptions.MergeAll); }
-
+            profile.Uid = uid;
+            _db.UserProfiles.Add(profile);
+        }
+        else
+        {
+            existing.DisplayName = profile.DisplayName;
+            if (profile.PhotoUrl != null) existing.PhotoUrl = profile.PhotoUrl;
+            existing.TotalXp = profile.TotalXp;
+            existing.CurrentStreak = profile.CurrentStreak;
+            existing.LongestStreak = profile.LongestStreak;
+            existing.LessonsCompleted = profile.LessonsCompleted;
+            existing.Rank = profile.Rank;
+        }
+        await _db.SaveChangesAsync();
         profile.Uid = uid;
         return profile;
     }

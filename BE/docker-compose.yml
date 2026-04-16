@@ -1,15 +1,47 @@
 version: '3.8'
 
 services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: datn
+      POSTGRES_USER: datn
+      POSTGRES_PASSWORD: datn_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U datn -d datn"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
   api:
     build: .
     ports:
-      - "5000:5000"
-    volumes:
-      # Mount service account JSON at runtime (never commit this file)
-      - ./DatnBackend.Api/firebase-service-account.json:/app/firebase-service-account.json:ro
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
     environment:
-      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_ENVIRONMENT=Development
       - Firebase__ProjectId=YOUR_PROJECT_ID
       - Firebase__ServiceAccountPath=/app/firebase-service-account.json
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=datn;Username=datn;Password=datn_password
+      - ConnectionStrings__Redis=redis:6379
+    volumes:
+      - ./DatnBackend.Api/firebase-service-account.json:/app/firebase-service-account.json:ro
     restart: unless-stopped
+
+volumes:
+  postgres_data:

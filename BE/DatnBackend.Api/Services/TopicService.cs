@@ -1,60 +1,54 @@
-using Google.Cloud.Firestore;
+using Microsoft.EntityFrameworkCore;
+using DatnBackend.Api.Data;
 using DatnBackend.Api.Models;
 
 namespace DatnBackend.Api.Services;
 
 public class TopicService
 {
-    private readonly FirestoreDb _db;
+    private readonly AppDbContext _db;
+    private readonly ICacheService _cache;
     private readonly ILogger<TopicService> _logger;
-    private const string Collection = "topics";
 
-    public TopicService(FirestoreDb db, ILogger<TopicService> logger)
+    public TopicService(AppDbContext db, ICacheService cache, ILogger<TopicService> logger)
     {
         _db = db;
+        _cache = cache;
         _logger = logger;
     }
 
     public async Task<List<Topic>> ListTopicsAsync(bool activeOnly = true)
     {
-        Query query = _db.Collection(Collection);
-        if (activeOnly)
-            query = query.WhereEqualTo("isActive", true);
-        query = query.OrderBy("order");
+        var cacheKey = $"topics:all:{activeOnly}";
+        var cached = await _cache.GetAsync<List<Topic>>(cacheKey);
+        if (cached != null) return cached;
 
-        var snapshot = await query.GetSnapshotAsync();
-        return snapshot.Documents.Select(MapTopic).ToList();
+        var query = _db.Topics.AsQueryable();
+        if (activeOnly) query = query.Where(t => t.IsActive);
+        var topics = await query.OrderBy(t => t.Order).ToListAsync();
+
+        await _cache.SetAsync(cacheKey, topics, TimeSpan.FromMinutes(10));
+        return topics;
     }
 
     public async Task<Topic?> GetTopicAsync(string id)
     {
-        var doc = await _db.Collection(Collection).Document(id).GetSnapshotAsync();
-        return doc.Exists ? MapTopic(doc) : null;
+        var cacheKey = $"topics:{id}";
+        var cached = await _cache.GetAsync<Topic>(cacheKey);
+        if (cached != null) return cached;
+
+        var topic = await _db.Topics.FirstOrDefaultAsync(t => t.Id == id);
+        if (topic != null)
+            await _cache.SetAsync(cacheKey, topic, TimeSpan.FromMinutes(10));
+
+        return topic;
     }
 
     public async Task<Topic> CreateTopicAsync(CreateTopicRequest request)
     {
-        var docRef = _db.Collection(Collection).Document();
-        var now = DateTime.UtcNow;
-
-        var data = new Dictionary<string, object>
+        var topic = new Topic
         {
-            ["id"] = docRef.Id,
-            ["title"] = request.Title,
-            ["description"] = request.Description,
-            ["icon"] = request.Icon,
-            ["color"] = request.Color,
-            ["order"] = request.Order,
-            ["totalLessons"] = 0,
-            ["isActive"] = true,
-            ["createdAt"] = Timestamp.FromDateTime(now),
-        };
-
-        await docRef.SetAsync(data);
-
-        return new Topic
-        {
-            Id = docRef.Id,
+            Id = Guid.NewGuid().ToString(),
             Title = request.Title,
             Description = request.Description,
             Icon = request.Icon,
@@ -62,50 +56,53 @@ public class TopicService
             Order = request.Order,
             TotalLessons = 0,
             IsActive = true,
-            CreatedAt = now,
+            CreatedAt = DateTime.UtcNow,
         };
+
+        _db.Topics.Add(topic);
+        await _db.SaveChangesAsync();
+        await InvalidateTopicsListAsync();
+
+        return topic;
     }
 
     public async Task<Topic> UpdateTopicAsync(string id, UpdateTopicRequest request)
     {
-        var docRef = _db.Collection(Collection).Document(id);
-        var snapshot = await docRef.GetSnapshotAsync();
-        if (!snapshot.Exists)
-            throw new KeyNotFoundException($"Topic '{id}' not found");
+        var topic = await _db.Topics.FirstOrDefaultAsync(t => t.Id == id)
+            ?? throw new KeyNotFoundException($"Topic '{id}' not found");
 
-        var updates = new Dictionary<string, object>();
-        if (request.Title != null) updates["title"] = request.Title;
-        if (request.Description != null) updates["description"] = request.Description;
-        if (request.Icon != null) updates["icon"] = request.Icon;
-        if (request.Color != null) updates["color"] = request.Color;
-        if (request.Order.HasValue) updates["order"] = request.Order.Value;
-        if (request.IsActive.HasValue) updates["isActive"] = request.IsActive.Value;
+        if (request.Title != null) topic.Title = request.Title;
+        if (request.Description != null) topic.Description = request.Description;
+        if (request.Icon != null) topic.Icon = request.Icon;
+        if (request.Color != null) topic.Color = request.Color;
+        if (request.Order.HasValue) topic.Order = request.Order.Value;
+        if (request.IsActive.HasValue) topic.IsActive = request.IsActive.Value;
 
-        if (updates.Count > 0)
-            await docRef.UpdateAsync(updates);
+        await _db.SaveChangesAsync();
+        await _cache.RemoveAsync($"topics:{id}", "topics:all:True", "topics:all:False");
 
-        var updated = await docRef.GetSnapshotAsync();
-        return MapTopic(updated);
+        return topic;
     }
 
     public async Task DeleteTopicAsync(string id)
     {
-        var doc = await _db.Collection(Collection).Document(id).GetSnapshotAsync();
-        if (!doc.Exists)
-            throw new KeyNotFoundException($"Topic '{id}' not found");
+        var topic = await _db.Topics.FirstOrDefaultAsync(t => t.Id == id)
+            ?? throw new KeyNotFoundException($"Topic '{id}' not found");
 
-        await _db.Collection(Collection).Document(id).DeleteAsync();
+        _db.Topics.Remove(topic);
+        await _db.SaveChangesAsync();
+        await _cache.RemoveAsync($"topics:{id}", "topics:all:True", "topics:all:False");
     }
 
     public async Task IncrementLessonCountAsync(string topicId, int delta = 1)
     {
         try
         {
-            var docRef = _db.Collection(Collection).Document(topicId);
-            await docRef.UpdateAsync(new Dictionary<string, object>
-            {
-                ["totalLessons"] = FieldValue.Increment(delta),
-            });
+            await _db.Topics
+                .Where(t => t.Id == topicId)
+                .ExecuteUpdateAsync(s => s.SetProperty(t => t.TotalLessons, t => t.TotalLessons + delta));
+
+            await _cache.RemoveAsync($"topics:{topicId}", "topics:all:True", "topics:all:False");
         }
         catch (Exception ex)
         {
@@ -113,18 +110,6 @@ public class TopicService
         }
     }
 
-    private static Topic MapTopic(DocumentSnapshot doc) => new()
-    {
-        Id = doc.Id,
-        Title = doc.ContainsField("title") ? doc.GetValue<string>("title") : "",
-        Description = doc.ContainsField("description") ? doc.GetValue<string>("description") : "",
-        Icon = doc.ContainsField("icon") ? doc.GetValue<string>("icon") : "",
-        Color = doc.ContainsField("color") ? doc.GetValue<string>("color") : "",
-        Order = doc.ContainsField("order") ? doc.GetValue<int>("order") : 0,
-        TotalLessons = doc.ContainsField("totalLessons") ? doc.GetValue<int>("totalLessons") : 0,
-        IsActive = doc.ContainsField("isActive") && doc.GetValue<bool>("isActive"),
-        CreatedAt = doc.ContainsField("createdAt")
-            ? doc.GetValue<Timestamp>("createdAt").ToDateTime()
-            : DateTime.UtcNow,
-    };
+    private Task InvalidateTopicsListAsync() =>
+        _cache.RemoveAsync("topics:all:True", "topics:all:False");
 }

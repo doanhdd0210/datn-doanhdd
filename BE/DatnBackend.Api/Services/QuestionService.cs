@@ -1,57 +1,47 @@
-using Google.Cloud.Firestore;
+using Microsoft.EntityFrameworkCore;
+using DatnBackend.Api.Data;
 using DatnBackend.Api.Models;
 
 namespace DatnBackend.Api.Services;
 
 public class QuestionService
 {
-    private readonly FirestoreDb _db;
+    private readonly AppDbContext _db;
+    private readonly ICacheService _cache;
     private readonly ILogger<QuestionService> _logger;
-    private const string Collection = "questions";
 
-    public QuestionService(FirestoreDb db, ILogger<QuestionService> logger)
+    public QuestionService(AppDbContext db, ICacheService cache, ILogger<QuestionService> logger)
     {
         _db = db;
+        _cache = cache;
         _logger = logger;
     }
 
     public async Task<List<Question>> ListQuestionsAsync(string lessonId)
     {
-        var snapshot = await _db.Collection(Collection)
-            .WhereEqualTo("lessonId", lessonId)
-            .OrderBy("order")
-            .GetSnapshotAsync();
+        var cacheKey = $"questions:lesson:{lessonId}";
+        var cached = await _cache.GetAsync<List<Question>>(cacheKey);
+        if (cached != null) return cached;
 
-        return snapshot.Documents.Select(MapQuestion).ToList();
+        var questions = await _db.Questions
+            .Where(q => q.LessonId == lessonId)
+            .OrderBy(q => q.Order)
+            .ToListAsync();
+
+        await _cache.SetAsync(cacheKey, questions, TimeSpan.FromMinutes(10));
+        return questions;
     }
 
     public async Task<Question?> GetQuestionAsync(string id)
     {
-        var doc = await _db.Collection(Collection).Document(id).GetSnapshotAsync();
-        return doc.Exists ? MapQuestion(doc) : null;
+        return await _db.Questions.FirstOrDefaultAsync(q => q.Id == id);
     }
 
     public async Task<Question> CreateQuestionAsync(CreateQuestionRequest request)
     {
-        var docRef = _db.Collection(Collection).Document();
-
-        var data = new Dictionary<string, object>
+        var question = new Question
         {
-            ["id"] = docRef.Id,
-            ["lessonId"] = request.LessonId,
-            ["questionText"] = request.QuestionText,
-            ["options"] = request.Options,
-            ["correctAnswerIndex"] = request.CorrectAnswerIndex,
-            ["explanation"] = request.Explanation,
-            ["order"] = request.Order,
-            ["points"] = request.Points,
-        };
-
-        await docRef.SetAsync(data);
-
-        return new Question
-        {
-            Id = docRef.Id,
+            Id = Guid.NewGuid().ToString(),
             LessonId = request.LessonId,
             QuestionText = request.QuestionText,
             Options = request.Options,
@@ -60,49 +50,41 @@ public class QuestionService
             Order = request.Order,
             Points = request.Points,
         };
+
+        _db.Questions.Add(question);
+        await _db.SaveChangesAsync();
+        await _cache.RemoveAsync($"questions:lesson:{request.LessonId}");
+
+        return question;
     }
 
     public async Task<Question> UpdateQuestionAsync(string id, UpdateQuestionRequest request)
     {
-        var docRef = _db.Collection(Collection).Document(id);
-        var snapshot = await docRef.GetSnapshotAsync();
-        if (!snapshot.Exists)
-            throw new KeyNotFoundException($"Question '{id}' not found");
+        var question = await _db.Questions.FirstOrDefaultAsync(q => q.Id == id)
+            ?? throw new KeyNotFoundException($"Question '{id}' not found");
 
-        var updates = new Dictionary<string, object>();
-        if (request.LessonId != null) updates["lessonId"] = request.LessonId;
-        if (request.QuestionText != null) updates["questionText"] = request.QuestionText;
-        if (request.Options != null) updates["options"] = request.Options;
-        if (request.CorrectAnswerIndex.HasValue) updates["correctAnswerIndex"] = request.CorrectAnswerIndex.Value;
-        if (request.Explanation != null) updates["explanation"] = request.Explanation;
-        if (request.Order.HasValue) updates["order"] = request.Order.Value;
-        if (request.Points.HasValue) updates["points"] = request.Points.Value;
+        if (request.LessonId != null) question.LessonId = request.LessonId;
+        if (request.QuestionText != null) question.QuestionText = request.QuestionText;
+        if (request.Options != null) question.Options = request.Options;
+        if (request.CorrectAnswerIndex.HasValue) question.CorrectAnswerIndex = request.CorrectAnswerIndex.Value;
+        if (request.Explanation != null) question.Explanation = request.Explanation;
+        if (request.Order.HasValue) question.Order = request.Order.Value;
+        if (request.Points.HasValue) question.Points = request.Points.Value;
 
-        if (updates.Count > 0)
-            await docRef.UpdateAsync(updates);
+        await _db.SaveChangesAsync();
+        await _cache.RemoveAsync($"questions:lesson:{question.LessonId}");
 
-        var updated = await docRef.GetSnapshotAsync();
-        return MapQuestion(updated);
+        return question;
     }
 
     public async Task DeleteQuestionAsync(string id)
     {
-        var doc = await _db.Collection(Collection).Document(id).GetSnapshotAsync();
-        if (!doc.Exists)
-            throw new KeyNotFoundException($"Question '{id}' not found");
+        var question = await _db.Questions.FirstOrDefaultAsync(q => q.Id == id)
+            ?? throw new KeyNotFoundException($"Question '{id}' not found");
 
-        await _db.Collection(Collection).Document(id).DeleteAsync();
+        var lessonId = question.LessonId;
+        _db.Questions.Remove(question);
+        await _db.SaveChangesAsync();
+        await _cache.RemoveAsync($"questions:lesson:{lessonId}");
     }
-
-    private static Question MapQuestion(DocumentSnapshot doc) => new()
-    {
-        Id = doc.Id,
-        LessonId = doc.ContainsField("lessonId") ? doc.GetValue<string>("lessonId") : "",
-        QuestionText = doc.ContainsField("questionText") ? doc.GetValue<string>("questionText") : "",
-        Options = doc.ContainsField("options") ? doc.GetValue<List<string>>("options") : new(),
-        CorrectAnswerIndex = doc.ContainsField("correctAnswerIndex") ? doc.GetValue<int>("correctAnswerIndex") : 0,
-        Explanation = doc.ContainsField("explanation") ? doc.GetValue<string>("explanation") : "",
-        Order = doc.ContainsField("order") ? doc.GetValue<int>("order") : 0,
-        Points = doc.ContainsField("points") ? doc.GetValue<int>("points") : 10,
-    };
 }

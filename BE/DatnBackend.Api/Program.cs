@@ -1,6 +1,7 @@
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
-using Google.Cloud.Firestore;
+using Microsoft.EntityFrameworkCore;
+using DatnBackend.Api.Data;
 using DatnBackend.Api.Middleware;
 using DatnBackend.Api.Services;
 
@@ -10,13 +11,10 @@ var builder = WebApplication.CreateBuilder(args);
 var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
 builder.WebHost.UseUrls($"http://+:{port}");
 
-// ─── Firebase Admin SDK ───────────────────────────────────────────────────────
+// ─── Firebase Admin SDK (Auth + FCM) ─────────────────────────────────────────
 var projectId = builder.Configuration["Firebase:ProjectId"]
     ?? throw new InvalidOperationException("Firebase:ProjectId is not configured.");
 
-// Hỗ trợ 2 cách cấu hình credentials:
-// 1. FIREBASE_SERVICE_ACCOUNT_JSON (env var) — dùng khi deploy Railway/Cloud Run
-// 2. Firebase:ServiceAccountPath (appsettings) — dùng khi chạy local
 GoogleCredential credential;
 var serviceAccountJson = Environment.GetEnvironmentVariable("FIREBASE_SERVICE_ACCOUNT_JSON");
 if (!string.IsNullOrEmpty(serviceAccountJson))
@@ -40,25 +38,43 @@ FirebaseApp.Create(new AppOptions
     ProjectId = projectId,
 });
 
-// ─── Firestore ────────────────────────────────────────────────────────────────
-var firestoreDb = await new FirestoreDbBuilder
-{
-    ProjectId = projectId,
-    Credential = credential,
-}.BuildAsync();
+// ─── PostgreSQL (EF Core) ─────────────────────────────────────────────────────
+var pgConn = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? Environment.GetEnvironmentVariable("DATABASE_URL")
+    ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection is not configured.");
 
-builder.Services.AddSingleton(firestoreDb);
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(pgConn, o => o.EnableRetryOnFailure()));
+
+// ─── Redis Cache (optional — falls back to in-memory) ─────────────────────────
+var redisConn = builder.Configuration.GetConnectionString("Redis")
+    ?? Environment.GetEnvironmentVariable("REDIS_URL");
+
+if (!string.IsNullOrEmpty(redisConn))
+{
+    builder.Services.AddStackExchangeRedisCache(options =>
+    {
+        options.Configuration = redisConn;
+        options.InstanceName = "datn:";
+    });
+}
+else
+{
+    builder.Services.AddDistributedMemoryCache();
+}
+
+builder.Services.AddScoped<ICacheService, CacheService>();
 
 // ─── Application Services ─────────────────────────────────────────────────────
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
-builder.Services.AddSingleton<TopicService>();
-builder.Services.AddSingleton<LessonService>();
-builder.Services.AddSingleton<QuestionService>();
-builder.Services.AddSingleton<ProgressService>();
-builder.Services.AddSingleton<CodeSnippetService>();
-builder.Services.AddSingleton<QaService>();
-builder.Services.AddSingleton<FriendsService>();
+builder.Services.AddScoped<TopicService>();
+builder.Services.AddScoped<LessonService>();
+builder.Services.AddScoped<QuestionService>();
+builder.Services.AddScoped<ProgressService>();
+builder.Services.AddScoped<CodeSnippetService>();
+builder.Services.AddScoped<QaService>();
+builder.Services.AddScoped<FriendsService>();
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
@@ -69,9 +85,7 @@ builder.Services.AddCors(options =>
     options.AddDefaultPolicy(policy =>
         policy.SetIsOriginAllowed(origin =>
             {
-                // Cho phép tất cả *.vercel.app (bao gồm preview URLs)
                 if (origin.EndsWith(".vercel.app", StringComparison.OrdinalIgnoreCase)) return true;
-                // Cho phép các origin đã cấu hình
                 return allowedOrigins.Contains(origin, StringComparer.OrdinalIgnoreCase);
             })
               .AllowAnyHeader()
@@ -118,6 +132,13 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
+// ─── Auto-migrate database on startup ─────────────────────────────────────────
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await db.Database.EnsureCreatedAsync();
+}
+
 // ─── Pipeline ─────────────────────────────────────────────────────────────────
 app.UseSwagger();
 app.UseSwaggerUI(c =>
@@ -145,7 +166,8 @@ app.MapPost("/bootstrap/admin/{uid}", async (string uid, string? secret) =>
     if (string.IsNullOrEmpty(bootstrapSecret) || secret != bootstrapSecret)
         return Results.Json(new { success = false, error = "Invalid secret" }, statusCode: 403);
 
-    await FirebaseAdmin.Auth.FirebaseAuth.DefaultInstance.SetCustomUserClaimsAsync(uid, new Dictionary<string, object> { ["admin"] = true });
+    await FirebaseAdmin.Auth.FirebaseAuth.DefaultInstance
+        .SetCustomUserClaimsAsync(uid, new Dictionary<string, object> { ["admin"] = true });
     return Results.Ok(new { success = true, message = $"Admin granted to {uid}" });
 });
 

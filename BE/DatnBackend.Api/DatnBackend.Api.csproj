@@ -11,10 +11,17 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Firebase Admin SDK (Auth + FCM + Storage) -->
+    <!-- Firebase Admin SDK (Auth + FCM) -->
     <PackageReference Include="FirebaseAdmin" Version="3.1.0" />
-    <!-- Firestore (lưu FCM tokens, notification history) -->
-    <PackageReference Include="Google.Cloud.Firestore" Version="3.9.0" />
+    <!-- EF Core + PostgreSQL -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.3" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <!-- Redis cache -->
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="9.0.0" />
     <!-- Swagger UI -->
     <PackageReference Include="Swashbuckle.AspNetCore" Version="7.2.0" />
   </ItemGroup>

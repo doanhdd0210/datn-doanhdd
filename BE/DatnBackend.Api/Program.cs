@@ -39,8 +39,8 @@ FirebaseApp.Create(new AppOptions
 });
 
 // ─── PostgreSQL (EF Core) ─────────────────────────────────────────────────────
-var pgConn = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? Environment.GetEnvironmentVariable("DATABASE_URL")
+var pgConn = Environment.GetEnvironmentVariable("DATABASE_URL")
+    ?? builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection is not configured.");
 
 builder.Services.AddDbContext<AppDbContext>(options =>

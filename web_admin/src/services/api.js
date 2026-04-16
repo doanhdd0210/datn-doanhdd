@@ -60,3 +60,50 @@ export const notificationsApi = {
 
 export const checkHealth = () =>
   fetch(`${BASE_URL}/health`).then((r) => r.json())
+
+// ─── Topics ──────────────────────────────────────────────────────────────────
+export const topicsApi = {
+  list: () => request('GET', '/api/topics'),
+  get: (id) => request('GET', `/api/topics/${id}`),
+  create: (data) => request('POST', '/api/topics', data),
+  update: (id, data) => request('PUT', `/api/topics/${id}`, data),
+  delete: (id) => request('DELETE', `/api/topics/${id}`),
+}
+
+// ─── Lessons ─────────────────────────────────────────────────────────────────
+export const lessonsApi = {
+  list: (topicId) => request('GET', topicId ? `/api/lessons?topicId=${topicId}` : '/api/lessons'),
+  get: (id) => request('GET', `/api/lessons/${id}`),
+  create: (data) => request('POST', '/api/lessons', data),
+  update: (id, data) => request('PUT', `/api/lessons/${id}`, data),
+  delete: (id) => request('DELETE', `/api/lessons/${id}`),
+}
+
+// ─── Questions ───────────────────────────────────────────────────────────────
+export const questionsApi = {
+  list: (lessonId) => request('GET', `/api/questions?lessonId=${lessonId}`),
+  create: (data) => request('POST', '/api/questions', data),
+  update: (id, data) => request('PUT', `/api/questions/${id}`, data),
+  delete: (id) => request('DELETE', `/api/questions/${id}`),
+}
+
+// ─── Code Snippets ────────────────────────────────────────────────────────────
+export const codeSnippetsApi = {
+  list: (topicId) => request('GET', topicId ? `/api/code-snippets?topicId=${topicId}` : '/api/code-snippets'),
+  get: (id) => request('GET', `/api/code-snippets/${id}`),
+  create: (data) => request('POST', '/api/code-snippets', data),
+  update: (id, data) => request('PUT', `/api/code-snippets/${id}`, data),
+  delete: (id) => request('DELETE', `/api/code-snippets/${id}`),
+}
+
+// ─── QA ──────────────────────────────────────────────────────────────────────
+export const qaApi = {
+  list: (page = 1) => request('GET', `/api/qa?page=${page}`),
+  get: (id) => request('GET', `/api/qa/${id}`),
+  delete: (id) => request('DELETE', `/api/qa/${id}`),
+}
+
+// ─── Progress/Stats ──────────────────────────────────────────────────────────
+export const statsApi = {
+  leaderboard: () => request('GET', '/api/friends/leaderboard'),
+}

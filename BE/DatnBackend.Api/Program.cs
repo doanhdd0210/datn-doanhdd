@@ -52,6 +52,13 @@ builder.Services.AddSingleton(firestoreDb);
 // ─── Application Services ─────────────────────────────────────────────────────
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddSingleton<TopicService>();
+builder.Services.AddSingleton<LessonService>();
+builder.Services.AddSingleton<QuestionService>();
+builder.Services.AddSingleton<ProgressService>();
+builder.Services.AddSingleton<CodeSnippetService>();
+builder.Services.AddSingleton<QaService>();
+builder.Services.AddSingleton<FriendsService>();
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()

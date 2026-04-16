@@ -12,4 +12,6 @@ public interface IUserService
     Task<AppUser> SetDisabledAsync(string uid, bool disabled);
     Task SetAdminClaimAsync(string uid, bool isAdmin);
     Task<List<AppUser>> ListAdminsAsync();
+    Task<UserProfile?> GetUserProfileAsync(string uid);
+    Task<UserProfile> UpsertUserProfileAsync(string uid, UserProfile profile);
 }

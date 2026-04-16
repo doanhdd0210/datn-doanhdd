@@ -74,6 +74,11 @@ public class UserService : IUserService
             ["createdAt"] = Timestamp.GetCurrentTimestamp(),
             ["fcmTokens"] = new List<string>(),
             ["isAdmin"] = request.IsAdmin,
+            ["totalXp"] = 0,
+            ["currentStreak"] = 0,
+            ["longestStreak"] = 0,
+            ["lessonsCompleted"] = 0,
+            ["rank"] = "Beginner",
         });
 
         return MapUser(record);
@@ -141,6 +146,55 @@ public class UserService : IUserService
     {
         var all = await ListUsersAsync();
         return all.Where(u => u.IsAdmin).ToList();
+    }
+
+    public async Task<UserProfile?> GetUserProfileAsync(string uid)
+    {
+        try
+        {
+            var doc = await _db.Collection("users").Document(uid).GetSnapshotAsync();
+            if (!doc.Exists) return null;
+
+            return new UserProfile
+            {
+                Uid = uid,
+                DisplayName = doc.ContainsField("displayName") ? doc.GetValue<string>("displayName") : "",
+                PhotoUrl = doc.ContainsField("photoUrl") ? doc.GetValue<string>("photoUrl") : null,
+                TotalXp = doc.ContainsField("totalXp") ? doc.GetValue<int>("totalXp") : 0,
+                CurrentStreak = doc.ContainsField("currentStreak") ? doc.GetValue<int>("currentStreak") : 0,
+                LongestStreak = doc.ContainsField("longestStreak") ? doc.GetValue<int>("longestStreak") : 0,
+                LessonsCompleted = doc.ContainsField("lessonsCompleted") ? doc.GetValue<int>("lessonsCompleted") : 0,
+                Rank = doc.ContainsField("rank") ? doc.GetValue<string>("rank") : "Beginner",
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to get profile for {Uid}", uid);
+            return null;
+        }
+    }
+
+    public async Task<UserProfile> UpsertUserProfileAsync(string uid, UserProfile profile)
+    {
+        var data = new Dictionary<string, object>
+        {
+            ["displayName"] = profile.DisplayName,
+            ["totalXp"] = profile.TotalXp,
+            ["currentStreak"] = profile.CurrentStreak,
+            ["longestStreak"] = profile.LongestStreak,
+            ["lessonsCompleted"] = profile.LessonsCompleted,
+            ["rank"] = profile.Rank,
+        };
+
+        if (profile.PhotoUrl != null)
+            data["photoUrl"] = profile.PhotoUrl;
+
+        var docRef = _db.Collection("users").Document(uid);
+        try { await docRef.UpdateAsync(data); }
+        catch { await docRef.SetAsync(data, SetOptions.MergeAll); }
+
+        profile.Uid = uid;
+        return profile;
     }
 
     private static AppUser MapUser(UserRecord record)

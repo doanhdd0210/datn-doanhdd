@@ -1,9 +1,12 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'constants/app_colors.dart';
 import 'firebase_options.dart';
-import 'screens/home_screen.dart';
+import 'providers/user_provider.dart';
 import 'screens/login_screen.dart';
+import 'screens/main_navigation_screen.dart';
 import 'services/notification_service.dart';
 
 void main() async {
@@ -18,19 +21,38 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'DATN App',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1A73E8)),
-        useMaterial3: true,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => UserProvider()),
+      ],
+      child: MaterialApp(
+        title: 'JavaLearn',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primary),
+          useMaterial3: true,
+          appBarTheme: const AppBarTheme(
+            backgroundColor: Colors.white,
+            foregroundColor: AppColors.textDark,
+            elevation: 0,
+          ),
+          elevatedButtonTheme: ElevatedButtonThemeData(
+            style: ElevatedButton.styleFrom(
+              elevation: 0,
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ),
+        home: const AuthWrapper(),
       ),
-      home: const AuthWrapper(),
     );
   }
 }
 
-// Lắng nghe trạng thái auth và điều hướng tự động
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
 
@@ -41,13 +63,19 @@ class AuthWrapper extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+            backgroundColor: AppColors.primary,
+            body: Center(
+              child: CircularProgressIndicator(color: Colors.white),
+            ),
           );
         }
 
         final user = snapshot.data;
         if (user != null) {
-          return HomeScreen(user: user);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            context.read<UserProvider>().refreshStats();
+          });
+          return const MainNavigationScreen();
         }
         return const LoginScreen();
       },

@@ -8,12 +8,22 @@ public class FirebaseAuthMiddleware
     private readonly RequestDelegate _next;
     private readonly ILogger<FirebaseAuthMiddleware> _logger;
 
-    // Các path không cần xác thực
+    // Paths that do not require any authentication
     private static readonly HashSet<string> PublicPaths =
     [
         "/health",
         "/",
         "/favicon.ico",
+    ];
+
+    // API paths that require authentication but NOT admin
+    // (everything under /api that is not explicitly admin-only)
+    // Admin enforcement is done per-controller for write operations.
+    private static readonly HashSet<string> AdminOnlyPrefixes =
+    [
+        "/api/users",
+        "/api/admins",
+        "/api/notifications",
     ];
 
     public FirebaseAuthMiddleware(RequestDelegate next, ILogger<FirebaseAuthMiddleware> logger)
@@ -26,7 +36,7 @@ public class FirebaseAuthMiddleware
     {
         var path = context.Request.Path.Value ?? "";
 
-        // Bỏ qua Swagger UI, health check và bootstrap
+        // Skip Swagger UI, health check and bootstrap
         if (path.StartsWith("/swagger", StringComparison.OrdinalIgnoreCase)
             || path.StartsWith("/bootstrap", StringComparison.OrdinalIgnoreCase)
             || PublicPaths.Contains(path))
@@ -50,21 +60,25 @@ public class FirebaseAuthMiddleware
         {
             var decoded = await FirebaseAuth.DefaultInstance.VerifyIdTokenAsync(token);
 
-            // Kiểm tra custom claim "admin"
             decoded.Claims.TryGetValue("admin", out var adminClaim);
             var isAdmin = adminClaim is bool b && b
                        || adminClaim?.ToString() == "true";
 
-            if (!isAdmin)
+            context.Items["FirebaseUid"] = decoded.Uid;
+            context.Items["FirebaseEmail"] = decoded.Claims.GetValueOrDefault("email")?.ToString();
+            context.Items["FirebaseIsAdmin"] = isAdmin;
+
+            // For legacy admin-only API paths, enforce admin at middleware level
+            bool isAdminOnlyPath = AdminOnlyPrefixes.Any(prefix =>
+                path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
+
+            if (isAdminOnlyPath && !isAdmin)
             {
                 context.Response.StatusCode = StatusCodes.Status403Forbidden;
                 await context.Response.WriteAsJsonAsync(
                     ApiResponse<object>.Fail("Forbidden: Admin access required"));
                 return;
             }
-
-            context.Items["FirebaseUid"] = decoded.Uid;
-            context.Items["FirebaseEmail"] = decoded.Claims.GetValueOrDefault("email")?.ToString();
         }
         catch (FirebaseAuthException ex)
         {

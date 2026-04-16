@@ -33,6 +33,8 @@ class UserProvider extends ChangeNotifier {
 
   final _api = ApiService();
 
+  Future<void> refreshStats() => loadStats();
+
   Future<void> loadStats() async {
     _isLoading = true;
     _error = null;

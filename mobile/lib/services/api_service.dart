@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:developer' as dev;
+import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -34,6 +36,20 @@ class ApiService {
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
+  void _log(String method, String path, http.Response response) {
+    if (!kDebugMode) return;
+    final body = response.body.length > 2000
+        ? '${response.body.substring(0, 2000)}... [truncated]'
+        : response.body;
+    dev.log(
+      '[$method] $_baseUrl$path\n'
+      '  Status : ${response.statusCode}\n'
+      '  Headers: ${response.headers}\n'
+      '  Body   : $body',
+      name: 'ApiService',
+    );
+  }
+
   Future<Map<String, String>> _getHeaders() async {
     final user = _auth.currentUser;
     if (user != null) {
@@ -54,6 +70,7 @@ class ApiService {
       final response = await http
           .get(Uri.parse('$_baseUrl$path'), headers: headers)
           .timeout(const Duration(seconds: 15));
+      _log('GET', path, response);
       if (response.statusCode >= 200 && response.statusCode < 300) {
         return jsonDecode(response.body);
       }
@@ -75,6 +92,7 @@ class ApiService {
             body: jsonEncode(body),
           )
           .timeout(const Duration(seconds: 15));
+      _log('POST', path, response);
       if (response.statusCode >= 200 && response.statusCode < 300) {
         if (response.body.isEmpty) return {};
         return jsonDecode(response.body);
@@ -93,6 +111,7 @@ class ApiService {
       final response = await http
           .delete(Uri.parse('$_baseUrl$path'), headers: headers)
           .timeout(const Duration(seconds: 15));
+      _log('DELETE', path, response);
       if (response.statusCode >= 200 && response.statusCode < 300) {
         if (response.body.isEmpty) return {};
         return jsonDecode(response.body);

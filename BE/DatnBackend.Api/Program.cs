@@ -43,6 +43,20 @@ var pgConn = Environment.GetEnvironmentVariable("DATABASE_URL")
     ?? builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection is not configured.");
 
+// Render cung cấp DATABASE_URL dạng postgresql://user:pass@host:5432/db
+// Npgsql cần convert sang key-value format và thêm SSL cho production
+if (pgConn.StartsWith("postgresql://") || pgConn.StartsWith("postgres://"))
+{
+    var pgUri = new Uri(pgConn);
+    var pgUserInfo = pgUri.UserInfo.Split(':', 2);
+    var pgHost = pgUri.Host;
+    var pgPort = pgUri.Port > 0 ? pgUri.Port : 5432;
+    var pgDatabase = pgUri.AbsolutePath.TrimStart('/');
+    var pgUsername = pgUserInfo.Length > 0 ? pgUserInfo[0] : "";
+    var pgPassword = pgUserInfo.Length > 1 ? pgUserInfo[1] : "";
+    pgConn = $"Host={pgHost};Port={pgPort};Database={pgDatabase};Username={pgUsername};Password={pgPassword};SSL Mode=Require;Trust Server Certificate=true";
+}
+
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(pgConn, o => o.EnableRetryOnFailure()));
 

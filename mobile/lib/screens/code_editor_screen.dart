@@ -17,12 +17,10 @@ class _C {
   static const border = Color(0xFF3E3E42);      // dividers
   static const termBg = Color(0xFF0C0C0C);      // terminal bg
   static const runGreen = Color(0xFF23A55A);    // Run button green
-  static const runGreenHover = Color(0xFF1E9150);
   static const accentBlue = Color(0xFF4FC3F7);
   static const lineNum = Color(0xFF858585);
   static const white70 = Color(0xFFBBBBBB);
   static const white40 = Color(0xFF666666);
-  static const successGreen = Color(0xFF4EC9B0);
   static const errorRed = Color(0xFFF14C4C);
   static const warnYellow = Color(0xFFCCA700);
 }

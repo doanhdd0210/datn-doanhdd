@@ -1,3 +1,5 @@
+using System.Text;
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using DatnBackend.Api.Models;
 using DatnBackend.Api.Services;
@@ -97,6 +99,86 @@ public class CodeSnippetsController : ControllerBase
         catch (Exception ex)
         {
             return BadRequest(ApiResponse<object>.Fail(ex.Message));
+        }
+    }
+
+    /// <summary>Chạy code qua Piston (proxy để tránh block từ mobile)</summary>
+    [HttpPost("run")]
+    public async Task<ActionResult<ApiResponse<RunCodeResult>>> Run(
+        [FromBody] RunCodeRequest request,
+        [FromServices] IHttpClientFactory httpFactory)
+    {
+        if (UserId == null) return Unauthorized(ApiResponse<RunCodeResult>.Fail("Unauthorized"));
+
+        static string FileName(string lang) => lang switch
+        {
+            "java" => "Main.java",
+            "python" => "main.py",
+            "javascript" => "main.js",
+            _ => $"main.{lang}",
+        };
+
+        var pistonBody = JsonSerializer.Serialize(new
+        {
+            language = request.Language,
+            version = "*",
+            files = new[] { new { name = FileName(request.Language), content = request.Code } },
+            stdin = request.Stdin,
+            compile_timeout = 10000,
+            run_timeout = 5000,
+        });
+
+        try
+        {
+            var client = httpFactory.CreateClient();
+            client.Timeout = TimeSpan.FromSeconds(30);
+            var response = await client.PostAsync(
+                "https://emkc.org/api/v2/piston/execute",
+                new StringContent(pistonBody, Encoding.UTF8, "application/json"));
+
+            if (!response.IsSuccessStatusCode)
+                return Ok(ApiResponse<RunCodeResult>.Ok(new RunCodeResult
+                {
+                    Stderr = "Compiler service unavailable. Try again.",
+                    ExitCode = -1,
+                    IsSuccess = false,
+                }));
+
+            using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+            var root = doc.RootElement;
+
+            // Compile error
+            if (root.TryGetProperty("compile", out var compile) &&
+                compile.TryGetProperty("code", out var cc) && cc.GetInt32() != 0)
+            {
+                var compileErr = compile.TryGetProperty("stderr", out var cs) ? cs.GetString() ?? ""
+                               : compile.TryGetProperty("output", out var co) ? co.GetString() ?? "" : "";
+                return Ok(ApiResponse<RunCodeResult>.Ok(new RunCodeResult
+                {
+                    Stderr = compileErr,
+                    ExitCode = cc.GetInt32(),
+                    IsSuccess = false,
+                }));
+            }
+
+            var run = root.GetProperty("run");
+            var exitCode = run.TryGetProperty("code", out var ec) ? ec.GetInt32() : 0;
+            return Ok(ApiResponse<RunCodeResult>.Ok(new RunCodeResult
+            {
+                Stdout = run.TryGetProperty("stdout", out var so) ? so.GetString() ?? "" : "",
+                Stderr = run.TryGetProperty("stderr", out var se) ? se.GetString() ?? "" : "",
+                ExitCode = exitCode,
+                IsSuccess = exitCode == 0,
+            }));
+        }
+        catch (Exception ex)
+        {
+            return Ok(ApiResponse<RunCodeResult>.Ok(new RunCodeResult
+            {
+                Stderr = $"Lỗi kết nối compiler: {ex.Message}",
+                ExitCode = -1,
+                IsSuccess = false,
+            }));
         }
     }
 

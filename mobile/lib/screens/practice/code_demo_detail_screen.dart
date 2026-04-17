@@ -52,11 +52,21 @@ class _CodeDemoDetailScreenState extends State<CodeDemoDetailScreen>
       _isRunning = true;
       _result = null;
     });
-    final result = await _compiler.run(
-      language: widget.snippet.language,
-      version: '*',
-      code: _codeController.text,
-    );
+    CompileResult result;
+    try {
+      result = await _compiler.run(
+        language: widget.snippet.language,
+        version: '*',
+        code: _codeController.text,
+      );
+    } catch (_) {
+      result = const CompileResult(
+        stdout: '',
+        stderr: 'Không thể chạy code lúc này. Thử lại sau.',
+        exitCode: -1,
+        isSuccess: false,
+      );
+    }
     if (mounted) {
       setState(() {
         _isRunning = false;
@@ -101,7 +111,7 @@ class _CodeDemoDetailScreenState extends State<CodeDemoDetailScreen>
               Clipboard.setData(ClipboardData(text: widget.snippet.code));
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Code copied!'),
+                  content: Text('Đã sao chép code!'),
                   behavior: SnackBarBehavior.floating,
                   duration: Duration(seconds: 1),
                 ),
@@ -170,7 +180,7 @@ class _CodeDemoDetailScreenState extends State<CodeDemoDetailScreen>
                           const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 16),
                         const SizedBox(width: 6),
                         Text(
-                          _isRunning ? 'Running...' : 'Run ▶',
+                          _isRunning ? 'Đang chạy...' : 'Chạy ▶',
                           style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
                         ),
                       ],
@@ -240,7 +250,7 @@ class _CodeDemoDetailScreenState extends State<CodeDemoDetailScreen>
                               CircularProgressIndicator(color: Color(0xFF23A55A), strokeWidth: 2.5),
                               SizedBox(height: 12),
                               Text(
-                                'Running...',
+                                'Đang chạy...',
                                 style: TextStyle(color: Color(0xFFBBBBBB), fontFamily: 'monospace', fontSize: 13),
                               ),
                             ],
@@ -255,7 +265,7 @@ class _CodeDemoDetailScreenState extends State<CodeDemoDetailScreen>
                                       style: TextStyle(color: Color(0xFF555555), fontSize: 32, fontFamily: 'monospace')),
                                   const SizedBox(height: 12),
                                   const Text(
-                                    'Press Run ▶ to execute the code',
+                                    'Nhấn Chạy ▶ để thực thi code',
                                     style: TextStyle(color: Color(0xFF777777), fontFamily: 'monospace', fontSize: 13),
                                   ),
                                 ],
@@ -282,7 +292,7 @@ class _CodeDemoDetailScreenState extends State<CodeDemoDetailScreen>
                                       ),
                                     ),
                                     child: Text(
-                                      _result!.isSuccess ? '✓ Success' : '✗ Error',
+                                      _result!.isSuccess ? '✓ Thành công' : '✗ Lỗi',
                                       style: TextStyle(
                                         color: _result!.isSuccess ? const Color(0xFF23A55A) : const Color(0xFFF14C4C),
                                         fontFamily: 'monospace',
@@ -324,7 +334,10 @@ class _CodeDemoDetailScreenState extends State<CodeDemoDetailScreen>
           // Practice button
           Container(
             padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
-            color: Colors.white,
+            decoration: const BoxDecoration(
+              color: AppColors.background,
+              border: Border(top: BorderSide(color: AppColors.border)),
+            ),
             child: SafeArea(
               child: SizedBox(
                 width: double.infinity,
@@ -338,7 +351,7 @@ class _CodeDemoDetailScreenState extends State<CodeDemoDetailScreen>
                     );
                   },
                   icon: const Icon(Icons.edit_note),
-                  label: const Text('Practice Typing'),
+                  label: const Text('Luyện gõ code'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.blue,
                     foregroundColor: Colors.white,

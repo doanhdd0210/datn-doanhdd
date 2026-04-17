@@ -41,6 +41,7 @@ class _TopicsScreenState extends State<TopicsScreen> {
           _topics = topics;
           _isLoading = false;
         });
+        context.read<UserProvider>().loadLevel();
         context.read<UserProvider>().loadTopicProgress();
         context.read<UserProvider>().loadStats();
       }
@@ -174,7 +175,9 @@ class _TopicsScreenState extends State<TopicsScreen> {
                 backgroundColor: AppColors.primary.withOpacity(0.25),
                 child: user?.photoURL == null
                     ? Text(
-                        (user?.displayName ?? 'J').substring(0, 1).toUpperCase(),
+                        (user?.displayName ?? 'J')
+                            .substring(0, 1)
+                            .toUpperCase(),
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w800,
@@ -189,11 +192,12 @@ class _TopicsScreenState extends State<TopicsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Java Learning',
-                      style: AppTextStyles.heading3,
+                      user?.displayName ?? '',
+                      style: AppTextStyles.heading4,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     Text(
-                      user?.displayName ?? 'Keep learning every day!',
+                      user?.email ?? 'Keep learning every day!',
                       style: AppTextStyles.bodySmall,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -318,8 +322,7 @@ class _SkillPath extends StatelessWidget {
             children: [
               for (int i = 0; i < topics.length; i++) ...[
                 _buildNodeRow(context, provider, i),
-                if (i < topics.length - 1)
-                  _PathConnector(isLeft: i % 2 == 0),
+                if (i < topics.length - 1) _PathConnector(isLeft: i % 2 == 0),
               ],
             ],
           ),
@@ -328,8 +331,7 @@ class _SkillPath extends StatelessWidget {
     );
   }
 
-  Widget _buildNodeRow(
-      BuildContext context, UserProvider provider, int index) {
+  Widget _buildNodeRow(BuildContext context, UserProvider provider, int index) {
     final topic = topics[index];
     final completed = provider.topicCompletedCount(topic.id);
     final total = topic.totalLessons > 0 ? topic.totalLessons : 1;
@@ -342,7 +344,8 @@ class _SkillPath extends StatelessWidget {
     final isLocked = !isCompleted && !levelUnlocked;
 
     final color = _topicColor(topic, index);
-    final shadowColor = AppColors.topicShadowColors[index % AppColors.topicShadowColors.length];
+    final shadowColor =
+        AppColors.topicShadowColors[index % AppColors.topicShadowColors.length];
 
     // Ziczac: even index → node on left side; odd → right side
     final isLeft = index % 2 == 0;
@@ -474,9 +477,7 @@ class _SkillNode extends StatelessWidget {
             spreadRadius: 0,
           ),
         ],
-        border: isCurrent
-            ? Border.all(color: Colors.white, width: 3)
-            : null,
+        border: isCurrent ? Border.all(color: Colors.white, width: 3) : null,
       ),
       child: Stack(
         alignment: Alignment.center,
@@ -498,7 +499,8 @@ class _SkillNode extends StatelessWidget {
             isCompleted ? '✓' : (isLocked ? '🔒' : topic.icon),
             style: TextStyle(
               fontSize: isCompleted ? 28 : 30,
-              color: isCompleted || !isLocked ? Colors.white : AppColors.textLight,
+              color:
+                  isCompleted || !isLocked ? Colors.white : AppColors.textLight,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -557,9 +559,12 @@ class _ConnectorPainter extends CustomPainter {
     final path = Path();
     path.moveTo(startX, startY);
     path.cubicTo(
-      startX, startY + 28,
-      endX, endY - 28,
-      endX, endY,
+      startX,
+      startY + 28,
+      endX,
+      endY - 28,
+      endX,
+      endY,
     );
 
     // Draw dashed path
@@ -600,9 +605,12 @@ class _LevelChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Map<String, _LevelStyle> styles = {
-      'beginner': const _LevelStyle('🌱', AppColors.correct, AppColors.surfaceElevated),
-      'intermediate': const _LevelStyle('⚡', AppColors.accentBlue, AppColors.surfaceElevated),
-      'advanced': const _LevelStyle('🔥', AppColors.streakOrange, AppColors.surfaceElevated),
+      'beginner':
+          const _LevelStyle('🌱', AppColors.correct, AppColors.surfaceElevated),
+      'intermediate': const _LevelStyle(
+          '⚡', AppColors.accentBlue, AppColors.surfaceElevated),
+      'advanced': const _LevelStyle(
+          '🔥', AppColors.streakOrange, AppColors.surfaceElevated),
     };
     final s = styles[level] ?? styles['beginner']!;
     return Container(
@@ -645,7 +653,8 @@ class _StatChip extends StatelessWidget {
   final String value;
   final Color color;
 
-  const _StatChip({required this.icon, required this.value, required this.color});
+  const _StatChip(
+      {required this.icon, required this.value, required this.color});
 
   @override
   Widget build(BuildContext context) {

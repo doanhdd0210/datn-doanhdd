@@ -1,6 +1,10 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../constants/app_colors.dart';
+import '../../providers/user_provider.dart';
+import '../../../main.dart' show onboardingDoneKey;
 import '../main_navigation_screen.dart';
 import 'placement_test_screen.dart';
 
@@ -20,9 +24,9 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
     _LevelData(
       id: 'beginner',
       emoji: '🌱',
-      title: 'Beginner',
-      subtitle: "I'm new to Java",
-      description: 'Start from the very basics — variables, loops, and simple programs.',
+      title: 'Mới bắt đầu',
+      subtitle: 'Tôi mới học Java',
+      description: 'Bắt đầu từ nền tảng cơ bản nhất — biến, vòng lặp và các chương trình đơn giản.',
       color: AppColors.primary,
       shadowColor: AppColors.primaryDark,
       bgColor: AppColors.surface,
@@ -31,9 +35,9 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
     _LevelData(
       id: 'intermediate',
       emoji: '⚡',
-      title: 'Intermediate',
-      subtitle: 'I know some Java',
-      description: 'Skip the basics. Dive into OOP, collections, and design patterns.',
+      title: 'Trung cấp',
+      subtitle: 'Tôi biết một chút Java',
+      description: 'Bỏ qua phần cơ bản. Lao vào OOP, collections và design patterns.',
       color: AppColors.secondary,
       shadowColor: AppColors.secondaryLight,
       bgColor: AppColors.surface,
@@ -42,9 +46,9 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
     _LevelData(
       id: 'advanced',
       emoji: '🔥',
-      title: 'Advanced',
-      subtitle: 'I code Java regularly',
-      description: 'Go straight to algorithms, concurrency, and advanced Java features.',
+      title: 'Nâng cao',
+      subtitle: 'Tôi đã code Java',
+      description: 'Đi thẳng vào algorithms, concurrency và các tính năng Java nâng cao.',
       color: AppColors.streakOrange,
       shadowColor: Color(0xFFCC6600),
       bgColor: AppColors.surface,
@@ -69,10 +73,13 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
 
   Future<void> _confirm() async {
     if (_selectedLevel == null) return;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('onboarding_done', true);
-    await prefs.setString('user_level', _selectedLevel!);
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(onboardingDoneKey(uid), true);
+    }
     if (mounted) {
+      await context.read<UserProvider>().setLevel(_selectedLevel!);
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
@@ -96,7 +103,7 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
                   const Text('🎯', style: TextStyle(fontSize: 48)),
                   const SizedBox(height: 16),
                   const Text(
-                    'What\'s your Java level?',
+                    'Trình độ Java của bạn?',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 28,
@@ -107,7 +114,7 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    'We\'ll unlock the right lessons for you',
+                    'Chúng tôi sẽ mở khóa bài học phù hợp với bạn',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 15,
@@ -164,7 +171,7 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
                           ],
                         ),
                         child: const Text(
-                          'START LEARNING',
+                          'BẮT ĐẦU HỌC',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.white,
@@ -199,7 +206,7 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
                           Text('📝', style: TextStyle(fontSize: 16)),
                           SizedBox(width: 8),
                           Text(
-                            'Take a placement test instead',
+                            'Làm bài kiểm tra xếp lớp',
                             style: TextStyle(
                               color: AppColors.textDark,
                               fontWeight: FontWeight.w700,

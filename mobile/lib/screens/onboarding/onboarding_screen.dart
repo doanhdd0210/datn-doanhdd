@@ -18,32 +18,32 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   static const _slides = [
     _SlideData(
       emoji: '☕',
-      title: 'Master Java\nthe fun way',
-      subtitle: 'Learn Java programming through bite-sized lessons, interactive quizzes, and real coding challenges.',
+      title: 'Chinh phục Java\ntheo cách thú vị',
+      subtitle: 'Học lập trình Java qua các bài học ngắn gọn, câu đố tương tác và thử thách code thực tế.',
       bgColor: Color(0xFF304FFE),
       cardColor: Color(0xFF2438CC),
       accentColor: Colors.white,
     ),
     _SlideData(
       emoji: '🗺️',
-      title: 'Your personal\nlearning path',
-      subtitle: 'Follow a skill tree tailored to your level. Unlock topics step by step as you progress.',
+      title: 'Lộ trình học\nriêng của bạn',
+      subtitle: 'Theo cây kỹ năng được cá nhân hóa theo trình độ. Mở khóa chủ đề từng bước khi bạn tiến bộ.',
       bgColor: Color(0xFF6949FF),
       cardColor: Color(0xFF4A2FDD),
       accentColor: Colors.white,
     ),
     _SlideData(
       emoji: '⚡',
-      title: 'Earn XP &\nkeep streaks',
-      subtitle: 'Stay motivated with daily streaks, XP rewards, and climb the leaderboard against friends.',
+      title: 'Kiếm XP &\nduy trì streak',
+      subtitle: 'Giữ động lực với streak hàng ngày, phần thưởng XP và leo bảng xếp hạng cùng bạn bè.',
       bgColor: Color(0xFFFF9800),
       cardColor: Color(0xFFCC6600),
       accentColor: Colors.white,
     ),
     _SlideData(
       emoji: '🚀',
-      title: 'Ready to start\nyour journey?',
-      subtitle: "We'll set up the perfect learning path for your current Java level.",
+      title: 'Sẵn sàng bắt đầu\nhành trình chưa?',
+      subtitle: 'Chúng tôi sẽ thiết lập lộ trình học phù hợp với trình độ Java hiện tại của bạn.',
       bgColor: Color(0xFF181A20),
       cardColor: Color(0xFF262A35),
       accentColor: Colors.white,
@@ -108,7 +108,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                       ? TextButton(
                           onPressed: _goToLevelSelection,
                           child: Text(
-                            'Skip',
+                            'Bỏ qua',
                             style: TextStyle(
                               color: slide.accentColor.withOpacity(0.8),
                               fontWeight: FontWeight.w700,
@@ -191,7 +191,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                 ],
               ),
               child: Text(
-                isLast ? "LET'S GO!" : 'CONTINUE',
+                isLast ? 'BẮT ĐẦU THÔI!' : 'TIẾP TỤC',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: slide.bgColor,

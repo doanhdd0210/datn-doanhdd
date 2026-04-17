@@ -1,6 +1,10 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../constants/app_colors.dart';
+import '../../providers/user_provider.dart';
+import '../../../main.dart' show onboardingDoneKey;
 import '../main_navigation_screen.dart';
 
 class PlacementTestScreen extends StatefulWidget {
@@ -24,58 +28,58 @@ class _PlacementTestScreenState extends State<PlacementTestScreen>
   late Animation<double> _shakeAnim;
 
   static const _questions = [
-    // Easy (0-2)
+    // Dễ (0-2)
     _PlacementQuestion(
-      text: 'What is the correct way to declare an integer variable in Java?',
+      text: 'Cách khai báo biến số nguyên trong Java nào là đúng?',
       options: ['int x = 5;', 'integer x = 5;', 'Int x = 5;', 'var x: int = 5;'],
       correct: 0,
       difficulty: 'easy',
     ),
     _PlacementQuestion(
-      text: 'Which of these is NOT a primitive type in Java?',
+      text: 'Kiểu nào sau đây KHÔNG phải là kiểu nguyên thủy (primitive) trong Java?',
       options: ['int', 'boolean', 'String', 'double'],
       correct: 2,
       difficulty: 'easy',
     ),
     _PlacementQuestion(
-      text: 'What does System.out.println() do?',
+      text: 'System.out.println() dùng để làm gì?',
       options: [
-        'Reads input from the user',
-        'Prints text and moves to the next line',
-        'Declares a variable',
-        'Creates a new class',
+        'Đọc dữ liệu nhập từ người dùng',
+        'In ra văn bản và xuống dòng mới',
+        'Khai báo một biến',
+        'Tạo một class mới',
       ],
       correct: 1,
       difficulty: 'easy',
     ),
-    // Medium (3-5)
+    // Trung bình (3-5)
     _PlacementQuestion(
-      text: 'Which keyword is used to prevent a class from being subclassed?',
+      text: 'Từ khóa nào dùng để ngăn một class bị kế thừa (subclassed)?',
       options: ['static', 'abstract', 'final', 'private'],
       correct: 2,
       difficulty: 'medium',
     ),
     _PlacementQuestion(
-      text: 'What is the output of: System.out.println(10 / 3); in Java?',
-      options: ['3.33', '3', '3.0', 'Error'],
+      text: 'Kết quả của System.out.println(10 / 3); trong Java là gì?',
+      options: ['3.33', '3', '3.0', 'Lỗi'],
       correct: 1,
       difficulty: 'medium',
     ),
     _PlacementQuestion(
-      text: 'Which interface must a class implement to be sorted by Collections.sort()?',
+      text: 'Interface nào một class cần implement để dùng được Collections.sort()?',
       options: ['Sortable', 'Comparable', 'Comparator', 'Iterable'],
       correct: 1,
       difficulty: 'medium',
     ),
-    // Hard (6-7)
+    // Khó (6-7)
     _PlacementQuestion(
-      text: 'What is the time complexity of HashMap.get() in the average case?',
+      text: 'Độ phức tạp thời gian của HashMap.get() trong trường hợp trung bình là?',
       options: ['O(n)', 'O(log n)', 'O(1)', 'O(n²)'],
       correct: 2,
       difficulty: 'hard',
     ),
     _PlacementQuestion(
-      text: 'Which Java keyword ensures a block of code runs even if an exception is thrown?',
+      text: 'Từ khóa Java nào đảm bảo một khối lệnh luôn được thực thi dù có exception?',
       options: ['catch', 'throws', 'finally', 'try'],
       correct: 2,
       difficulty: 'hard',
@@ -86,6 +90,12 @@ class _PlacementTestScreenState extends State<PlacementTestScreen>
     'easy': AppColors.primary,
     'medium': AppColors.blue,
     'hard': AppColors.streakOrange,
+  };
+
+  static const _difficultyLabels = {
+    'easy': 'DỄ',
+    'medium': 'TRUNG BÌNH',
+    'hard': 'KHÓ',
   };
 
   @override
@@ -154,10 +164,13 @@ class _PlacementTestScreenState extends State<PlacementTestScreen>
   }
 
   Future<void> _saveAndContinue() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('onboarding_done', true);
-    await prefs.setString('user_level', _resultLevel);
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(onboardingDoneKey(uid), true);
+    }
     if (mounted) {
+      await context.read<UserProvider>().setLevel(_resultLevel);
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
@@ -253,7 +266,7 @@ class _PlacementTestScreenState extends State<PlacementTestScreen>
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          q.difficulty.toUpperCase(),
+                          _difficultyLabels[q.difficulty] ?? q.difficulty.toUpperCase(),
                           style: TextStyle(
                             color: diffColor,
                             fontWeight: FontWeight.w800,
@@ -263,7 +276,7 @@ class _PlacementTestScreenState extends State<PlacementTestScreen>
                         ),
                       ),
                       const SizedBox(width: 8),
-                      const Text('Choose the correct answer',
+                      const Text('Chọn đáp án đúng',
                           style: TextStyle(
                               color: AppColors.textGray, fontSize: 13)),
                     ],
@@ -403,33 +416,33 @@ class _PlacementTestScreenState extends State<PlacementTestScreen>
     final Map<String, _ResultData> results = {
       'beginner': const _ResultData(
         emoji: '🌱',
-        title: 'You\'re a Beginner!',
-        subtitle: 'No worries — everyone starts somewhere. We\'ll build your foundation step by step.',
+        title: 'Bạn đang ở trình độ cơ bản!',
+        subtitle: 'Không sao cả — ai cũng phải bắt đầu từ đâu đó. Chúng tôi sẽ xây dựng nền tảng cho bạn từng bước.',
         color: AppColors.primary,
         shadowColor: AppColors.primaryDark,
         bgColor: Color(0xFFD7FFB8),
-        levelLabel: 'Beginner Path',
-        unlockText: 'Starting from lesson 1',
+        levelLabel: 'Lộ trình cơ bản',
+        unlockText: 'Bắt đầu từ bài học đầu tiên',
       ),
       'intermediate': const _ResultData(
         emoji: '⚡',
-        title: 'You\'re Intermediate!',
-        subtitle: 'Nice! You know the basics. We\'ll jump you straight to OOP and beyond.',
+        title: 'Bạn đang ở trình độ trung cấp!',
+        subtitle: 'Tuyệt! Bạn đã nắm cơ bản. Chúng tôi sẽ đưa bạn thẳng vào OOP và hơn thế nữa.',
         color: AppColors.blue,
         shadowColor: AppColors.blueDark,
         bgColor: Color(0xFFCCEDFF),
-        levelLabel: 'Intermediate Path',
-        unlockText: 'First 4 topics unlocked',
+        levelLabel: 'Lộ trình trung cấp',
+        unlockText: 'Đã mở khóa 4 chủ đề đầu tiên',
       ),
       'advanced': const _ResultData(
         emoji: '🔥',
-        title: 'You\'re Advanced!',
-        subtitle: 'Impressive! All topics are unlocked. Dive straight into the hard stuff.',
+        title: 'Bạn đang ở trình độ nâng cao!',
+        subtitle: 'Ấn tượng! Tất cả chủ đề đã được mở khóa. Bắt tay vào những thứ khó ngay thôi.',
         color: AppColors.streakOrange,
         shadowColor: Color(0xFFCC6600),
         bgColor: Color(0xFFFFDDBB),
-        levelLabel: 'Advanced Path',
-        unlockText: 'All topics unlocked!',
+        levelLabel: 'Lộ trình nâng cao',
+        unlockText: 'Tất cả chủ đề đã mở khóa!',
       ),
     };
 
@@ -556,7 +569,7 @@ class _PlacementTestScreenState extends State<PlacementTestScreen>
                       Border(bottom: BorderSide(color: r.shadowColor, width: 4)),
                 ),
                 child: const Text(
-                  'START MY JOURNEY',
+                  'BẮT ĐẦU HÀNH TRÌNH',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.white,
@@ -612,7 +625,7 @@ class _FeedbackBar extends StatelessWidget {
                   style: const TextStyle(fontSize: 20)),
               const SizedBox(width: 8),
               Text(
-                isCorrect ? 'Correct!' : 'Incorrect',
+                isCorrect ? 'Chính xác!' : 'Sai rồi!',
                 style: TextStyle(
                     color: accentColor,
                     fontWeight: FontWeight.w800,
@@ -638,7 +651,7 @@ class _FeedbackBar extends StatelessWidget {
                 ],
               ),
               child: Text(
-                isLast ? 'SEE MY RESULT' : 'CONTINUE',
+                isLast ? 'XEM KẾT QUẢ' : 'TIẾP TỤC',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: Colors.white,

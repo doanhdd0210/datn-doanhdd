@@ -106,6 +106,9 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod());
 });
 
+// ─── HttpClient (dùng cho compiler proxy) ─────────────────────────────────────
+builder.Services.AddHttpClient();
+
 // ─── Controllers + Swagger ────────────────────────────────────────────────────
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

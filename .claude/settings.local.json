@@ -85,7 +85,17 @@
       "Bash(curl -s \"https://datn-doanhdd.onrender.com/api/topics\")",
       "Bash(git commit:*)",
       "Bash(grep -oP 'fill=\"\\(#[a-fA-F0-9]{3,8}\\)\"' \"/Users/doducdoanh/Desktop/Quizzo - Quiz App UI Kit \\(Preview\\).svg\")",
-      "Bash(rg 'fill=\"#\\([a-fA-F0-9]{3,8}\\)\"' \"/Users/doducdoanh/Desktop/Quizzo - Quiz App UI Kit \\(Preview\\).svg\" -o)"
+      "Bash(rg 'fill=\"#\\([a-fA-F0-9]{3,8}\\)\"' \"/Users/doducdoanh/Desktop/Quizzo - Quiz App UI Kit \\(Preview\\).svg\" -o)",
+      "Bash(flutter devices:*)",
+      "Bash(grep -v \"^$\")",
+      "Bash(flutter install:*)",
+      "Bash(adb -s emulator-5554 install -r /Users/doducdoanh/StudioProjects/datn.doanhdd/mobile/build/app/outputs/flutter-apk/app-debug.apk)",
+      "Bash(adb -s emulator-5554 shell am start -n com.example.mobile/.MainActivity)",
+      "Bash(adb -s emulator-5554 logcat -s flutter -d)",
+      "Bash(python3 -c \"from PIL import Image; print\\('PIL ok'\\)\")",
+      "Bash(pip3 install:*)",
+      "Bash(dart pub:*)",
+      "Bash(dart run:*)"
     ]
   }
 }

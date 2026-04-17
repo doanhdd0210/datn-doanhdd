@@ -38,14 +38,22 @@ class ApiService {
 
   void _log(String method, String path, http.Response response) {
     if (!kDebugMode) return;
-    final body = response.body.length > 2000
-        ? '${response.body.substring(0, 2000)}... [truncated]'
-        : response.body;
+    final code = response.statusCode;
+    final ok = code >= 200 && code < 300;
+    final icon = ok ? '✓' : '✗';
+
+    String body;
+    try {
+      final decoded = jsonDecode(response.body);
+      body = const JsonEncoder.withIndent('  ').convert(decoded);
+    } catch (_) {
+      body = response.body;
+    }
+    if (body.length > 800) body = '${body.substring(0, 800)}\n  ... [truncated]';
+
     dev.log(
-      '[$method] $_baseUrl$path\n'
-      '  Status : ${response.statusCode}\n'
-      '  Body   : $body',
-      name: 'ApiService',
+      '$icon $method $path [$code]\n$body',
+      name: 'API',
     );
   }
 
@@ -240,6 +248,21 @@ class ApiService {
   Future<ApiCodeSnippet> getCodeSnippet(String id) async {
     final data = await _get('/code-snippets/$id');
     return ApiCodeSnippet.fromJson(data as Map<String, dynamic>);
+  }
+
+  // Backend: POST /api/code-snippets/run (proxy to Piston)
+  Future<Map<String, dynamic>> runCode({
+    required String language,
+    required String code,
+    String stdin = '',
+  }) async {
+    final data = await _post('/code-snippets/run', {
+      'language': language,
+      'code': code,
+      'stdin': stdin,
+    });
+    if (data is Map<String, dynamic>) return data;
+    return {'stdout': '', 'stderr': 'Invalid response', 'exitCode': -1, 'isSuccess': false};
   }
 
   // Backend: POST /api/code-snippets/practice-submit

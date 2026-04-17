@@ -18,8 +18,12 @@ class _FriendsScreenState extends State<FriendsScreen>
     with SingleTickerProviderStateMixin {
   final _api = ApiService();
   late TabController _tabController;
+
   List<LeaderboardEntry> _leaderboard = [];
   List<UserFollow> _following = [];
+  Set<String> _followingIds = {};
+  Set<String> _loadingIds = {};
+
   bool _isLoadingLeaderboard = true;
   bool _isLoadingFriends = true;
 
@@ -27,8 +31,7 @@ class _FriendsScreenState extends State<FriendsScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _loadLeaderboard();
-    _loadFriends();
+    _loadAll();
   }
 
   @override
@@ -37,23 +40,17 @@ class _FriendsScreenState extends State<FriendsScreen>
     super.dispose();
   }
 
+  Future<void> _loadAll() async {
+    await Future.wait([_loadLeaderboard(), _loadFriends()]);
+  }
+
   Future<void> _loadLeaderboard() async {
     setState(() => _isLoadingLeaderboard = true);
     try {
       final data = await _api.getLeaderboard();
-      if (mounted) {
-        setState(() {
-          _leaderboard = data;
-          _isLoadingLeaderboard = false;
-        });
-      }
+      if (mounted) setState(() { _leaderboard = data; _isLoadingLeaderboard = false; });
     } catch (_) {
-      if (mounted) {
-        setState(() {
-          _leaderboard = _mockLeaderboard();
-          _isLoadingLeaderboard = false;
-        });
-      }
+      if (mounted) setState(() => _isLoadingLeaderboard = false);
     }
   }
 
@@ -64,55 +61,62 @@ class _FriendsScreenState extends State<FriendsScreen>
       if (mounted) {
         setState(() {
           _following = data;
+          _followingIds = data.map((u) => u.userId).toSet();
           _isLoadingFriends = false;
         });
       }
     } catch (_) {
-      if (mounted) {
-        setState(() {
-          _following = [];
-          _isLoadingFriends = false;
-        });
-      }
+      if (mounted) setState(() => _isLoadingFriends = false);
     }
   }
 
-  List<LeaderboardEntry> _mockLeaderboard() {
-    return List.generate(
-      10,
-      (i) => LeaderboardEntry(
-        userId: 'user_$i',
-        name: [
-          'Alice',
-          'Bob',
-          'Charlie',
-          'Diana',
-          'Eve',
-          'Frank',
-          'Grace',
-          'Hank',
-          'Iris',
-          'Jack'
-        ][i],
-        avatar: '',
-        totalXp: 1000 - i * 80,
-        streak: 10 - i,
-        rank: i + 1,
-        isCurrentUser: i == 3,
-      ),
-    );
+  Future<void> _toggleFollow(LeaderboardEntry entry) async {
+    if (_loadingIds.contains(entry.userId)) return;
+    setState(() => _loadingIds.add(entry.userId));
+
+    try {
+      if (_followingIds.contains(entry.userId)) {
+        await _api.unfollowUser(entry.userId);
+        setState(() {
+          _followingIds.remove(entry.userId);
+          _following.removeWhere((u) => u.userId == entry.userId);
+        });
+      } else {
+        await _api.followUser(entry.userId, entry.name, entry.avatar);
+        setState(() {
+          _followingIds.add(entry.userId);
+          _following.add(UserFollow(
+            id: '',
+            userId: entry.userId,
+            name: entry.name,
+            avatar: entry.avatar,
+            totalXp: entry.totalXp,
+            streak: entry.streak,
+          ));
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi: $e'), behavior: SnackBarBehavior.floating),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loadingIds.remove(entry.userId));
+    }
   }
 
   Future<void> _unfollow(UserFollow user) async {
     try {
       await _api.unfollowUser(user.userId);
-      if (mounted) setState(() => _following.remove(user));
+      setState(() {
+        _following.removeWhere((u) => u.userId == user.userId);
+        _followingIds.remove(user.userId);
+      });
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Error: $e'),
-              behavior: SnackBarBehavior.floating),
+          SnackBar(content: Text('Lỗi: $e'), behavior: SnackBarBehavior.floating),
         );
       }
     }
@@ -125,14 +129,13 @@ class _FriendsScreenState extends State<FriendsScreen>
       body: SafeArea(
         child: Column(
           children: [
-            // Header
             Container(
               color: AppColors.surface,
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Ranking', style: AppTextStyles.heading2),
+                  Text('Bảng xếp hạng', style: AppTextStyles.heading2),
                   const SizedBox(height: 12),
                   TabBar(
                     controller: _tabController,
@@ -140,14 +143,12 @@ class _FriendsScreenState extends State<FriendsScreen>
                     indicatorWeight: 3,
                     labelColor: AppColors.primary,
                     unselectedLabelColor: AppColors.textGray,
-                    labelStyle: const TextStyle(
-                        fontWeight: FontWeight.w800, fontSize: 14),
-                    unselectedLabelStyle: const TextStyle(
-                        fontWeight: FontWeight.w600, fontSize: 14),
+                    labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                    unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
                     dividerColor: AppColors.border,
-                    tabs: const [
-                      Tab(text: 'Leaderboard'),
-                      Tab(text: 'Following'),
+                    tabs: [
+                      const Tab(text: 'Xếp hạng'),
+                      Tab(text: 'Đang theo dõi (${_following.length})'),
                     ],
                   ),
                 ],
@@ -171,43 +172,53 @@ class _FriendsScreenState extends State<FriendsScreen>
   Widget _buildLeaderboard() {
     if (_isLoadingLeaderboard) return _buildShimmer();
 
+    if (_leaderboard.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('🏆', style: TextStyle(fontSize: 52)),
+            SizedBox(height: 12),
+            Text('Chưa có dữ liệu', style: AppTextStyles.heading4),
+          ],
+        ),
+      );
+    }
+
     final top3 = _leaderboard.take(3).toList();
     final rest = _leaderboard.skip(3).toList();
 
     return RefreshIndicator(
-      onRefresh: _loadLeaderboard,
+      onRefresh: _loadAll,
       color: AppColors.primary,
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
         children: [
-          // Podium top 3
           if (top3.length >= 3) _buildPodium(top3),
-          const SizedBox(height: 20),
-          // Rest of the list
-          ...rest.map((entry) => _LeaderboardRow(entry: entry)),
+          const SizedBox(height: 16),
+          ...rest.map((entry) => _buildLeaderboardRow(entry)),
         ],
       ),
     );
   }
 
   Widget _buildPodium(List<LeaderboardEntry> top3) {
-    // Order: #2 left, #1 center, #3 right
     final order = [top3[1], top3[0], top3[2]];
-    final heights = [100.0, 120.0, 88.0];
+    final heights = [100.0, 128.0, 84.0];
     final crowns = ['🥈', '🥇', '🥉'];
     final colors = [
-      const Color(0xFFC0C0C0), // silver
-      AppColors.xpGold,         // gold
-      const Color(0xFFCD7F32), // bronze
+      const Color(0xFFC0C0C0),
+      AppColors.xpGold,
+      const Color(0xFFCD7F32),
     ];
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppColors.primary.withOpacity(0.15),
-            AppColors.secondary.withOpacity(0.1),
+            AppColors.primary.withOpacity(0.12),
+            AppColors.secondary.withOpacity(0.08),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -224,30 +235,23 @@ class _FriendsScreenState extends State<FriendsScreen>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                // Crown
-                Text(crowns[i], style: const TextStyle(fontSize: 24)),
+                Text(crowns[i], style: const TextStyle(fontSize: 26)),
                 const SizedBox(height: 6),
-                // Avatar
                 Container(
                   padding: const EdgeInsets.all(3),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: colors[i],
-                  ),
+                  decoration: BoxDecoration(shape: BoxShape.circle, color: colors[i]),
                   child: CircleAvatar(
-                    radius: isCenter ? 30 : 24,
+                    radius: isCenter ? 32 : 24,
                     backgroundColor: colors[i].withOpacity(0.2),
                     backgroundImage: entry.avatar.isNotEmpty
                         ? CachedNetworkImageProvider(entry.avatar)
                         : null,
                     child: entry.avatar.isEmpty
                         ? Text(
-                            entry.name.isNotEmpty
-                                ? entry.name[0].toUpperCase()
-                                : 'U',
+                            entry.name.isNotEmpty ? entry.name[0].toUpperCase() : 'U',
                             style: TextStyle(
                               fontWeight: FontWeight.w800,
-                              fontSize: isCenter ? 22 : 18,
+                              fontSize: isCenter ? 24 : 18,
                               color: Colors.white,
                             ),
                           )
@@ -255,44 +259,41 @@ class _FriendsScreenState extends State<FriendsScreen>
                   ),
                 ),
                 const SizedBox(height: 8),
-                // Name
                 Text(
-                  entry.name.split(' ').first,
+                  entry.name.split(' ').last,
                   style: TextStyle(
                     fontWeight: FontWeight.w800,
-                    fontSize: isCenter ? 14 : 12,
+                    fontSize: isCenter ? 13 : 11,
                     color: AppColors.textDark,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
-                // XP
                 Text(
-                  '${entry.totalXp} XP',
+                  '⚡ ${entry.totalXp} XP',
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
-                    fontSize: 12,
+                    fontSize: 11,
                     color: colors[i],
                   ),
                 ),
                 const SizedBox(height: 8),
-                // Podium block
                 Container(
                   height: heights[i],
                   decoration: BoxDecoration(
-                    color: colors[i].withOpacity(0.2),
+                    color: colors[i].withOpacity(0.15),
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(8),
                       topRight: Radius.circular(8),
                     ),
-                    border: Border.all(color: colors[i], width: 2),
+                    border: Border.all(color: colors[i], width: 1.5),
                   ),
                   child: Center(
                     child: Text(
-                      '#${entry.rank}',
+                      '${entry.rank}',
                       style: TextStyle(
                         fontWeight: FontWeight.w900,
-                        fontSize: 18,
+                        fontSize: 22,
                         color: colors[i],
                       ),
                     ),
@@ -306,20 +307,133 @@ class _FriendsScreenState extends State<FriendsScreen>
     );
   }
 
+  Widget _buildLeaderboardRow(LeaderboardEntry entry) {
+    final isMe = entry.isCurrentUser;
+    final isFollowing = _followingIds.contains(entry.userId);
+    final isLoading = _loadingIds.contains(entry.userId);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+      decoration: BoxDecoration(
+        color: isMe ? AppColors.primary.withOpacity(0.1) : AppColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isMe ? AppColors.primary.withOpacity(0.4) : AppColors.border,
+        ),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 30,
+            child: Text(
+              '#${entry.rank}',
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 13,
+                color: isMe ? AppColors.primary : AppColors.textGray,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          CircleAvatar(
+            radius: 20,
+            backgroundColor: AppColors.primary.withOpacity(0.2),
+            backgroundImage: entry.avatar.isNotEmpty
+                ? CachedNetworkImageProvider(entry.avatar)
+                : null,
+            child: entry.avatar.isEmpty
+                ? Text(
+                    entry.name.isNotEmpty ? entry.name[0].toUpperCase() : 'U',
+                    style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.primary),
+                  )
+                : null,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        entry.name,
+                        style: AppTextStyles.labelBold,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (isMe) ...[
+                      const SizedBox(width: 5),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: const Text('Bạn',
+                            style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w800)),
+                      ),
+                    ],
+                  ],
+                ),
+                Text('🔥 ${entry.streak} ngày  ⚡ ${entry.totalXp} XP',
+                    style: AppTextStyles.bodySmall),
+              ],
+            ),
+          ),
+          if (!isMe)
+            GestureDetector(
+              onTap: isLoading ? null : () => _toggleFollow(entry),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: isFollowing ? AppColors.primary.withOpacity(0.1) : AppColors.primary,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: isFollowing ? AppColors.primary.withOpacity(0.4) : AppColors.primary,
+                  ),
+                ),
+                child: isLoading
+                    ? const SizedBox(
+                        width: 14, height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                      )
+                    : Text(
+                        isFollowing ? 'Đang theo' : '+ Theo dõi',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: isFollowing ? AppColors.primary : Colors.white,
+                        ),
+                      ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildFriends() {
     if (_isLoadingFriends) return _buildShimmer();
 
     if (_following.isEmpty) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('👥', style: TextStyle(fontSize: 52)),
-            SizedBox(height: 12),
-            Text('No one followed yet', style: AppTextStyles.heading4),
-            SizedBox(height: 8),
-            Text('Follow users from the leaderboard!',
+            const Text('👥', style: TextStyle(fontSize: 52)),
+            const SizedBox(height: 12),
+            const Text('Chưa theo dõi ai', style: AppTextStyles.heading4),
+            const SizedBox(height: 8),
+            const Text('Theo dõi người khác từ bảng xếp hạng!',
                 style: AppTextStyles.bodySmall),
+            const SizedBox(height: 20),
+            TextButton(
+              onPressed: () => _tabController.animateTo(0),
+              child: const Text('Xem bảng xếp hạng'),
+            ),
           ],
         ),
       );
@@ -333,9 +447,63 @@ class _FriendsScreenState extends State<FriendsScreen>
         itemCount: _following.length,
         itemBuilder: (context, index) {
           final user = _following[index];
-          return _FriendRow(
-              user: user, onUnfollow: () => _unfollow(user));
+          return _buildFriendRow(user);
         },
+      ),
+    );
+  }
+
+  Widget _buildFriendRow(UserFollow user) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 22,
+            backgroundColor: AppColors.primary.withOpacity(0.2),
+            backgroundImage: user.avatar.isNotEmpty
+                ? CachedNetworkImageProvider(user.avatar)
+                : null,
+            child: user.avatar.isEmpty
+                ? Text(
+                    user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
+                    style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.primary),
+                  )
+                : null,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(user.name, style: AppTextStyles.labelBold),
+                Text('⚡ ${user.totalXp} XP  🔥 ${user.streak} ngày',
+                    style: AppTextStyles.bodySmall),
+              ],
+            ),
+          ),
+          GestureDetector(
+            onTap: () => _unfollow(user),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceLight,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.borderDark),
+              ),
+              child: const Text(
+                'Bỏ theo',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textGray),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -358,199 +526,6 @@ class _FriendsScreenState extends State<FriendsScreen>
             ),
           );
         }),
-      ),
-    );
-  }
-}
-
-// ─── Leaderboard Row (#4+) ────────────────────────────────────────────────────
-
-class _LeaderboardRow extends StatelessWidget {
-  final LeaderboardEntry entry;
-
-  const _LeaderboardRow({required this.entry});
-
-  @override
-  Widget build(BuildContext context) {
-    final isMe = entry.isCurrentUser;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: isMe ? AppColors.primary.withOpacity(0.12) : AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isMe ? AppColors.primary.withOpacity(0.5) : AppColors.border,
-        ),
-      ),
-      child: Row(
-        children: [
-          // Rank
-          SizedBox(
-            width: 32,
-            child: Text(
-              '#${entry.rank}',
-              style: TextStyle(
-                fontWeight: FontWeight.w800,
-                fontSize: 14,
-                color: isMe ? AppColors.primaryDark : AppColors.textGray,
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          // Avatar
-          CircleAvatar(
-            radius: 20,
-            backgroundColor: AppColors.primary.withOpacity(0.2),
-            backgroundImage: entry.avatar.isNotEmpty
-                ? CachedNetworkImageProvider(entry.avatar)
-                : null,
-            child: entry.avatar.isEmpty
-                ? Text(
-                    entry.name.isNotEmpty
-                        ? entry.name[0].toUpperCase()
-                        : 'U',
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primary),
-                  )
-                : null,
-          ),
-          const SizedBox(width: 12),
-          // Name + streak
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        entry.name,
-                        style: AppTextStyles.labelBold,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    if (isMe) ...[
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: const Text('You',
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 9,
-                                fontWeight: FontWeight.w800)),
-                      ),
-                    ],
-                  ],
-                ),
-                Text(
-                  '🔥 ${entry.streak} day streak',
-                  style: AppTextStyles.bodySmall,
-                ),
-              ],
-            ),
-          ),
-          // XP
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '${entry.totalXp}',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 16,
-                  color: AppColors.xpGold,
-                ),
-              ),
-              const Text('XP',
-                  style: TextStyle(
-                      fontSize: 10, color: AppColors.textGray)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Friend Row ───────────────────────────────────────────────────────────────
-
-class _FriendRow extends StatelessWidget {
-  final UserFollow user;
-  final VoidCallback onUnfollow;
-
-  const _FriendRow({required this.user, required this.onUnfollow});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 22,
-            backgroundColor: AppColors.primary.withOpacity(0.2),
-            backgroundImage: user.avatar.isNotEmpty
-                ? CachedNetworkImageProvider(user.avatar)
-                : null,
-            child: user.avatar.isEmpty
-                ? Text(
-                    user.name.isNotEmpty
-                        ? user.name[0].toUpperCase()
-                        : 'U',
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primary),
-                  )
-                : null,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(user.name, style: AppTextStyles.labelBold),
-                Text(
-                  '⚡ ${user.totalXp} XP  🔥 ${user.streak} days',
-                  style: AppTextStyles.bodySmall,
-                ),
-              ],
-            ),
-          ),
-          GestureDetector(
-            onTap: onUnfollow,
-            child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-              decoration: BoxDecoration(
-                color: AppColors.surfaceLight,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: AppColors.borderDark),
-              ),
-              child: const Text(
-                'Unfollow',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textGray,
-                ),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

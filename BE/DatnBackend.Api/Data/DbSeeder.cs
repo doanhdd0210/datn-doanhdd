@@ -1154,7 +1154,8 @@ public class Main {
 
         Map<String, Integer> freq = new LinkedHashMap<>();
         for (String word : words) {
-            freq.put(word, freq.getOrDefault(word, 0) + 1);
+            Integer count = freq.get(word);
+            freq.put(word, count == null ? 1 : count + 1);
         }
 
         for (Map.Entry<String, Integer> e : freq.entrySet()) {
@@ -1174,7 +1175,7 @@ import java.util.stream.*;
 
 public class Main {
     public static void main(String[] args) {
-        List<Integer> numbers = List.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+        List<Integer> numbers = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
 
         List<Integer> evens = numbers.stream()
             .filter(n -> n % 2 == 0)

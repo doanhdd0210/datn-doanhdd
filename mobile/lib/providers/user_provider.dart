@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
@@ -46,15 +47,24 @@ class UserProvider extends ChangeNotifier {
   bool isLessonCompleted(String lessonId) => _completedLessons.contains(lessonId);
 
   Future<void> loadLevel() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
     final prefs = await SharedPreferences.getInstance();
-    _level = prefs.getString('user_level') ?? 'beginner';
+    // Ưu tiên key theo UID, fallback về key cũ nếu có
+    _level = (uid != null ? prefs.getString('user_level_$uid') : null)
+        ?? prefs.getString('user_level')
+        ?? 'beginner';
     notifyListeners();
   }
 
   Future<void> setLevel(String level) async {
     _level = level;
+    final uid = FirebaseAuth.instance.currentUser?.uid;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('user_level', level);
+    if (uid != null) {
+      await prefs.setString('user_level_$uid', level);
+    } else {
+      await prefs.setString('user_level', level);
+    }
     notifyListeners();
   }
 

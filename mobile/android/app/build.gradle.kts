@@ -41,6 +41,10 @@ android {
     }
 }
 
+dependencies {
+    // Code execution được xử lý qua backend API (Piston engine)
+}
+
 flutter {
     source = "../.."
 }

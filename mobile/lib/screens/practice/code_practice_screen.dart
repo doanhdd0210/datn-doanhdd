@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_text_styles.dart';
 import '../../models/api_code_snippet.dart';
-import '../../services/compiler_service.dart';
 import '../../services/api_service.dart';
 import 'practice_result_screen.dart';
 
@@ -17,7 +16,6 @@ class CodePracticeScreen extends StatefulWidget {
 }
 
 class _CodePracticeScreenState extends State<CodePracticeScreen> {
-  final _compiler = CompilerService();
   final _api = ApiService();
   final _controller = TextEditingController();
   final _scrollController = ScrollController();
@@ -54,24 +52,22 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
 
     setState(() => _isSubmitting = true);
 
-    CompileResult? result;
+    String stdout = '';
     try {
-      result = await _compiler.run(
+      final runResult = await _api.runCode(
         language: widget.snippet.language,
-        version: '*',
         code: code,
       );
-    } catch (_) {
-      result = const CompileResult(stdout: '', stderr: 'Could not execute code', exitCode: -1, isSuccess: false);
-    }
+      stdout = runResult['stdout'] as String? ?? '';
+    } catch (_) {}
 
-    final expectedOutput = widget.snippet.expectedOutput.trim();
-    final actualOutput = result.stdout.trim();
-    final passed = actualOutput == expectedOutput || result.isSuccess;
+    final expectedOutput = _normalize(widget.snippet.expectedOutput);
+    final actualOutput = _normalize(stdout);
+    final passed = actualOutput == expectedOutput;
     final matchPercent = _calculateMatch(code, widget.snippet.code);
 
     try {
-      await _api.submitPractice(widget.snippet.id, code, result.stdout, passed);
+      await _api.submitPractice(widget.snippet.id, code, stdout, passed);
     } catch (_) {}
 
     if (mounted) {
@@ -82,7 +78,7 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
           builder: (_) => PracticeResultScreen(
             snippet: widget.snippet,
             userCode: code,
-            output: result!.stdout,
+            output: stdout,
             passed: passed,
             matchPercent: matchPercent,
             timeSpent: _elapsedSeconds,
@@ -91,6 +87,15 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
       );
     }
   }
+
+  /// Normalize output: \r\n → \n, trim mỗi dòng, trim tổng thể
+  String _normalize(String s) => s
+      .replaceAll('\r\n', '\n')
+      .replaceAll('\r', '\n')
+      .split('\n')
+      .map((l) => l.trimRight())
+      .join('\n')
+      .trim();
 
   double _calculateMatch(String userCode, String originalCode) {
     final userLines = userCode.split('\n').map((l) => l.trim()).where((l) => l.isNotEmpty).toList();

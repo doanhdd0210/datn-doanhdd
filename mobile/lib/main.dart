@@ -18,6 +18,10 @@ void main() async {
   runApp(const MyApp());
 }
 
+// Key helpers — gắn với UID để mỗi tài khoản có trạng thái onboarding riêng
+String onboardingDoneKey(String uid) => 'onboarding_done_$uid';
+String userLevelKey(String uid) => 'user_level_$uid';
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -155,8 +159,13 @@ class _OnboardingGateState extends State<_OnboardingGate> {
   }
 
   Future<void> _check() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) {
+      if (mounted) setState(() => _onboardingDone = false);
+      return;
+    }
     final prefs = await SharedPreferences.getInstance();
-    final done = prefs.getBool('onboarding_done') ?? false;
+    final done = prefs.getBool(onboardingDoneKey(uid)) ?? false;
     if (mounted) setState(() => _onboardingDone = done);
   }
 

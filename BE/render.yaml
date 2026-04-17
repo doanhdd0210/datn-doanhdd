@@ -5,10 +5,23 @@ services:
     dockerfilePath: ./Dockerfile
     dockerContext: .
     plan: free
+    healthCheckPath: /health
     envVars:
       - key: ASPNETCORE_ENVIRONMENT
         value: Production
       - key: Firebase__ProjectId
         value: datndoanhdd
       - key: FIREBASE_SERVICE_ACCOUNT_JSON
-        sync: false   # <- mày điền tay trong Render dashboard (nội dung file JSON)
+        sync: false   # <- điền tay trong Render dashboard (copy toàn bộ nội dung JSON)
+      - key: DATABASE_URL
+        fromDatabase:
+          name: datn-db
+          property: connectionString
+      - key: REDIS_URL
+        sync: false   # <- điền nếu có Redis, để trống thì dùng in-memory cache
+
+databases:
+  - name: datn-db
+    plan: free
+    databaseName: datn
+    user: datn

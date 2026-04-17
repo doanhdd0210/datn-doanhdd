@@ -68,40 +68,43 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
+      appBar: AppBar(
+        backgroundColor: AppColors.background,
+        foregroundColor: AppColors.textDark,
+        elevation: 0,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              widget.topic.title,
+              style: AppTextStyles.bodySmall.copyWith(color: _topicColor),
+            ),
+            Text(widget.lesson.title,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textDark,
+                )),
+          ],
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(4),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(height: 1, color: AppColors.border),
+              LinearProgressIndicator(
+                value: _readProgress,
+                backgroundColor: AppColors.border,
+                valueColor: AlwaysStoppedAnimation(_topicColor),
+                minHeight: 3,
+              ),
+            ],
+          ),
+        ),
+      ),
       body: Column(
         children: [
-          // Top reading progress bar
-          LinearProgressIndicator(
-            value: _readProgress,
-            backgroundColor: AppColors.border,
-            valueColor: AlwaysStoppedAnimation(_topicColor),
-            minHeight: 3,
-          ),
-          // App bar
-          AppBar(
-            backgroundColor: Colors.white,
-            foregroundColor: AppColors.textDark,
-            elevation: 0,
-            title: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  widget.topic.title,
-                  style: AppTextStyles.bodySmall.copyWith(color: _topicColor),
-                ),
-                Text(widget.lesson.title,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textDark,
-                    )),
-              ],
-            ),
-            bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(1),
-              child: Container(height: 1, color: AppColors.border),
-            ),
-          ),
           // Content
           Expanded(
             child: SingleChildScrollView(
@@ -113,7 +116,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(20),
-                    color: Colors.white,
+                    color: AppColors.surface,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -164,7 +167,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                   // Content body
                   Container(
                     width: double.infinity,
-                    color: Colors.white,
+                    color: AppColors.background,
                     padding: const EdgeInsets.all(20),
                     child: _buildContent(widget.lesson.content),
                   ),
@@ -176,15 +179,9 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
           // Bottom action bar
           Container(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
-                  blurRadius: 8,
-                  offset: const Offset(0, -2),
-                ),
-              ],
+            decoration: const BoxDecoration(
+              color: AppColors.surface,
+              border: Border(top: BorderSide(color: AppColors.border)),
             ),
             child: SafeArea(
               child: SizedBox(
@@ -293,7 +290,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
         spans.add(TextSpan(
           text: match.group(2),
           style: AppTextStyles.codeStyle.copyWith(
-            backgroundColor: const Color(0xFFF0F0F0),
+            backgroundColor: AppColors.surfaceElevated,
             fontSize: 13,
           ),
         ));

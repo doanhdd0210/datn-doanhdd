@@ -202,13 +202,13 @@ class _CodeDemoListScreenState extends State<CodeDemoListScreen> {
       child: Column(
         children: List.generate(4, (_) {
           return Shimmer.fromColors(
-            baseColor: const Color(0xFFE0E0E0),
-            highlightColor: const Color(0xFFF5F5F5),
+            baseColor: AppColors.surface,
+            highlightColor: AppColors.surfaceElevated,
             child: Container(
               margin: const EdgeInsets.only(bottom: 12),
               height: 90,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surface,
                 borderRadius: BorderRadius.circular(14),
               ),
             ),
@@ -249,7 +249,7 @@ class _FilterChip extends StatelessWidget {
         margin: const EdgeInsets.only(right: 8),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Colors.white,
+          color: isSelected ? AppColors.primary : AppColors.surface,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected ? AppColors.primary : AppColors.border,
@@ -282,15 +282,9 @@ class _SnippetCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(14),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          border: Border.all(color: AppColors.border),
         ),
         child: Row(
           children: [

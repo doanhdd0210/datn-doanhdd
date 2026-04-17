@@ -11,6 +11,7 @@ class UserProvider extends ChangeNotifier {
   String _rank = '-';
   bool _isLoading = false;
   String? _error;
+  String _level = 'beginner'; // beginner | intermediate | advanced
 
   // Completed lesson IDs set
   final Set<String> _completedLessons = {};
@@ -26,14 +27,43 @@ class UserProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
   Set<String> get completedLessons => _completedLessons;
+  String get level => _level;
+
+  /// Số topic được mở khoá theo level
+  int get unlockedTopicCount {
+    switch (_level) {
+      case 'advanced':
+        return 999;
+      case 'intermediate':
+        return 4;
+      default:
+        return 2;
+    }
+  }
 
   int topicCompletedCount(String topicId) => _topicProgressMap[topicId] ?? 0;
 
   bool isLessonCompleted(String lessonId) => _completedLessons.contains(lessonId);
 
+  Future<void> loadLevel() async {
+    final prefs = await SharedPreferences.getInstance();
+    _level = prefs.getString('user_level') ?? 'beginner';
+    notifyListeners();
+  }
+
+  Future<void> setLevel(String level) async {
+    _level = level;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('user_level', level);
+    notifyListeners();
+  }
+
   final _api = ApiService();
 
-  Future<void> refreshStats() => loadStats();
+  Future<void> refreshStats() async {
+    await loadLevel();
+    await loadStats();
+  }
 
   Future<void> loadStats() async {
     _isLoading = true;

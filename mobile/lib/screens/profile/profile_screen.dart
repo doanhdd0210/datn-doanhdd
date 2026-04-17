@@ -23,9 +23,13 @@ class ProfileScreen extends StatelessWidget {
           builder: (context, provider, _) {
             return CustomScrollView(
               slivers: [
-                SliverToBoxAdapter(child: _buildHeader(context, user, provider)),
-                SliverToBoxAdapter(child: _buildStatsRow(provider)),
-                SliverToBoxAdapter(child: _buildMenuSection(context)),
+                SliverToBoxAdapter(
+                    child: _buildHero(context, user, provider)),
+                SliverToBoxAdapter(child: _buildStatCards(provider)),
+                SliverToBoxAdapter(
+                    child: _buildWeeklyStreak(provider)),
+                SliverToBoxAdapter(
+                    child: _buildMenuSection(context)),
               ],
             );
           },
@@ -34,127 +38,250 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context, User? user, UserProvider provider) {
+  // ── Hero ──────────────────────────────────────────────────────────────────
+
+  Widget _buildHero(
+      BuildContext context, User? user, UserProvider provider) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-      color: Colors.white,
+      color: AppColors.surface,
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
       child: Column(
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('Profile', style: AppTextStyles.heading2),
-              IconButton(
-                icon: const Icon(Icons.settings_outlined),
-                onPressed: () => Navigator.push(
+              GestureDetector(
+                onTap: () => Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                  MaterialPageRoute(
+                      builder: (_) => const SettingsScreen()),
+                ),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceElevated,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: const Icon(Icons.settings_rounded,
+                      size: 20, color: AppColors.textGray),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          // Avatar
-          Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.primary, width: 3),
-            ),
-            child: CircleAvatar(
-              radius: 44,
-              backgroundColor: AppColors.primary.withOpacity(0.2),
-              child: user?.photoURL != null
-                  ? ClipOval(
-                      child: CachedNetworkImage(
-                        imageUrl: user!.photoURL!,
-                        width: 88,
-                        height: 88,
-                        fit: BoxFit.cover,
-                        errorWidget: (_, __, ___) => _defaultAvatar(user),
-                      ),
-                    )
-                  : _defaultAvatar(user),
-            ),
+          const SizedBox(height: 20),
+          // Avatar with ring
+          Stack(
+            alignment: Alignment.bottomRight,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: const LinearGradient(
+                    colors: [AppColors.primary, AppColors.secondary],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: CircleAvatar(
+                  radius: 46,
+                  backgroundColor: AppColors.surface,
+                  child: CircleAvatar(
+                    radius: 43,
+                    backgroundColor:
+                        AppColors.primary.withOpacity(0.2),
+                    child: user?.photoURL != null
+                        ? ClipOval(
+                            child: CachedNetworkImage(
+                              imageUrl: user!.photoURL!,
+                              width: 86,
+                              height: 86,
+                              fit: BoxFit.cover,
+                              errorWidget: (_, __, ___) =>
+                                  _avatarText(user),
+                            ),
+                          )
+                        : _avatarText(user),
+                  ),
+                ),
+              ),
+              // Level badge
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: AppColors.xpGold,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.white, width: 2),
+                ),
+                child: Text(
+                  'Lv.${_calcLevel(provider.totalXp)}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 11,
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           Text(
             user?.displayName ?? 'Java Learner',
             style: AppTextStyles.heading3,
           ),
           const SizedBox(height: 4),
           Text(user?.email ?? '', style: AppTextStyles.bodySmall),
-          const SizedBox(height: 20),
         ],
       ),
     );
   }
 
-  Widget _defaultAvatar(User? user) {
+  Widget _avatarText(User? user) {
     return Text(
-      (user?.displayName?.isNotEmpty == true ? user!.displayName![0] : 'J').toUpperCase(),
+      (user?.displayName?.isNotEmpty == true
+              ? user!.displayName![0]
+              : 'J')
+          .toUpperCase(),
       style: const TextStyle(
-        fontSize: 36,
+        fontSize: 38,
         fontWeight: FontWeight.w800,
-        color: AppColors.primary,
+        color: Colors.white,
       ),
     );
   }
 
-  Widget _buildStatsRow(UserProvider provider) {
-    return Container(
-      color: Colors.white,
-      child: Column(
+  int _calcLevel(int xp) => (xp / 100).floor() + 1;
+
+  // ── Stat Cards ────────────────────────────────────────────────────────────
+
+  Widget _buildStatCards(UserProvider provider) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: Row(
         children: [
-          const Divider(height: 1, color: AppColors.border),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Row(
-              children: [
-                _StatCell(
-                  value: provider.totalXp.toString(),
-                  label: 'Total XP',
-                  icon: '⚡',
-                  color: AppColors.xpGold,
-                ),
-                _Divider(),
-                _StatCell(
-                  value: provider.streak.toString(),
-                  label: 'Day Streak',
-                  icon: '🔥',
-                  color: AppColors.orange,
-                ),
-                _Divider(),
-                _StatCell(
-                  value: provider.lessonsCompleted.toString(),
-                  label: 'Lessons',
-                  icon: '📚',
-                  color: AppColors.primary,
-                ),
-                _Divider(),
-                _StatCell(
-                  value: provider.rank,
-                  label: 'Rank',
-                  icon: '🏆',
-                  color: AppColors.purple,
-                ),
-              ],
-            ),
+          _StatCard(
+            icon: '⚡',
+            value: provider.totalXp.toString(),
+            label: 'Total XP',
+            color: AppColors.xpGold,
+            bgColor: AppColors.surface,
+          ),
+          const SizedBox(width: 10),
+          _StatCard(
+            icon: '🔥',
+            value: provider.streak.toString(),
+            label: 'Day Streak',
+            color: AppColors.streakOrange,
+            bgColor: AppColors.surface,
+          ),
+          const SizedBox(width: 10),
+          _StatCard(
+            icon: '📚',
+            value: provider.lessonsCompleted.toString(),
+            label: 'Lessons',
+            color: AppColors.primary,
+            bgColor: AppColors.surface,
           ),
         ],
       ),
     );
   }
 
+  // ── Weekly Streak Calendar ────────────────────────────────────────────────
+
+  Widget _buildWeeklyStreak(UserProvider provider) {
+    final days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    final today = DateTime.now().weekday - 1; // 0=Mon
+    final streak = provider.streak.clamp(0, 7);
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text('🔥', style: TextStyle(fontSize: 18)),
+              const SizedBox(width: 8),
+              Text('Weekly Streak', style: AppTextStyles.labelBold),
+              const Spacer(),
+              Text(
+                '${provider.streak} days',
+                style: const TextStyle(
+                  color: AppColors.streakOrange,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: List.generate(7, (i) {
+              final isToday = i == today;
+              final isActive = i <= today && (today - i) < streak;
+              return Column(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isActive
+                          ? AppColors.streakOrange
+                          : isToday
+                              ? AppColors.streakOrange.withOpacity(0.15)
+                              : AppColors.surfaceElevated,
+                      border: isToday && !isActive
+                          ? Border.all(
+                              color: AppColors.streakOrange, width: 2)
+                          : null,
+                    ),
+                    child: Center(
+                      child: Text(
+                        isActive ? '🔥' : days[i],
+                        style: TextStyle(
+                          fontSize: isActive ? 16 : 12,
+                          color: isActive
+                              ? Colors.white
+                              : isToday
+                                  ? AppColors.streakOrange
+                                  : AppColors.textLight,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Menu ──────────────────────────────────────────────────────────────────
+
   Widget _buildMenuSection(BuildContext context) {
     final authService = AuthService();
 
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 8),
-          _SectionLabel(label: 'Learning'),
+          _SectionLabel(label: 'LEARNING'),
           _MenuItem(
             icon: Icons.bar_chart_rounded,
             label: 'Learning Statistics',
@@ -165,31 +292,29 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          _SectionLabel(label: 'Account'),
+          _SectionLabel(label: 'ACCOUNT'),
           _MenuItem(
-            icon: Icons.settings_outlined,
+            icon: Icons.settings_rounded,
             label: 'Settings',
             color: AppColors.blue,
             onTap: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const SettingsScreen()),
+              MaterialPageRoute(
+                  builder: (_) => const SettingsScreen()),
             ),
           ),
           _MenuItem(
             icon: Icons.logout_rounded,
             label: 'Sign Out',
-            color: AppColors.red,
-            textColor: AppColors.red,
+            color: AppColors.heartRed,
+            textColor: AppColors.heartRed,
             onTap: () => _confirmSignOut(context, authService),
           ),
           const SizedBox(height: 24),
           Center(
-            child: Text(
-              'JavaLearn v1.0.0',
-              style: AppTextStyles.bodySmall,
-            ),
+            child: Text('JavaLearn v1.0.0',
+                style: AppTextStyles.bodySmall),
           ),
-          const SizedBox(height: 8),
         ],
       ),
     );
@@ -199,9 +324,11 @@ class ProfileScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Sign Out?', style: AppTextStyles.heading4),
-        content: const Text('You will be returned to the login screen.', style: AppTextStyles.bodyMedium),
+        content: const Text('You will be returned to the login screen.',
+            style: AppTextStyles.bodyMedium),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -212,7 +339,8 @@ class ProfileScreen extends StatelessWidget {
               Navigator.pop(ctx);
               await authService.signOut();
             },
-            child: const Text('Sign Out', style: TextStyle(color: AppColors.red)),
+            child: const Text('Sign Out',
+                style: TextStyle(color: AppColors.heartRed)),
           ),
         ],
       ),
@@ -220,34 +348,65 @@ class ProfileScreen extends StatelessWidget {
   }
 }
 
-class _StatCell extends StatelessWidget {
+// ─── Widgets ──────────────────────────────────────────────────────────────────
+
+class _StatCard extends StatelessWidget {
+  final String icon;
   final String value;
   final String label;
-  final String icon;
   final Color color;
+  final Color bgColor;
 
-  const _StatCell({required this.value, required this.label, required this.icon, required this.color});
+  const _StatCard({
+    required this.icon,
+    required this.value,
+    required this.label,
+    required this.color,
+    required this.bgColor,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Column(
-        children: [
-          Text(icon, style: const TextStyle(fontSize: 18)),
-          const SizedBox(height: 4),
-          Text(value, style: AppTextStyles.heading4.copyWith(color: color)),
-          const SizedBox(height: 2),
-          Text(label, style: AppTextStyles.bodySmall),
-        ],
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.4),
+              offset: const Offset(0, 3),
+              blurRadius: 0,
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Text(icon, style: const TextStyle(fontSize: 22)),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+                color: color,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textGray,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
-  }
-}
-
-class _Divider extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(width: 1, height: 40, color: AppColors.border);
   }
 }
 
@@ -258,8 +417,16 @@ class _SectionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 4, bottom: 8),
-      child: Text(label, style: AppTextStyles.bodySmall.copyWith(fontWeight: FontWeight.w700, letterSpacing: 0.5)),
+      padding: const EdgeInsets.only(left: 4, bottom: 10),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+          color: AppColors.textGray,
+          letterSpacing: 1.0,
+        ),
+      ),
     );
   }
 }
@@ -282,32 +449,39 @@ class _MenuItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6, offset: const Offset(0, 2)),
+          BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 4,
+              offset: const Offset(0, 2)),
         ],
       ),
       child: ListTile(
         leading: Container(
-          width: 36,
-          height: 36,
+          width: 38,
+          height: 38,
           decoration: BoxDecoration(
             color: color.withOpacity(0.12),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(icon, color: color, size: 18),
+          child: Icon(icon, color: color, size: 20),
         ),
         title: Text(
           label,
           style: AppTextStyles.labelBold.copyWith(color: textColor),
         ),
-        trailing: const Icon(Icons.chevron_right, color: AppColors.textGray, size: 18),
+        trailing: const Icon(Icons.chevron_right_rounded,
+            color: AppColors.textGray, size: 20),
         onTap: onTap,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14)),
       ),
     );
   }

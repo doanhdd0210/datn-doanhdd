@@ -50,7 +50,7 @@ class PracticeResultScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.background,
         foregroundColor: AppColors.textDark,
         elevation: 0,
         title: const Text('Practice Result', style: AppTextStyles.heading4),
@@ -113,11 +113,9 @@ class PracticeResultScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surface,
                 borderRadius: BorderRadius.circular(14),
-                boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, 2)),
-                ],
+                border: Border.all(color: AppColors.border),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -137,7 +135,7 @@ class PracticeResultScreen extends StatelessWidget {
                     icon: passed ? Icons.check_circle : Icons.cancel,
                     label: 'Output',
                     value: passed ? 'Passed' : 'Failed',
-                    color: passed ? AppColors.primary : AppColors.red,
+                    color: passed ? AppColors.correct : AppColors.wrong,
                   ),
                 ],
               ),

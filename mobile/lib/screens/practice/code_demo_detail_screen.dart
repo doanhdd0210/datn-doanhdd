@@ -79,7 +79,7 @@ class _CodeDemoDetailScreenState extends State<CodeDemoDetailScreen>
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.background,
         foregroundColor: AppColors.textDark,
         elevation: 0,
         title: Column(
@@ -114,7 +114,7 @@ class _CodeDemoDetailScreenState extends State<CodeDemoDetailScreen>
         children: [
           // Info section
           Container(
-            color: Colors.white,
+            color: AppColors.surface,
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
             child: Row(
               children: [

@@ -24,6 +24,14 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     ProfileScreen(),
   ];
 
+  static const _navItems = [
+    _NavItem(icon: Icons.auto_stories_rounded, label: 'Learn'),
+    _NavItem(icon: Icons.code_rounded, label: 'Practice'),
+    _NavItem(icon: Icons.forum_rounded, label: 'Community'),
+    _NavItem(icon: Icons.emoji_events_rounded, label: 'Ranking'),
+    _NavItem(icon: Icons.person_rounded, label: 'Profile'),
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -31,64 +39,119 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         index: _currentIndex,
         children: _screens,
       ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
-            ),
-          ],
+      bottomNavigationBar: _QuizzoBottomNav(
+        currentIndex: _currentIndex,
+        items: _navItems,
+        onTap: (index) => setState(() => _currentIndex = index),
+      ),
+    );
+  }
+}
+
+class _NavItem {
+  final IconData icon;
+  final String label;
+  const _NavItem({required this.icon, required this.label});
+}
+
+class _QuizzoBottomNav extends StatelessWidget {
+  final int currentIndex;
+  final List<_NavItem> items;
+  final ValueChanged<int> onTap;
+
+  const _QuizzoBottomNav({
+    required this.currentIndex,
+    required this.items,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: AppColors.navBackground,
+        border: Border(
+          top: BorderSide(color: AppColors.navBorder, width: 1),
         ),
-        child: SafeArea(
-          child: BottomNavigationBar(
-            currentIndex: _currentIndex,
-            onTap: (index) => setState(() => _currentIndex = index),
-            type: BottomNavigationBarType.fixed,
-            backgroundColor: Colors.white,
-            selectedItemColor: AppColors.primary,
-            unselectedItemColor: const Color(0xFFAFAFAF),
-            selectedLabelStyle: const TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 11,
-            ),
-            unselectedLabelStyle: const TextStyle(
-              fontWeight: FontWeight.w500,
-              fontSize: 11,
-            ),
-            elevation: 0,
-            items: const [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.menu_book_outlined),
-                activeIcon: Icon(Icons.menu_book),
-                label: 'Learn',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.code_outlined),
-                activeIcon: Icon(Icons.code),
-                label: 'Practice',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.forum_outlined),
-                activeIcon: Icon(Icons.forum),
-                label: 'Community',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.leaderboard_outlined),
-                activeIcon: Icon(Icons.leaderboard),
-                label: 'Ranking',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.person_outlined),
-                activeIcon: Icon(Icons.person),
-                label: 'Profile',
-              ),
-            ],
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x40000000),
+            blurRadius: 20,
+            offset: Offset(0, -4),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: SizedBox(
+          height: 64,
+          child: Row(
+            children: List.generate(items.length, (i) {
+              final item = items[i];
+              final isActive = i == currentIndex;
+              return Expanded(
+                child: InkWell(
+                  onTap: () => onTap(i),
+                  splashColor: Colors.transparent,
+                  highlightColor: Colors.transparent,
+                  child: _NavTabItem(
+                    icon: item.icon,
+                    label: item.label,
+                    isActive: isActive,
+                  ),
+                ),
+              );
+            }),
           ),
         ),
       ),
+    );
+  }
+}
+
+class _NavTabItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isActive;
+
+  const _NavTabItem({
+    required this.icon,
+    required this.label,
+    required this.isActive,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          decoration: isActive
+              ? BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(20),
+                )
+              : null,
+          child: Icon(
+            icon,
+            size: 24,
+            color: isActive ? AppColors.navActive : AppColors.navInactive,
+          ),
+        ),
+        const SizedBox(height: 2),
+        AnimatedDefaultTextStyle(
+          duration: const Duration(milliseconds: 200),
+          style: TextStyle(
+            fontFamily: 'Nunito',
+            fontSize: 10,
+            fontWeight: isActive ? FontWeight.w800 : FontWeight.w500,
+            color: isActive ? AppColors.navActive : AppColors.navInactive,
+          ),
+          child: Text(label),
+        ),
+      ],
     );
   }
 }

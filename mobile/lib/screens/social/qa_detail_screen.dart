@@ -91,7 +91,7 @@ class _QaDetailScreenState extends State<QaDetailScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.background,
         foregroundColor: AppColors.textDark,
         elevation: 0,
         title: const Text('Question', style: AppTextStyles.heading4),
@@ -173,9 +173,9 @@ class _QaDetailScreenState extends State<QaDetailScreen> {
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, 2))],
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -223,8 +223,8 @@ class _QaDetailScreenState extends State<QaDetailScreen> {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
       decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 8, offset: const Offset(0, -2))],
+        color: AppColors.surface,
+        border: const Border(top: BorderSide(color: AppColors.border)),
       ),
       child: SafeArea(
         child: Row(
@@ -305,7 +305,7 @@ class _AnswerCard extends StatelessWidget {
       margin: const EdgeInsets.fromLTRB(16, 4, 16, 4),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: answer.isAccepted ? AppColors.primary.withOpacity(0.05) : Colors.white,
+        color: answer.isAccepted ? AppColors.primary.withOpacity(0.15) : AppColors.surface,
         borderRadius: BorderRadius.circular(12),
         border: answer.isAccepted ? Border.all(color: AppColors.primary.withOpacity(0.3)) : null,
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6, offset: const Offset(0, 2))],

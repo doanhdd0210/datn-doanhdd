@@ -84,7 +84,7 @@ class _CreateQaScreenState extends State<CreateQaScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.background,
         elevation: 0,
         title: Text('Đặt câu hỏi', style: AppTextStyles.heading3),
         leading: IconButton(

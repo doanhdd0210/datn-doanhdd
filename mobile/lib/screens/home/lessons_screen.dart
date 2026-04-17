@@ -195,13 +195,13 @@ class _LessonsScreenState extends State<LessonsScreen> {
       child: Column(
         children: List.generate(5, (_) {
           return Shimmer.fromColors(
-            baseColor: const Color(0xFFE0E0E0),
-            highlightColor: const Color(0xFFF5F5F5),
+            baseColor: AppColors.surface,
+            highlightColor: AppColors.surfaceElevated,
             child: Container(
               margin: const EdgeInsets.only(bottom: 12),
               height: 80,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surface,
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
@@ -263,18 +263,11 @@ class _LessonItem extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 10),
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surface,
               borderRadius: BorderRadius.circular(14),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.06),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
               border: isCompleted
-                  ? Border.all(color: AppColors.primary.withOpacity(0.3))
-                  : null,
+                  ? Border.all(color: AppColors.primary.withOpacity(0.5))
+                  : Border.all(color: AppColors.border),
             ),
             child: Row(
               children: [

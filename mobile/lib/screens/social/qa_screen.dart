@@ -185,8 +185,11 @@ class _QaScreenState extends State<QaScreen> {
         },
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
-        icon: const Icon(Icons.add),
-        label: const Text('Ask', style: TextStyle(fontWeight: FontWeight.w700)),
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        icon: const Icon(Icons.add_rounded),
+        label: const Text('Ask Question',
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
       ),
     );
   }
@@ -224,7 +227,7 @@ class _QaScreenState extends State<QaScreen> {
               margin: const EdgeInsets.only(right: 8),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
               decoration: BoxDecoration(
-                color: isSelected ? AppColors.primary : Colors.white,
+                color: isSelected ? AppColors.primary : AppColors.surface,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: isSelected ? AppColors.primary : AppColors.border),
               ),
@@ -249,13 +252,13 @@ class _QaScreenState extends State<QaScreen> {
       child: Column(
         children: List.generate(5, (_) {
           return Shimmer.fromColors(
-            baseColor: const Color(0xFFE0E0E0),
-            highlightColor: const Color(0xFFF5F5F5),
+            baseColor: AppColors.surface,
+            highlightColor: AppColors.surfaceElevated,
             child: Container(
               margin: const EdgeInsets.only(bottom: 12),
               height: 100,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surface,
                 borderRadius: BorderRadius.circular(14),
               ),
             ),
@@ -289,9 +292,9 @@ class _QaPostCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(14),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6, offset: const Offset(0, 2))],
+          border: Border.all(color: AppColors.border),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

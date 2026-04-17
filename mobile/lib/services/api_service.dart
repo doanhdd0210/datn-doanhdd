@@ -16,7 +16,7 @@ import '../models/daily_progress.dart';
 import '../models/leaderboard_entry.dart';
 
 class ApiService {
-  static const String _defaultBaseUrl = 'https://datn-backend.onrender.com';
+  static const String _defaultBaseUrl = 'https://datn-doanhdd.onrender.com/api';
   static const String _baseUrlKey = 'api_base_url';
 
   static String _baseUrl = _defaultBaseUrl;
@@ -44,7 +44,6 @@ class ApiService {
     dev.log(
       '[$method] $_baseUrl$path\n'
       '  Status : ${response.statusCode}\n'
-      '  Headers: ${response.headers}\n'
       '  Body   : $body',
       name: 'ApiService',
     );
@@ -64,17 +63,33 @@ class ApiService {
     return {'Content-Type': 'application/json'};
   }
 
+  /// Unwrap ApiResponse<T> wrapper từ backend:
+  /// { "success": true, "data": ..., "message": "..." }
+  dynamic _unwrap(dynamic raw) {
+    if (raw is Map<String, dynamic>) {
+      if (raw.containsKey('success') && raw.containsKey('data')) {
+        return raw['data'];
+      }
+      // Old Node.js format: { "err": 0, "data": ... }
+      if (raw.containsKey('err') && raw.containsKey('data')) {
+        return raw['data'];
+      }
+    }
+    return raw;
+  }
+
   Future<dynamic> _get(String path) async {
     try {
       final headers = await _getHeaders();
       final response = await http
           .get(Uri.parse('$_baseUrl$path'), headers: headers)
-          .timeout(const Duration(seconds: 15));
+          .timeout(const Duration(seconds: 20));
       _log('GET', path, response);
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        return jsonDecode(response.body);
+        if (response.body.isEmpty) return null;
+        return _unwrap(jsonDecode(response.body));
       }
-      throw ApiException('HTTP ${response.statusCode}', response.statusCode);
+      throw ApiException('HTTP ${response.statusCode}: ${response.body}', response.statusCode);
     } on ApiException {
       rethrow;
     } catch (e) {
@@ -91,13 +106,13 @@ class ApiService {
             headers: headers,
             body: jsonEncode(body),
           )
-          .timeout(const Duration(seconds: 15));
+          .timeout(const Duration(seconds: 20));
       _log('POST', path, response);
       if (response.statusCode >= 200 && response.statusCode < 300) {
         if (response.body.isEmpty) return {};
-        return jsonDecode(response.body);
+        return _unwrap(jsonDecode(response.body));
       }
-      throw ApiException('HTTP ${response.statusCode}', response.statusCode);
+      throw ApiException('HTTP ${response.statusCode}: ${response.body}', response.statusCode);
     } on ApiException {
       rethrow;
     } catch (e) {
@@ -110,13 +125,13 @@ class ApiService {
       final headers = await _getHeaders();
       final response = await http
           .delete(Uri.parse('$_baseUrl$path'), headers: headers)
-          .timeout(const Duration(seconds: 15));
+          .timeout(const Duration(seconds: 20));
       _log('DELETE', path, response);
       if (response.statusCode >= 200 && response.statusCode < 300) {
         if (response.body.isEmpty) return {};
-        return jsonDecode(response.body);
+        return _unwrap(jsonDecode(response.body));
       }
-      throw ApiException('HTTP ${response.statusCode}', response.statusCode);
+      throw ApiException('HTTP ${response.statusCode}: ${response.body}', response.statusCode);
     } on ApiException {
       rethrow;
     } catch (e) {
@@ -124,18 +139,11 @@ class ApiService {
     }
   }
 
-  // ── Bootstrap / User ──────────────────────────────────────────────────────
-
-  Future<Map<String, dynamic>> bootstrap() async {
-    final data = await _get('/bootstrap');
-    return data as Map<String, dynamic>;
-  }
-
   // ── Topics ────────────────────────────────────────────────────────────────
 
   Future<List<Topic>> getTopics() async {
     final data = await _get('/topics');
-    final list = data as List<dynamic>;
+    final list = (data as List<dynamic>?) ?? [];
     return list.map((e) => Topic.fromJson(e as Map<String, dynamic>)).toList();
   }
 
@@ -148,7 +156,7 @@ class ApiService {
 
   Future<List<Lesson>> getLessonsByTopic(String topicId) async {
     final data = await _get('/lessons?topicId=$topicId');
-    final list = data as List<dynamic>;
+    final list = (data as List<dynamic>?) ?? [];
     return list.map((e) => Lesson.fromJson(e as Map<String, dynamic>)).toList();
   }
 
@@ -161,7 +169,7 @@ class ApiService {
 
   Future<List<Question>> getQuestions(String lessonId) async {
     final data = await _get('/questions?lessonId=$lessonId');
-    final list = data as List<dynamic>;
+    final list = (data as List<dynamic>?) ?? [];
     return list.map((e) => Question.fromJson(e as Map<String, dynamic>)).toList();
   }
 
@@ -169,37 +177,44 @@ class ApiService {
 
   Future<Map<String, dynamic>> getTopicProgress() async {
     final data = await _get('/progress/topics');
+    if (data == null) return {};
     return data as Map<String, dynamic>;
   }
 
   Future<Map<String, dynamic>> getLessonProgress(String topicId) async {
     final data = await _get('/progress/lessons?topicId=$topicId');
+    if (data == null) return {};
     return data as Map<String, dynamic>;
   }
 
-  Future<void> completeLesson(String lessonId, String topicId) async {
-    await _post('/progress/complete', {
+  // Backend: POST /api/progress/complete-lesson
+  // Body: { lessonId, topicId, timeSpentSeconds }
+  Future<void> completeLesson(String lessonId, String topicId, {int timeSpentSeconds = 0}) async {
+    await _post('/progress/complete-lesson', {
       'lessonId': lessonId,
       'topicId': topicId,
+      'timeSpentSeconds': timeSpentSeconds,
     });
   }
 
+  // Backend: POST /api/progress/quiz-submit
+  // Body: { lessonId, answers: [...], timeSpentSeconds }
   Future<QuizResult> submitQuiz(
     String lessonId,
     List<UserAnswer> answers,
     int timeSpent,
   ) async {
-    final data = await _post('/progress/quiz', {
+    final data = await _post('/progress/quiz-submit', {
       'lessonId': lessonId,
       'answers': answers.map((a) => a.toJson()).toList(),
-      'timeSpent': timeSpent,
+      'timeSpentSeconds': timeSpent,
     });
     return QuizResult.fromJson(data as Map<String, dynamic>);
   }
 
   Future<List<DailyProgress>> getDailyProgress() async {
     final data = await _get('/progress/daily');
-    final list = data as List<dynamic>;
+    final list = (data as List<dynamic>?) ?? [];
     return list
         .map((e) => DailyProgress.fromJson(e as Map<String, dynamic>))
         .toList();
@@ -207,6 +222,7 @@ class ApiService {
 
   Future<Map<String, dynamic>> getUserStats() async {
     final data = await _get('/progress/stats');
+    if (data == null) return {};
     return data as Map<String, dynamic>;
   }
 
@@ -215,7 +231,7 @@ class ApiService {
   Future<List<ApiCodeSnippet>> getCodeSnippets({String? topicId}) async {
     final query = topicId != null ? '?topicId=$topicId' : '';
     final data = await _get('/code-snippets$query');
-    final list = data as List<dynamic>;
+    final list = (data as List<dynamic>?) ?? [];
     return list
         .map((e) => ApiCodeSnippet.fromJson(e as Map<String, dynamic>))
         .toList();
@@ -226,16 +242,19 @@ class ApiService {
     return ApiCodeSnippet.fromJson(data as Map<String, dynamic>);
   }
 
+  // Backend: POST /api/code-snippets/practice-submit
+  // Body: { codeSnippetId, submittedCode, actualOutput, isPassed }
   Future<void> submitPractice(
     String snippetId,
     String code,
     String output,
     bool passed,
   ) async {
-    await _post('/code-snippets/$snippetId/practice', {
-      'code': code,
-      'output': output,
-      'passed': passed,
+    await _post('/code-snippets/practice-submit', {
+      'codeSnippetId': snippetId,
+      'submittedCode': code,
+      'actualOutput': output,
+      'isPassed': passed,
     });
   }
 
@@ -249,7 +268,7 @@ class ApiService {
     if (data is Map) {
       list = data['posts'] as List<dynamic>? ?? data['data'] as List<dynamic>? ?? [];
     } else {
-      list = data as List<dynamic>;
+      list = (data as List<dynamic>?) ?? [];
     }
     return list.map((e) => QaPost.fromJson(e as Map<String, dynamic>)).toList();
   }
@@ -286,26 +305,32 @@ class ApiService {
     return list.map((e) => QaAnswer.fromJson(e as Map<String, dynamic>)).toList();
   }
 
+  // Backend: POST /api/qa/answers
+  // Body: { postId, content }
   Future<void> createQaAnswer(String postId, String content) async {
-    await _post('/qa/$postId/answers', {'content': content});
+    await _post('/qa/answers', {
+      'postId': postId,
+      'content': content,
+    });
   }
 
-  // ── Friends / Follow ──────────────────────────────────────────────────────
+  // ── Friends / Leaderboard ─────────────────────────────────────────────────
+  // Backend route: /api/friends/... (không phải /social/...)
 
   Future<List<UserFollow>> getFollowing() async {
-    final data = await _get('/social/following');
-    final list = data as List<dynamic>;
+    final data = await _get('/friends/following');
+    final list = (data as List<dynamic>?) ?? [];
     return list.map((e) => UserFollow.fromJson(e as Map<String, dynamic>)).toList();
   }
 
   Future<List<UserFollow>> getFollowers() async {
-    final data = await _get('/social/followers');
-    final list = data as List<dynamic>;
+    final data = await _get('/friends/followers');
+    final list = (data as List<dynamic>?) ?? [];
     return list.map((e) => UserFollow.fromJson(e as Map<String, dynamic>)).toList();
   }
 
   Future<void> followUser(String userId, String name, String avatar) async {
-    await _post('/social/follow', {
+    await _post('/friends/follow', {
       'userId': userId,
       'name': name,
       'avatar': avatar,
@@ -313,8 +338,30 @@ class ApiService {
   }
 
   Future<void> unfollowUser(String userId) async {
-    await _delete('/social/follow/$userId');
+    await _delete('/friends/follow/$userId');
   }
+
+  Future<List<LeaderboardEntry>> getLeaderboard() async {
+    final data = await _get('/friends/leaderboard');
+    List<dynamic> list;
+    if (data is List) {
+      list = data;
+    } else if (data is Map) {
+      list = data['leaderboard'] as List<dynamic>? ?? [];
+    } else {
+      list = [];
+    }
+    final currentUserId = _auth.currentUser?.uid ?? '';
+    return list.asMap().entries.map((entry) {
+      final e = entry.value as Map<String, dynamic>;
+      return LeaderboardEntry.fromJson(
+        e,
+        isCurrentUser: (e['userId'] ?? e['id'] ?? e['_id']) == currentUserId,
+      );
+    }).toList();
+  }
+
+  // ── Notifications ─────────────────────────────────────────────────────────
 
   Future<List<Map<String, dynamic>>> getNotificationHistory() async {
     try {
@@ -329,26 +376,6 @@ class ApiService {
     } catch (_) {
       return [];
     }
-  }
-
-  Future<List<LeaderboardEntry>> getLeaderboard() async {
-    final data = await _get('/social/leaderboard');
-    List<dynamic> list;
-    if (data is List) {
-      list = data;
-    } else if (data is Map) {
-      list = data['leaderboard'] as List<dynamic>? ?? [];
-    } else {
-      list = [];
-    }
-    final currentUserId = _auth.currentUser?.uid ?? '';
-    return list.asMap().entries.map((entry) {
-      final e = entry.value as Map<String, dynamic>;
-      return LeaderboardEntry.fromJson(
-        e,
-        isCurrentUser: (e['userId'] ?? e['_id']) == currentUserId,
-      );
-    }).toList();
   }
 }
 

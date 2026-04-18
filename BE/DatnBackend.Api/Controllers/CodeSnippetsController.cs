@@ -130,7 +130,7 @@ public class CodeSnippetsController : ControllerBase
     private static async Task<RunCodeResult> RunJavaAsync(string tmpDir, string code, string stdin)
     {
         var srcFile = Path.Combine(tmpDir, "Main.java");
-        await File.WriteAllTextAsync(srcFile, code);
+        await System.IO.File.WriteAllTextAsync(srcFile, code);
 
         // Compile
         var compile = await ExecAsync("javac", $"\"{srcFile}\"", tmpDir, "", TimeSpan.FromSeconds(15));
@@ -150,7 +150,7 @@ public class CodeSnippetsController : ControllerBase
 
     private static async Task<RunCodeResult> RunProcessAsync(string cmd, string args, string code, string fileName, string tmpDir, string stdin)
     {
-        await File.WriteAllTextAsync(Path.Combine(tmpDir, fileName), code);
+        await System.IO.File.WriteAllTextAsync(Path.Combine(tmpDir, fileName), code);
         var run = await ExecAsync(cmd, args, tmpDir, stdin, TimeSpan.FromSeconds(10));
         return new RunCodeResult
         {

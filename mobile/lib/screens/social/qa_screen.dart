@@ -188,7 +188,7 @@ class _QaScreenState extends State<QaScreen> {
         elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         icon: const Icon(Icons.add_rounded),
-        label: const Text('Ask Question',
+        label: const Text('Đặt câu hỏi',
             style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
       ),
     );
@@ -200,9 +200,9 @@ class _QaScreenState extends State<QaScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Community Q&A', style: AppTextStyles.heading2),
+          Text('Q&A Cộng đồng', style: AppTextStyles.heading2),
           const SizedBox(height: 4),
-          Text('Ask questions, share knowledge', style: AppTextStyles.bodySmall),
+          Text('Đặt câu hỏi, chia sẻ kiến thức', style: AppTextStyles.bodySmall),
         ],
       ),
     );
@@ -210,9 +210,9 @@ class _QaScreenState extends State<QaScreen> {
 
   Widget _buildFilterBar() {
     final filters = [
-      ('all', 'All'),
-      ('unanswered', 'Unanswered'),
-      ('solved', 'Solved'),
+      ('all', 'Tất cả'),
+      ('unanswered', 'Chưa trả lời'),
+      ('solved', 'Đã giải quyết'),
     ];
     return SizedBox(
       height: 40,
@@ -277,11 +277,11 @@ class _QaPostCard extends StatelessWidget {
 
   String _timeAgo(DateTime date) {
     final diff = DateTime.now().difference(date);
-    if (diff.inDays > 7) return DateFormat('MMM d').format(date);
-    if (diff.inDays > 0) return '${diff.inDays}d ago';
-    if (diff.inHours > 0) return '${diff.inHours}h ago';
-    if (diff.inMinutes > 0) return '${diff.inMinutes}m ago';
-    return 'Just now';
+    if (diff.inDays > 7) return DateFormat('d MMM').format(date);
+    if (diff.inDays > 0) return '${diff.inDays} ngày trước';
+    if (diff.inHours > 0) return '${diff.inHours} giờ trước';
+    if (diff.inMinutes > 0) return '${diff.inMinutes} phút trước';
+    return 'Vừa xong';
   }
 
   @override
@@ -317,7 +317,7 @@ class _QaPostCard extends StatelessWidget {
                       color: AppColors.primary.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: const Text('✓ Solved',
+                    child: const Text('✓ Đã giải quyết',
                         style: TextStyle(color: AppColors.primary, fontSize: 10, fontWeight: FontWeight.w700)),
                   ),
               ],

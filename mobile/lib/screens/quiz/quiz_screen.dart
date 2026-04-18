@@ -231,8 +231,8 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
 
     if (_questions.isEmpty) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Quiz')),
-        body: const Center(child: Text('No questions available')),
+        appBar: AppBar(title: const Text('Bài trắc nghiệm')),
+        body: const Center(child: Text('Không có câu hỏi nào')),
       );
     }
 
@@ -265,7 +265,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                     children: [
                       // Category label
                       Text(
-                        'Choose the correct answer',
+                        'Chọn câu trả lời đúng',
                         style: AppTextStyles.labelGray,
                       ),
                       const SizedBox(height: 16),
@@ -325,15 +325,15 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Exit Quiz?', style: AppTextStyles.heading4),
+        title: const Text('Thoát bài trắc nghiệm?', style: AppTextStyles.heading4),
         content: const Text(
-          'Your progress will not be saved.',
+          'Tiến độ của bạn sẽ không được lưu.',
           style: AppTextStyles.bodyMedium,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Stay',
+            child: const Text('Ở lại',
                 style: TextStyle(
                     color: AppColors.primary, fontWeight: FontWeight.w700)),
           ),
@@ -342,7 +342,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
               Navigator.pop(ctx);
               Navigator.pop(context);
             },
-            child: const Text('Exit',
+            child: const Text('Thoát',
                 style: TextStyle(
                     color: AppColors.heartRed, fontWeight: FontWeight.w700)),
           ),
@@ -581,7 +581,7 @@ class _FeedbackBar extends StatelessWidget {
     final btnColor = isCorrect ? AppColors.correct : AppColors.wrong;
     final btnShadow = isCorrect ? AppColors.correctDark : AppColors.wrongDark;
     final icon = isCorrect ? '🎉' : '❌';
-    final title = isCorrect ? 'Excellent!' : 'Incorrect';
+    final title = isCorrect ? 'Tuyệt vời!' : 'Sai rồi!';
 
     return Container(
       width: double.infinity,
@@ -638,7 +638,7 @@ class _FeedbackBar extends StatelessWidget {
                 ],
               ),
               child: Text(
-                isLast ? 'SEE RESULTS' : 'CONTINUE',
+                isLast ? 'XEM KẾT QUẢ' : 'TIẾP TỤC',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: Colors.white,
@@ -685,7 +685,7 @@ class _IdleCheckBar extends StatelessWidget {
             ],
           ),
           child: const Text(
-            'CHECK',
+            'KIỂM TRA',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Colors.white,

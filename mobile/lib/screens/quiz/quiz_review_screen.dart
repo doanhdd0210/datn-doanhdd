@@ -19,7 +19,7 @@ class QuizReviewScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Review Answers'),
+        title: const Text('Xem lại câu trả lời'),
         backgroundColor: AppColors.background,
         foregroundColor: AppColors.textDark,
         elevation: 0,
@@ -104,7 +104,7 @@ class _ReviewItemState extends State<_ReviewItem> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Question ${widget.questionIndex + 1}',
+                  'Câu hỏi ${widget.questionIndex + 1}',
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     color: isCorrect ? AppColors.correct : AppColors.wrong,
@@ -119,7 +119,7 @@ class _ReviewItemState extends State<_ReviewItem> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    isCorrect ? '+${question.points} pts' : '0 pts',
+                    isCorrect ? '+${question.points} đ' : '0 đ',
                     style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
                   ),
                 ),
@@ -211,7 +211,7 @@ class _ReviewItemState extends State<_ReviewItem> {
                         const Icon(Icons.lightbulb_outline, size: 16, color: AppColors.orange),
                         const SizedBox(width: 6),
                         Text(
-                          _showExplanation ? 'Hide Explanation' : 'Show Explanation',
+                          _showExplanation ? 'Ẩn giải thích' : 'Xem giải thích',
                           style: const TextStyle(
                             color: AppColors.orange,
                             fontWeight: FontWeight.w600,

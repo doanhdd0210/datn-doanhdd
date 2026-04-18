@@ -105,7 +105,7 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
                 title: const Text(
-                  'Code Editor',
+                  'Trình soạn thảo Code',
                   style: TextStyle(fontWeight: FontWeight.w600),
                 ),
                 subtitle: const Text(

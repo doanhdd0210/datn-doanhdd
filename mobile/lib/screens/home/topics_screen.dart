@@ -61,7 +61,7 @@ class _TopicsScreenState extends State<TopicsScreen> {
       const Topic(
         id: 'mock1',
         title: 'Java Basics',
-        description: 'Variables, data types, operators and control flow',
+        description: 'Biến, kiểu dữ liệu, toán tử và luồng điều khiển',
         icon: '☕',
         color: '#58CC02',
         order: 1,
@@ -71,7 +71,7 @@ class _TopicsScreenState extends State<TopicsScreen> {
       const Topic(
         id: 'mock2',
         title: 'Object-Oriented',
-        description: 'Classes, objects, inheritance and polymorphism',
+        description: 'Lớp, đối tượng, kế thừa và tính đa hình',
         icon: '🏗️',
         color: '#1CB0F6',
         order: 2,
@@ -81,7 +81,7 @@ class _TopicsScreenState extends State<TopicsScreen> {
       const Topic(
         id: 'mock3',
         title: 'Data Structures',
-        description: 'Arrays, lists, stacks, queues and maps',
+        description: 'Mảng, danh sách, ngăn xếp, hàng đợi và bản đồ',
         icon: '📊',
         color: '#FF9600',
         order: 3,
@@ -91,7 +91,7 @@ class _TopicsScreenState extends State<TopicsScreen> {
       const Topic(
         id: 'mock4',
         title: 'Algorithms',
-        description: 'Sorting, searching and recursion',
+        description: 'Sắp xếp, tìm kiếm và đệ quy',
         icon: '🔄',
         color: '#CE82FF',
         order: 4,
@@ -101,7 +101,7 @@ class _TopicsScreenState extends State<TopicsScreen> {
       const Topic(
         id: 'mock5',
         title: 'Exception Handling',
-        description: 'Try-catch, custom exceptions and best practices',
+        description: 'Try-catch, ngoại lệ tùy chỉnh và các thực hành tốt nhất',
         icon: '⚠️',
         color: '#FF4B4B',
         order: 5,
@@ -111,7 +111,7 @@ class _TopicsScreenState extends State<TopicsScreen> {
       const Topic(
         id: 'mock6',
         title: 'Collections & Streams',
-        description: 'Java Collections Framework and Stream API',
+        description: 'Java Collections Framework và Stream API',
         icon: '🌊',
         color: '#00CD9C',
         order: 6,
@@ -197,7 +197,7 @@ class _TopicsScreenState extends State<TopicsScreen> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     Text(
-                      user?.email ?? 'Keep learning every day!',
+                      user?.email ?? 'Tiếp tục học mỗi ngày nhé!',
                       style: AppTextStyles.bodySmall,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -253,7 +253,7 @@ class _TopicsScreenState extends State<TopicsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${provider.streak} Day Streak!',
+                      '${provider.streak} ngày liên tiếp!',
                       style: const TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 15,
@@ -261,7 +261,7 @@ class _TopicsScreenState extends State<TopicsScreen> {
                       ),
                     ),
                     const Text(
-                      'Keep it up — come back tomorrow!',
+                      'Duy trì nhé — quay lại vào ngày mai!',
                       style: TextStyle(
                         fontSize: 12,
                         color: AppColors.textGray,
@@ -449,7 +449,7 @@ class _SkillNode extends StatelessWidget {
           if (isCompleted) ...[
             const SizedBox(height: 4),
             const Text(
-              'Complete!',
+              'Hoàn thành!',
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,

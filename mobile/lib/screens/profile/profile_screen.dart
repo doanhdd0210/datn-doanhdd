@@ -50,7 +50,7 @@ class ProfileScreen extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Profile', style: AppTextStyles.heading2),
+              Text('Hồ sơ', style: AppTextStyles.heading2),
               GestureDetector(
                 onTap: () => Navigator.push(
                   context,
@@ -129,7 +129,7 @@ class ProfileScreen extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           Text(
-            user?.displayName ?? 'Java Learner',
+            user?.displayName ?? 'Người học Java',
             style: AppTextStyles.heading3,
           ),
           const SizedBox(height: 4),
@@ -165,7 +165,7 @@ class ProfileScreen extends StatelessWidget {
           _StatCard(
             icon: '⚡',
             value: provider.totalXp.toString(),
-            label: 'Total XP',
+            label: 'Tổng XP',
             color: AppColors.xpGold,
             bgColor: AppColors.surface,
           ),
@@ -173,7 +173,7 @@ class ProfileScreen extends StatelessWidget {
           _StatCard(
             icon: '🔥',
             value: provider.streak.toString(),
-            label: 'Day Streak',
+            label: 'Chuỗi ngày',
             color: AppColors.streakOrange,
             bgColor: AppColors.surface,
           ),
@@ -181,7 +181,7 @@ class ProfileScreen extends StatelessWidget {
           _StatCard(
             icon: '📚',
             value: provider.lessonsCompleted.toString(),
-            label: 'Lessons',
+            label: 'Bài học',
             color: AppColors.primary,
             bgColor: AppColors.surface,
           ),
@@ -212,10 +212,10 @@ class ProfileScreen extends StatelessWidget {
             children: [
               const Text('🔥', style: TextStyle(fontSize: 18)),
               const SizedBox(width: 8),
-              Text('Weekly Streak', style: AppTextStyles.labelBold),
+              Text('Chuỗi hàng tuần', style: AppTextStyles.labelBold),
               const Spacer(),
               Text(
-                '${provider.streak} days',
+                '${provider.streak} ngày',
                 style: const TextStyle(
                   color: AppColors.streakOrange,
                   fontWeight: FontWeight.w700,
@@ -281,10 +281,10 @@ class ProfileScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _SectionLabel(label: 'LEARNING'),
+          _SectionLabel(label: 'HỌC TẬP'),
           _MenuItem(
             icon: Icons.bar_chart_rounded,
-            label: 'Learning Statistics',
+            label: 'Thống kê học tập',
             color: AppColors.primary,
             onTap: () => Navigator.push(
               context,
@@ -292,10 +292,10 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          _SectionLabel(label: 'ACCOUNT'),
+          _SectionLabel(label: 'TÀI KHOẢN'),
           _MenuItem(
             icon: Icons.settings_rounded,
-            label: 'Settings',
+            label: 'Cài đặt',
             color: AppColors.blue,
             onTap: () => Navigator.push(
               context,
@@ -305,7 +305,7 @@ class ProfileScreen extends StatelessWidget {
           ),
           _MenuItem(
             icon: Icons.logout_rounded,
-            label: 'Sign Out',
+            label: 'Đăng xuất',
             color: AppColors.heartRed,
             textColor: AppColors.heartRed,
             onTap: () => _confirmSignOut(context, authService),
@@ -326,20 +326,20 @@ class ProfileScreen extends StatelessWidget {
       builder: (ctx) => AlertDialog(
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Sign Out?', style: AppTextStyles.heading4),
-        content: const Text('You will be returned to the login screen.',
+        title: const Text('Đăng xuất?', style: AppTextStyles.heading4),
+        content: const Text('Bạn sẽ quay lại màn hình đăng nhập.',
             style: AppTextStyles.bodyMedium),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: const Text('Huỷ'),
           ),
           TextButton(
             onPressed: () async {
               Navigator.pop(ctx);
               await authService.signOut();
             },
-            child: const Text('Sign Out',
+            child: const Text('Đăng xuất',
                 style: TextStyle(color: AppColors.heartRed)),
           ),
         ],

@@ -189,7 +189,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                 child: ElevatedButton.icon(
                   onPressed: _startQuiz,
                   icon: const Icon(Icons.quiz),
-                  label: const Text('Start Quiz'),
+                  label: const Text('Bắt đầu trắc nghiệm'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,

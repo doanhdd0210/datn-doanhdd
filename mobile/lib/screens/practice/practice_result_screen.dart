@@ -29,10 +29,10 @@ class PracticeResultScreen extends StatelessWidget {
   }
 
   String get _resultMessage {
-    if (matchPercent == 1.0) return 'Perfect Match! 🏆';
-    if (matchPercent >= 0.8) return 'Almost there! 🎉';
-    if (matchPercent >= 0.6) return 'Good effort! 💪';
-    return 'Keep practicing! 📚';
+    if (matchPercent == 1.0) return 'Khớp hoàn hảo! 🏆';
+    if (matchPercent >= 0.8) return 'Gần hoàn hảo! 🎉';
+    if (matchPercent >= 0.6) return 'Cố gắng tốt! 💪';
+    return 'Tiếp tục luyện tập! 📚';
   }
 
   Color get _resultColor {
@@ -53,7 +53,7 @@ class PracticeResultScreen extends StatelessWidget {
         backgroundColor: AppColors.background,
         foregroundColor: AppColors.textDark,
         elevation: 0,
-        title: const Text('Practice Result', style: AppTextStyles.heading4),
+        title: const Text('Kết quả thực hành', style: AppTextStyles.heading4),
         automaticallyImplyLeading: false,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
@@ -85,7 +85,7 @@ class PracticeResultScreen extends StatelessWidget {
                     '${(matchPercent * 100).round()}%',
                     style: AppTextStyles.heading2.copyWith(color: _resultColor),
                   ),
-                  Text('match', style: AppTextStyles.bodySmall),
+                  Text('khớp', style: AppTextStyles.bodySmall),
                 ],
               ),
             ),
@@ -103,7 +103,7 @@ class PracticeResultScreen extends StatelessWidget {
                 children: [
                   const Text('⚡', style: TextStyle(fontSize: 22)),
                   const SizedBox(width: 8),
-                  Text('+$_xpEarned XP earned',
+                  Text('+$_xpEarned XP kiếm được',
                       style: AppTextStyles.heading4.copyWith(color: AppColors.xpGold)),
                 ],
               ),
@@ -120,21 +120,21 @@ class PracticeResultScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Summary', style: AppTextStyles.heading4),
+                  Text('Tóm tắt', style: AppTextStyles.heading4),
                   const SizedBox(height: 14),
-                  _StatRow(icon: Icons.timer, label: 'Time Spent', value: _formatTime(timeSpent), color: AppColors.blue),
+                  _StatRow(icon: Icons.timer, label: 'Thời gian', value: _formatTime(timeSpent), color: AppColors.blue),
                   const SizedBox(height: 10),
                   _StatRow(
                     icon: Icons.code,
-                    label: 'Code Match',
+                    label: 'Khớp code',
                     value: '${(matchPercent * 100).round()}%',
                     color: _resultColor,
                   ),
                   const SizedBox(height: 10),
                   _StatRow(
                     icon: passed ? Icons.check_circle : Icons.cancel,
-                    label: 'Output',
-                    value: passed ? 'Passed' : 'Failed',
+                    label: 'Kết quả đầu ra',
+                    value: passed ? 'Đạt' : 'Chưa đạt',
                     color: passed ? AppColors.correct : AppColors.wrong,
                   ),
                 ],
@@ -153,7 +153,7 @@ class PracticeResultScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Your Output',
+                    const Text('Kết quả của bạn',
                         style: TextStyle(color: Color(0xFF4FC3F7), fontFamily: 'monospace', fontSize: 11, fontWeight: FontWeight.w700)),
                     const SizedBox(height: 8),
                     Text(output.trim(),
@@ -162,7 +162,7 @@ class PracticeResultScreen extends StatelessWidget {
                       const SizedBox(height: 12),
                       const Divider(color: Color(0xFF333333)),
                       const SizedBox(height: 8),
-                      const Text('Expected Output',
+                      const Text('Kết quả dự kiến',
                           style: TextStyle(color: Color(0xFF23A55A), fontFamily: 'monospace', fontSize: 11, fontWeight: FontWeight.w700)),
                       const SizedBox(height: 6),
                       Text(snippet.expectedOutput.trim(),
@@ -186,7 +186,7 @@ class PracticeResultScreen extends StatelessWidget {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   textStyle: AppTextStyles.buttonText,
                 ),
-                child: const Text('Back to Practice'),
+                child: const Text('Quay lại thực hành'),
               ),
             ),
             const SizedBox(height: 10),
@@ -201,7 +201,7 @@ class PracticeResultScreen extends StatelessWidget {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
                 ),
-                child: const Text('Try Again'),
+                child: const Text('Thử lại'),
               ),
             ),
             const SizedBox(height: 24),

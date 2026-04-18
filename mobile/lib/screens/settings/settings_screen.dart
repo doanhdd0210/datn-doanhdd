@@ -153,7 +153,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ]),
           const SizedBox(height: 16),
-          _buildSection('Developer', [
+          _buildSection('Nhà phát triển', [
             _buildUrlTile(),
           ]),
           const SizedBox(height: 16),

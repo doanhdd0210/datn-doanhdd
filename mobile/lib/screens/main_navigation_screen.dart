@@ -25,11 +25,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   ];
 
   static const _navItems = [
-    _NavItem(icon: Icons.auto_stories_rounded, label: 'Learn'),
-    _NavItem(icon: Icons.code_rounded, label: 'Practice'),
-    _NavItem(icon: Icons.forum_rounded, label: 'Community'),
-    _NavItem(icon: Icons.emoji_events_rounded, label: 'Ranking'),
-    _NavItem(icon: Icons.person_rounded, label: 'Profile'),
+    _NavItem(icon: Icons.auto_stories_rounded, label: 'Học'),
+    _NavItem(icon: Icons.code_rounded, label: 'Thực hành'),
+    _NavItem(icon: Icons.forum_rounded, label: 'Cộng đồng'),
+    _NavItem(icon: Icons.emoji_events_rounded, label: 'Xếp hạng'),
+    _NavItem(icon: Icons.person_rounded, label: 'Hồ sơ'),
   ];
 
   @override

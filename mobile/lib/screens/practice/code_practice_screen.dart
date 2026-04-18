@@ -119,7 +119,7 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Practice: ${widget.snippet.title}', style: AppTextStyles.labelBold),
+            Text('Thực hành: ${widget.snippet.title}', style: AppTextStyles.labelBold),
             Text(_formatTime(_elapsedSeconds),
                 style: const TextStyle(fontSize: 12, color: AppColors.blue, fontWeight: FontWeight.w700)),
           ],
@@ -132,7 +132,7 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
           TextButton.icon(
             onPressed: () => setState(() => _showHint = !_showHint),
             icon: const Icon(Icons.lightbulb_outline, size: 18),
-            label: Text(_showHint ? 'Hide' : 'Hint'),
+            label: Text(_showHint ? 'Ẩn' : 'Gợi ý'),
             style: TextButton.styleFrom(foregroundColor: AppColors.orange),
           ),
         ],
@@ -153,7 +153,7 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
                           children: [
                             Icon(Icons.remove_red_eye_outlined, size: 14, color: Color(0xFF4FC3F7)),
                             SizedBox(width: 6),
-                            Text('Reference', style: TextStyle(color: Color(0xFF4FC3F7), fontSize: 11, fontWeight: FontWeight.w600)),
+                            Text('Tham khảo', style: TextStyle(color: Color(0xFF4FC3F7), fontSize: 11, fontWeight: FontWeight.w600)),
                           ],
                         ),
                       ),
@@ -190,7 +190,7 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
                           children: [
                             Icon(Icons.edit, size: 14, color: Color(0xFF23A55A)),
                             SizedBox(width: 6),
-                            Text('Your Code', style: TextStyle(color: Color(0xFF23A55A), fontSize: 11, fontWeight: FontWeight.w600)),
+                            Text('Code của bạn', style: TextStyle(color: Color(0xFF23A55A), fontSize: 11, fontWeight: FontWeight.w600)),
                           ],
                         ),
                       ),
@@ -208,7 +208,7 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
                               color: Colors.white,
                             ),
                             decoration: const InputDecoration(
-                              hintText: 'Type the code here...',
+                              hintText: 'Nhập code vào đây...',
                               hintStyle: TextStyle(
                                 color: Color(0xFF555555),
                                 fontFamily: 'monospace',
@@ -250,7 +250,7 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
                           height: 20,
                           child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                         )
-                      : const Text('Submit'),
+                      : const Text('Nộp bài'),
                 ),
               ),
             ),
@@ -273,7 +273,7 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Hint: First difference found:',
+          const Text('Gợi ý: Điểm khác biệt đầu tiên:',
               style: TextStyle(color: AppColors.orange, fontSize: 11, fontWeight: FontWeight.w700)),
           const SizedBox(height: 6),
           Expanded(
@@ -286,7 +286,7 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
                     final userLine = i < userLines.length ? userLines[i].trim() : '';
                     if (origLine != userLine) {
                       return [
-                        Text('Line ${i + 1} expected:',
+                        Text('Dòng ${i + 1} cần là:',
                             style: const TextStyle(color: Color(0xFF888888), fontSize: 10)),
                         Text(origLines[i],
                             style: const TextStyle(
@@ -294,7 +294,7 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
                       ];
                     }
                   }
-                  return [const Text('Looking good!', style: TextStyle(color: AppColors.primary, fontFamily: 'monospace'))];
+                  return [const Text('Trông tốt lắm!', style: TextStyle(color: AppColors.primary, fontFamily: 'monospace'))];
                 }(),
               ),
             ),

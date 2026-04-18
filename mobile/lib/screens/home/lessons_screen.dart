@@ -70,8 +70,8 @@ class _LessonsScreenState extends State<LessonsScreen> {
         id: 'mock_lesson_$i',
         topicId: widget.topic.id,
         title: 'Lesson ${i + 1}: ${_mockTitles[i % _mockTitles.length]}',
-        content: 'Sample lesson content for lesson ${i + 1}',
-        summary: 'Learn the fundamentals of ${widget.topic.title}',
+        content: 'Nội dung bài học mẫu cho bài ${i + 1}',
+        summary: 'Tìm hiểu các kiến thức cơ bản về ${widget.topic.title}',
         order: i + 1,
         xpReward: 10 + i * 5,
         estimatedMinutes: 5 + i * 2,
@@ -81,12 +81,12 @@ class _LessonsScreenState extends State<LessonsScreen> {
   }
 
   static const _mockTitles = [
-    'Introduction',
-    'Variables & Types',
-    'Control Flow',
-    'Methods',
-    'Arrays',
-    'Classes',
+    'Giới thiệu',
+    'Biến & Kiểu dữ liệu',
+    'Luồng điều khiển',
+    'Phương thức',
+    'Mảng',
+    'Lớp',
   ];
 
   @override
@@ -168,7 +168,7 @@ class _LessonsScreenState extends State<LessonsScreen> {
                             )),
                         const SizedBox(height: 4),
                         Text(
-                          '${widget.topic.totalLessons} lessons',
+                          '${widget.topic.totalLessons} bài học',
                           style: const TextStyle(
                             color: Colors.white70,
                             fontSize: 13,
@@ -220,7 +220,7 @@ class _LessonsScreenState extends State<LessonsScreen> {
             const SizedBox(height: 40),
             const Icon(Icons.error_outline, size: 48, color: AppColors.textGray),
             const SizedBox(height: 12),
-            Text('Could not load lessons', style: AppTextStyles.heading4),
+            Text('Không thể tải bài học', style: AppTextStyles.heading4),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _loadLessons,
@@ -229,7 +229,7 @@ class _LessonsScreenState extends State<LessonsScreen> {
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              child: const Text('Retry'),
+              child: const Text('Thử lại'),
             ),
           ],
         ),

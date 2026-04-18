@@ -58,7 +58,7 @@ class _QaDetailScreenState extends State<QaDetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Answer posted!'),
+            content: Text('Đã đăng câu trả lời!'),
             behavior: SnackBarBehavior.floating,
             backgroundColor: AppColors.primary,
           ),
@@ -77,11 +77,11 @@ class _QaDetailScreenState extends State<QaDetailScreen> {
 
   String _timeAgo(DateTime date) {
     final diff = DateTime.now().difference(date);
-    if (diff.inDays > 7) return DateFormat('MMM d, yyyy').format(date);
-    if (diff.inDays > 0) return '${diff.inDays}d ago';
-    if (diff.inHours > 0) return '${diff.inHours}h ago';
-    if (diff.inMinutes > 0) return '${diff.inMinutes}m ago';
-    return 'Just now';
+    if (diff.inDays > 7) return DateFormat('d MMM, yyyy').format(date);
+    if (diff.inDays > 0) return '${diff.inDays} ngày trước';
+    if (diff.inHours > 0) return '${diff.inHours} giờ trước';
+    if (diff.inMinutes > 0) return '${diff.inMinutes} phút trước';
+    return 'Vừa xong';
   }
 
   @override
@@ -94,7 +94,7 @@ class _QaDetailScreenState extends State<QaDetailScreen> {
         backgroundColor: AppColors.background,
         foregroundColor: AppColors.textDark,
         elevation: 0,
-        title: const Text('Question', style: AppTextStyles.heading4),
+        title: const Text('Câu hỏi', style: AppTextStyles.heading4),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Container(height: 1, color: AppColors.border),
@@ -115,7 +115,7 @@ class _QaDetailScreenState extends State<QaDetailScreen> {
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
                       child: Text(
-                        '${widget.post.answerCount} Answers',
+                        '${widget.post.answerCount} Câu trả lời',
                         style: AppTextStyles.heading4,
                       ),
                     ),
@@ -138,7 +138,7 @@ class _QaDetailScreenState extends State<QaDetailScreen> {
                             children: [
                               const Text('💬', style: TextStyle(fontSize: 32)),
                               const SizedBox(height: 8),
-                              Text('No answers yet. Be the first!', style: AppTextStyles.bodySmall),
+                              Text('Chưa có câu trả lời. Hãy là người đầu tiên!', style: AppTextStyles.bodySmall),
                             ],
                           ),
                         ),
@@ -235,7 +235,7 @@ class _QaDetailScreenState extends State<QaDetailScreen> {
                 maxLines: null,
                 minLines: 1,
                 decoration: InputDecoration(
-                  hintText: 'Write your answer...',
+                  hintText: 'Viết câu trả lời của bạn...',
                   hintStyle: AppTextStyles.labelGray,
                   filled: true,
                   fillColor: AppColors.background,
@@ -293,10 +293,10 @@ class _AnswerCard extends StatelessWidget {
 
   String _timeAgo(DateTime date) {
     final diff = DateTime.now().difference(date);
-    if (diff.inDays > 0) return '${diff.inDays}d ago';
-    if (diff.inHours > 0) return '${diff.inHours}h ago';
-    if (diff.inMinutes > 0) return '${diff.inMinutes}m ago';
-    return 'Just now';
+    if (diff.inDays > 0) return '${diff.inDays} ngày trước';
+    if (diff.inHours > 0) return '${diff.inHours} giờ trước';
+    if (diff.inMinutes > 0) return '${diff.inMinutes} phút trước';
+    return 'Vừa xong';
   }
 
   @override
@@ -326,7 +326,7 @@ class _AnswerCard extends StatelessWidget {
                 children: [
                   Icon(Icons.check_circle, size: 12, color: Colors.white),
                   SizedBox(width: 4),
-                  Text('Accepted Answer', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+                  Text('Câu trả lời được chấp nhận', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
                 ],
               ),
             ),
@@ -369,7 +369,7 @@ class _AnswerCard extends StatelessWidget {
                       border: Border.all(color: AppColors.primary),
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: const Text('Accept', style: TextStyle(color: AppColors.primary, fontSize: 11, fontWeight: FontWeight.w600)),
+                    child: const Text('Chấp nhận', style: TextStyle(color: AppColors.primary, fontSize: 11, fontWeight: FontWeight.w600)),
                   ),
                 ),
               ],

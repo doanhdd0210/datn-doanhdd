@@ -163,10 +163,10 @@ class _CodeDemoListScreenState extends State<CodeDemoListScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Practice', style: AppTextStyles.heading2),
+          Text('Thực hành', style: AppTextStyles.heading2),
           const SizedBox(height: 4),
           Text(
-            'Run and practice Java code examples',
+            'Chạy và luyện tập các ví dụ code Java',
             style: AppTextStyles.bodySmall,
           ),
         ],
@@ -182,7 +182,7 @@ class _CodeDemoListScreenState extends State<CodeDemoListScreen> {
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
         children: [
           _FilterChip(
-            label: 'All',
+            label: 'Tất cả',
             isSelected: _selectedTopicId == null,
             onTap: () => _filterByTopic(null),
           ),
@@ -226,7 +226,7 @@ class _CodeDemoListScreenState extends State<CodeDemoListScreen> {
           children: [
             Text('💻', style: TextStyle(fontSize: 48)),
             SizedBox(height: 12),
-            Text('No code examples yet', style: AppTextStyles.heading4),
+            Text('Chưa có ví dụ code nào', style: AppTextStyles.heading4),
           ],
         ),
       ),

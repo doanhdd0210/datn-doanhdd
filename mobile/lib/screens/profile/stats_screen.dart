@@ -98,7 +98,7 @@ class _StatsScreenState extends State<StatsScreen> with SingleTickerProviderStat
         backgroundColor: AppColors.background,
         foregroundColor: AppColors.textDark,
         elevation: 0,
-        title: const Text('Learning Progress', style: AppTextStyles.heading4),
+        title: const Text('Tiến độ học tập', style: AppTextStyles.heading4),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Container(height: 1, color: AppColors.border),
@@ -158,7 +158,7 @@ class _StatsScreenState extends State<StatsScreen> with SingleTickerProviderStat
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Current Streak',
+                const Text('Chuỗi ngày hiện tại',
                     style: TextStyle(color: Colors.white70, fontSize: 12)),
                 Text(
                   '$currentStreak days',
@@ -174,7 +174,7 @@ class _StatsScreenState extends State<StatsScreen> with SingleTickerProviderStat
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              const Text('Best Streak', style: TextStyle(color: Colors.white70, fontSize: 11)),
+              const Text('Chuỗi tốt nhất', style: TextStyle(color: Colors.white70, fontSize: 11)),
               Text(
                 '$longestStreak days',
                 style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
@@ -200,9 +200,9 @@ class _StatsScreenState extends State<StatsScreen> with SingleTickerProviderStat
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Weekly XP', style: AppTextStyles.heading4),
+          Text('XP hàng tuần', style: AppTextStyles.heading4),
           const SizedBox(height: 4),
-          Text('Last 7 days', style: AppTextStyles.bodySmall),
+          Text('7 ngày qua', style: AppTextStyles.bodySmall),
           const SizedBox(height: 16),
           SizedBox(
             height: 160,
@@ -291,10 +291,10 @@ class _StatsScreenState extends State<StatsScreen> with SingleTickerProviderStat
       mainAxisSpacing: 12,
       childAspectRatio: 1.6,
       children: [
-        _StatCard(icon: '⚡', label: 'Total XP', value: totalXp.toString(), color: AppColors.xpGold),
-        _StatCard(icon: '📚', label: 'Lessons Done', value: lessonsCompleted.toString(), color: AppColors.primary),
-        _StatCard(icon: '⏱', label: 'Minutes Learned', value: totalMinutes.toString(), color: AppColors.blue),
-        _StatCard(icon: '📈', label: 'Avg Daily XP', value: avgDailyXp.toString(), color: AppColors.purple),
+        _StatCard(icon: '⚡', label: 'Tổng XP', value: totalXp.toString(), color: AppColors.xpGold),
+        _StatCard(icon: '📚', label: 'Bài đã học', value: lessonsCompleted.toString(), color: AppColors.primary),
+        _StatCard(icon: '⏱', label: 'Phút học tập', value: totalMinutes.toString(), color: AppColors.blue),
+        _StatCard(icon: '📈', label: 'XP TB mỗi ngày', value: avgDailyXp.toString(), color: AppColors.purple),
       ],
     );
   }
@@ -312,9 +312,9 @@ class _StatsScreenState extends State<StatsScreen> with SingleTickerProviderStat
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Activity Calendar', style: AppTextStyles.heading4),
+          Text('Lịch hoạt động', style: AppTextStyles.heading4),
           const SizedBox(height: 4),
-          Text('Last 30 days', style: AppTextStyles.bodySmall),
+          Text('30 ngày qua', style: AppTextStyles.bodySmall),
           const SizedBox(height: 16),
           Wrap(
             spacing: 4,
@@ -340,7 +340,7 @@ class _StatsScreenState extends State<StatsScreen> with SingleTickerProviderStat
           const SizedBox(height: 12),
           Row(
             children: [
-              const Text('Less', style: TextStyle(fontSize: 10, color: AppColors.textGray)),
+              const Text('Ít', style: TextStyle(fontSize: 10, color: AppColors.textGray)),
               const SizedBox(width: 6),
               ...List.generate(5, (i) {
                 final opacity = 0.15 + i * 0.2;
@@ -355,7 +355,7 @@ class _StatsScreenState extends State<StatsScreen> with SingleTickerProviderStat
                 );
               }),
               const SizedBox(width: 6),
-              const Text('More', style: TextStyle(fontSize: 10, color: AppColors.textGray)),
+              const Text('Nhiều', style: TextStyle(fontSize: 10, color: AppColors.textGray)),
             ],
           ),
         ],

@@ -59,11 +59,11 @@ class _QuizResultScreenState extends State<QuizResultScreen>
 
   String get _resultMessage {
     final pct = widget.result.percentage;
-    if (pct == 1.0) return 'Perfect! 🏆';
-    if (pct >= 0.8) return 'Excellent! 🎉';
-    if (pct >= 0.7) return 'Good job! 👏';
-    if (pct >= 0.5) return 'Keep going! 💪';
-    return 'Try again! 📚';
+    if (pct == 1.0) return 'Hoàn hảo! 🏆';
+    if (pct >= 0.8) return 'Tuyệt vời! 🎉';
+    if (pct >= 0.7) return 'Làm tốt lắm! 👏';
+    if (pct >= 0.5) return 'Tiếp tục nào! 💪';
+    return 'Thử lại thôi! 📚';
   }
 
   Color get _resultColor {
@@ -113,7 +113,7 @@ class _QuizResultScreenState extends State<QuizResultScreen>
                           style: AppTextStyles.heading2.copyWith(color: _resultColor),
                         ),
                         Text(
-                          'correct',
+                          'đúng',
                           style: AppTextStyles.bodySmall,
                         ),
                       ],
@@ -163,7 +163,7 @@ class _QuizResultScreenState extends State<QuizResultScreen>
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                         textStyle: AppTextStyles.buttonText,
                       ),
-                      child: const Text('Continue Learning'),
+                      child: const Text('Tiếp tục học'),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -189,7 +189,7 @@ class _QuizResultScreenState extends State<QuizResultScreen>
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                           textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
                         ),
-                        child: const Text('Review Answers'),
+                        child: const Text('Xem lại câu trả lời'),
                       ),
                     ),
                   const SizedBox(height: 24),
@@ -229,25 +229,25 @@ class _QuizResultScreenState extends State<QuizResultScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Results Summary', style: AppTextStyles.heading4),
+          Text('Tóm tắt kết quả', style: AppTextStyles.heading4),
           const SizedBox(height: 14),
           Row(
             children: [
               _StatItem(
                 icon: Icons.check_circle,
-                label: 'Correct',
+                label: 'Đúng',
                 value: result.correctAnswers.toString(),
                 color: AppColors.primary,
               ),
               _StatItem(
                 icon: Icons.cancel,
-                label: 'Wrong',
+                label: 'Sai',
                 value: (result.totalQuestions - result.correctAnswers).toString(),
                 color: AppColors.red,
               ),
               _StatItem(
                 icon: Icons.percent,
-                label: 'Score',
+                label: 'Điểm',
                 value: '$percentage%',
                 color: _resultColor,
               ),

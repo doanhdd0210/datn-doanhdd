@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as dev;
 import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_text_styles.dart';
@@ -53,13 +54,18 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
     setState(() => _isSubmitting = true);
 
     String stdout = '';
+    String runError = '';
     try {
       final runResult = await _api.runCode(
         language: widget.snippet.language,
         code: code,
       );
       stdout = runResult['stdout'] as String? ?? '';
-    } catch (_) {}
+      runError = runResult['stderr'] as String? ?? '';
+    } catch (e) {
+      dev.log('runCode error: $e', name: 'Practice');
+      runError = e.toString();
+    }
 
     final expectedOutput = _normalize(widget.snippet.expectedOutput);
     final actualOutput = _normalize(stdout);

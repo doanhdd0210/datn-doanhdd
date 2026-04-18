@@ -138,7 +138,7 @@ public class CodeSnippetsController : ControllerBase
             return new RunCodeResult { Stderr = compile.stderr, ExitCode = compile.exitCode, IsSuccess = false };
 
         // Run
-        var run = await ExecAsync("java", "-Dfile.encoding=UTF-8 -Dstdout.encoding=UTF-8 -cp \".\" Main", tmpDir, stdin, TimeSpan.FromSeconds(10));
+        var run = await ExecAsync("java", "-Dfile.encoding=UTF-8 -cp . Main", tmpDir, stdin, TimeSpan.FromSeconds(10));
         return new RunCodeResult
         {
             Stdout    = run.stdout,
@@ -168,14 +168,16 @@ public class CodeSnippetsController : ControllerBase
         using var proc = new System.Diagnostics.Process();
         proc.StartInfo = new System.Diagnostics.ProcessStartInfo
         {
-            FileName               = cmd,
-            Arguments              = args,
-            WorkingDirectory       = workDir,
-            RedirectStandardInput  = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError  = true,
-            UseShellExecute        = false,
-            CreateNoWindow         = true,
+            FileName                = cmd,
+            Arguments               = args,
+            WorkingDirectory        = workDir,
+            RedirectStandardInput   = true,
+            RedirectStandardOutput  = true,
+            RedirectStandardError   = true,
+            UseShellExecute         = false,
+            CreateNoWindow          = true,
+            StandardOutputEncoding  = System.Text.Encoding.UTF8,
+            StandardErrorEncoding   = System.Text.Encoding.UTF8,
         };
         proc.Start();
         if (!string.IsNullOrEmpty(stdin))

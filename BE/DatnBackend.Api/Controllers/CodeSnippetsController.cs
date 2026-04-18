@@ -138,7 +138,7 @@ public class CodeSnippetsController : ControllerBase
             return new RunCodeResult { Stderr = compile.stderr, ExitCode = compile.exitCode, IsSuccess = false };
 
         // Run
-        var run = await ExecAsync("java", "-cp \".\" Main", tmpDir, stdin, TimeSpan.FromSeconds(10));
+        var run = await ExecAsync("java", "-Dfile.encoding=UTF-8 -Dstdout.encoding=UTF-8 -cp \".\" Main", tmpDir, stdin, TimeSpan.FromSeconds(10));
         return new RunCodeResult
         {
             Stdout    = run.stdout,

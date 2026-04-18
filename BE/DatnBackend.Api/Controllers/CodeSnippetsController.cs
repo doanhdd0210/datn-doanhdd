@@ -133,7 +133,7 @@ public class CodeSnippetsController : ControllerBase
         await System.IO.File.WriteAllTextAsync(srcFile, code);
 
         // Compile
-        var compile = await ExecAsync("javac", $"\"{srcFile}\"", tmpDir, "", TimeSpan.FromSeconds(15));
+        var compile = await ExecAsync("javac", $"-encoding UTF-8 \"{srcFile}\"", tmpDir, "", TimeSpan.FromSeconds(15));
         if (compile.exitCode != 0)
             return new RunCodeResult { Stderr = compile.stderr, ExitCode = compile.exitCode, IsSuccess = false };
 

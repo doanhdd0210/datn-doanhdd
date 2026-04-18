@@ -102,30 +102,35 @@ public class CodeSnippetsController : ControllerBase
         }
     }
 
-    /// <summary>Chạy code qua Piston (proxy để tránh block từ mobile)</summary>
+    /// <summary>Chạy code qua JDoodle</summary>
     [HttpPost("run")]
     public async Task<ActionResult<ApiResponse<RunCodeResult>>> Run(
         [FromBody] RunCodeRequest request,
-        [FromServices] IHttpClientFactory httpFactory)
+        [FromServices] IHttpClientFactory httpFactory,
+        [FromServices] IConfiguration config)
     {
         if (UserId == null) return Unauthorized(ApiResponse<RunCodeResult>.Fail("Unauthorized"));
 
-        static string FileName(string lang) => lang switch
+        static (string lang, string version) MapLanguage(string lang) => lang switch
         {
-            "java" => "Main.java",
-            "python" => "main.py",
-            "javascript" => "main.js",
-            _ => $"main.{lang}",
+            "java"       => ("java", "4"),
+            "python"     => ("python3", "4"),
+            "javascript" => ("nodejs", "4"),
+            _            => (lang, "0"),
         };
 
-        var pistonBody = JsonSerializer.Serialize(new
+        var (jdLang, versionIndex) = MapLanguage(request.Language);
+        var clientId     = config["JDoodle:ClientId"]     ?? Environment.GetEnvironmentVariable("JDOODLE_CLIENT_ID");
+        var clientSecret = config["JDoodle:ClientSecret"] ?? Environment.GetEnvironmentVariable("JDOODLE_CLIENT_SECRET");
+
+        var body = JsonSerializer.Serialize(new
         {
-            language = request.Language,
-            version = "*",
-            files = new[] { new { name = FileName(request.Language), content = request.Code } },
-            stdin = request.Stdin,
-            compile_timeout = 10000,
-            run_timeout = 5000,
+            clientId,
+            clientSecret,
+            script       = request.Code,
+            language     = jdLang,
+            versionIndex,
+            stdin        = request.Stdin,
         });
 
         try
@@ -133,13 +138,14 @@ public class CodeSnippetsController : ControllerBase
             var client = httpFactory.CreateClient();
             client.Timeout = TimeSpan.FromSeconds(30);
             var response = await client.PostAsync(
-                "https://emkc.org/api/v2/piston/execute", // fallback: https://api.piston.rs/api/v2/execute
-                new StringContent(pistonBody, Encoding.UTF8, "application/json"));
+                "https://api.jdoodle.com/v1/execute",
+                new StringContent(body, Encoding.UTF8, "application/json"));
+
+            var responseBody = await response.Content.ReadAsStringAsync();
 
             if (!response.IsSuccessStatusCode)
             {
-                var errorBody = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"[Piston] HTTP {(int)response.StatusCode}: {errorBody}");
+                Console.WriteLine($"[JDoodle] HTTP {(int)response.StatusCode}: {responseBody}");
                 return Ok(ApiResponse<RunCodeResult>.Ok(new RunCodeResult
                 {
                     Stderr = "Compiler service unavailable. Try again.",
@@ -148,31 +154,18 @@ public class CodeSnippetsController : ControllerBase
                 }));
             }
 
-            using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+            using var doc = JsonDocument.Parse(responseBody);
             var root = doc.RootElement;
 
-            // Compile error
-            if (root.TryGetProperty("compile", out var compile) &&
-                compile.TryGetProperty("code", out var cc) && cc.GetInt32() != 0)
-            {
-                var compileErr = compile.TryGetProperty("stderr", out var cs) ? cs.GetString() ?? ""
-                               : compile.TryGetProperty("output", out var co) ? co.GetString() ?? "" : "";
-                return Ok(ApiResponse<RunCodeResult>.Ok(new RunCodeResult
-                {
-                    Stderr = compileErr,
-                    ExitCode = cc.GetInt32(),
-                    IsSuccess = false,
-                }));
-            }
+            var output   = root.TryGetProperty("output",   out var o) ? o.GetString() ?? "" : "";
+            var exitCode = root.TryGetProperty("statusCode", out var sc) ? sc.GetInt32() : 0;
 
-            var run = root.GetProperty("run");
-            var exitCode = run.TryGetProperty("code", out var ec) ? ec.GetInt32() : 0;
             return Ok(ApiResponse<RunCodeResult>.Ok(new RunCodeResult
             {
-                Stdout = run.TryGetProperty("stdout", out var so) ? so.GetString() ?? "" : "",
-                Stderr = run.TryGetProperty("stderr", out var se) ? se.GetString() ?? "" : "",
-                ExitCode = exitCode,
-                IsSuccess = exitCode == 0,
+                Stdout    = exitCode == 200 ? output : "",
+                Stderr    = exitCode != 200 ? output : "",
+                ExitCode  = exitCode == 200 ? 0 : 1,
+                IsSuccess = exitCode == 200,
             }));
         }
         catch (Exception ex)

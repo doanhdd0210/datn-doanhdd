@@ -102,81 +102,99 @@ public class CodeSnippetsController : ControllerBase
         }
     }
 
-    /// <summary>Chạy code qua JDoodle</summary>
+    /// <summary>Chạy code trực tiếp trên server (Java/Python/Node)</summary>
     [HttpPost("run")]
-    public async Task<ActionResult<ApiResponse<RunCodeResult>>> Run(
-        [FromBody] RunCodeRequest request,
-        [FromServices] IHttpClientFactory httpFactory,
-        [FromServices] IConfiguration config)
+    public async Task<ActionResult<ApiResponse<RunCodeResult>>> Run([FromBody] RunCodeRequest request)
     {
         if (UserId == null) return Unauthorized(ApiResponse<RunCodeResult>.Fail("Unauthorized"));
 
-        static (string lang, string version) MapLanguage(string lang) => lang switch
-        {
-            "java"       => ("java", "4"),
-            "python"     => ("python3", "4"),
-            "javascript" => ("nodejs", "4"),
-            _            => (lang, "0"),
-        };
-
-        var (jdLang, versionIndex) = MapLanguage(request.Language);
-        var clientId     = config["JDoodle:ClientId"]     ?? Environment.GetEnvironmentVariable("JDOODLE_CLIENT_ID");
-        var clientSecret = config["JDoodle:ClientSecret"] ?? Environment.GetEnvironmentVariable("JDOODLE_CLIENT_SECRET");
-
-        var body = JsonSerializer.Serialize(new
-        {
-            clientId,
-            clientSecret,
-            script       = request.Code,
-            language     = jdLang,
-            versionIndex,
-            stdin        = request.Stdin,
-        });
-
+        var tmpDir = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        Directory.CreateDirectory(tmpDir);
         try
         {
-            var client = httpFactory.CreateClient();
-            client.Timeout = TimeSpan.FromSeconds(30);
-            var response = await client.PostAsync(
-                "https://api.jdoodle.com/v1/execute",
-                new StringContent(body, Encoding.UTF8, "application/json"));
-
-            var responseBody = await response.Content.ReadAsStringAsync();
-
-            if (!response.IsSuccessStatusCode)
+            RunCodeResult result = request.Language switch
             {
-                Console.WriteLine($"[JDoodle] HTTP {(int)response.StatusCode}: {responseBody}");
-                return Ok(ApiResponse<RunCodeResult>.Ok(new RunCodeResult
-                {
-                    Stderr = "Compiler service unavailable. Try again.",
-                    ExitCode = -1,
-                    IsSuccess = false,
-                }));
-            }
-
-            using var doc = JsonDocument.Parse(responseBody);
-            var root = doc.RootElement;
-
-            var output   = root.TryGetProperty("output",   out var o) ? o.GetString() ?? "" : "";
-            var exitCode = root.TryGetProperty("statusCode", out var sc) ? sc.GetInt32() : 0;
-
-            return Ok(ApiResponse<RunCodeResult>.Ok(new RunCodeResult
-            {
-                Stdout    = exitCode == 200 ? output : "",
-                Stderr    = exitCode != 200 ? output : "",
-                ExitCode  = exitCode == 200 ? 0 : 1,
-                IsSuccess = exitCode == 200,
-            }));
+                "java"       => await RunJavaAsync(tmpDir, request.Code, request.Stdin),
+                "python"     => await RunProcessAsync("python3", $"\"{Path.Combine(tmpDir, "main.py")}\"", request.Code, "main.py", tmpDir, request.Stdin),
+                "javascript" => await RunProcessAsync("node",    $"\"{Path.Combine(tmpDir, "main.js")}\"",  request.Code, "main.js",  tmpDir, request.Stdin),
+                _            => new RunCodeResult { Stderr = "Unsupported language.", ExitCode = -1, IsSuccess = false },
+            };
+            return Ok(ApiResponse<RunCodeResult>.Ok(result));
         }
-        catch (Exception ex)
+        finally
         {
-            return Ok(ApiResponse<RunCodeResult>.Ok(new RunCodeResult
-            {
-                Stderr = $"Lỗi kết nối compiler: {ex.Message}",
-                ExitCode = -1,
-                IsSuccess = false,
-            }));
+            try { Directory.Delete(tmpDir, true); } catch { }
         }
+    }
+
+    private static async Task<RunCodeResult> RunJavaAsync(string tmpDir, string code, string stdin)
+    {
+        var srcFile = Path.Combine(tmpDir, "Main.java");
+        await File.WriteAllTextAsync(srcFile, code);
+
+        // Compile
+        var compile = await ExecAsync("javac", $"\"{srcFile}\"", tmpDir, "", TimeSpan.FromSeconds(15));
+        if (compile.exitCode != 0)
+            return new RunCodeResult { Stderr = compile.stderr, ExitCode = compile.exitCode, IsSuccess = false };
+
+        // Run
+        var run = await ExecAsync("java", "-cp \".\" Main", tmpDir, stdin, TimeSpan.FromSeconds(10));
+        return new RunCodeResult
+        {
+            Stdout    = run.stdout,
+            Stderr    = run.stderr,
+            ExitCode  = run.exitCode,
+            IsSuccess = run.exitCode == 0,
+        };
+    }
+
+    private static async Task<RunCodeResult> RunProcessAsync(string cmd, string args, string code, string fileName, string tmpDir, string stdin)
+    {
+        await File.WriteAllTextAsync(Path.Combine(tmpDir, fileName), code);
+        var run = await ExecAsync(cmd, args, tmpDir, stdin, TimeSpan.FromSeconds(10));
+        return new RunCodeResult
+        {
+            Stdout    = run.stdout,
+            Stderr    = run.stderr,
+            ExitCode  = run.exitCode,
+            IsSuccess = run.exitCode == 0,
+        };
+    }
+
+    private static async Task<(string stdout, string stderr, int exitCode)> ExecAsync(
+        string cmd, string args, string workDir, string stdin, TimeSpan timeout)
+    {
+        using var cts = new CancellationTokenSource(timeout);
+        using var proc = new System.Diagnostics.Process();
+        proc.StartInfo = new System.Diagnostics.ProcessStartInfo
+        {
+            FileName               = cmd,
+            Arguments              = args,
+            WorkingDirectory       = workDir,
+            RedirectStandardInput  = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError  = true,
+            UseShellExecute        = false,
+            CreateNoWindow         = true,
+        };
+        proc.Start();
+        if (!string.IsNullOrEmpty(stdin))
+        {
+            await proc.StandardInput.WriteAsync(stdin);
+        }
+        proc.StandardInput.Close();
+
+        var stdoutTask = proc.StandardOutput.ReadToEndAsync();
+        var stderrTask = proc.StandardError.ReadToEndAsync();
+
+        try { await proc.WaitForExitAsync(cts.Token); }
+        catch (OperationCanceledException)
+        {
+            try { proc.Kill(true); } catch { }
+            return ("", "Timeout: chương trình chạy quá lâu.", -1);
+        }
+
+        return (await stdoutTask, await stderrTask, proc.ExitCode);
     }
 
     /// <summary>Submit practice result and award XP</summary>

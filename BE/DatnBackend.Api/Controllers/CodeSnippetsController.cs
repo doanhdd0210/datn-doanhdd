@@ -133,16 +133,20 @@ public class CodeSnippetsController : ControllerBase
             var client = httpFactory.CreateClient();
             client.Timeout = TimeSpan.FromSeconds(30);
             var response = await client.PostAsync(
-                "https://emkc.org/api/v2/piston/execute",
+                "https://emkc.org/api/v2/piston/execute", // fallback: https://api.piston.rs/api/v2/execute
                 new StringContent(pistonBody, Encoding.UTF8, "application/json"));
 
             if (!response.IsSuccessStatusCode)
+            {
+                var errorBody = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"[Piston] HTTP {(int)response.StatusCode}: {errorBody}");
                 return Ok(ApiResponse<RunCodeResult>.Ok(new RunCodeResult
                 {
                     Stderr = "Compiler service unavailable. Try again.",
                     ExitCode = -1,
                     IsSuccess = false,
                 }));
+            }
 
             using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
             var root = doc.RootElement;

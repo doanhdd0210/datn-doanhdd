@@ -60,22 +60,8 @@ if (pgConn.StartsWith("postgresql://") || pgConn.StartsWith("postgres://"))
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(pgConn, o => o.EnableRetryOnFailure()));
 
-// ─── Redis Cache (optional — falls back to in-memory) ─────────────────────────
-var redisConn = builder.Configuration.GetConnectionString("Redis")
-    ?? Environment.GetEnvironmentVariable("REDIS_URL");
-
-if (!string.IsNullOrEmpty(redisConn))
-{
-    builder.Services.AddStackExchangeRedisCache(options =>
-    {
-        options.Configuration = redisConn;
-        options.InstanceName = "datn:";
-    });
-}
-else
-{
-    builder.Services.AddDistributedMemoryCache();
-}
+// ─── In-memory Cache ───────────────────────────────────────────────────────────
+builder.Services.AddDistributedMemoryCache();
 
 builder.Services.AddScoped<ICacheService, CacheService>();
 

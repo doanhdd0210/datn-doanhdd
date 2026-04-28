@@ -168,6 +168,21 @@ public class UserService : IUserService
         return profile;
     }
 
+    public async Task RegisterFcmTokenAsync(string uid, string token)
+    {
+        var profile = await _db.UserProfiles.FirstOrDefaultAsync(p => p.Uid == uid);
+        if (profile == null)
+        {
+            profile = new UserProfile { Uid = uid, FcmTokens = new List<string> { token } };
+            _db.UserProfiles.Add(profile);
+        }
+        else if (!profile.FcmTokens.Contains(token))
+        {
+            profile.FcmTokens.Add(token);
+        }
+        await _db.SaveChangesAsync();
+    }
+
     private static AppUser MapUser(UserRecord record)
     {
         var isAdmin = record.CustomClaims?.TryGetValue("admin", out var v) == true

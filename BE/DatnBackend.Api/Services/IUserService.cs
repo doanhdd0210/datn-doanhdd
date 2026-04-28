@@ -14,4 +14,5 @@ public interface IUserService
     Task<List<AppUser>> ListAdminsAsync();
     Task<UserProfile?> GetUserProfileAsync(string uid);
     Task<UserProfile> UpsertUserProfileAsync(string uid, UserProfile profile);
+    Task RegisterFcmTokenAsync(string uid, string token);
 }

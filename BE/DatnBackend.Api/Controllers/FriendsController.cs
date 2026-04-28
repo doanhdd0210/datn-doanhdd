@@ -84,11 +84,19 @@ public class FriendsController : ControllerBase
         }
     }
 
-    /// <summary>Get leaderboard - top users by XP</summary>
+    /// <summary>Get leaderboard - top users by total XP</summary>
     [HttpGet("leaderboard")]
     public async Task<ActionResult<ApiResponse<List<LeaderboardEntry>>>> GetLeaderboard([FromQuery] int limit = 20)
     {
         var entries = await _friendsService.GetLeaderboardAsync(limit);
+        return Ok(ApiResponse<List<LeaderboardEntry>>.Ok(entries));
+    }
+
+    /// <summary>Get weekly leaderboard - top users by XP earned in the past 7 days</summary>
+    [HttpGet("leaderboard/weekly")]
+    public async Task<ActionResult<ApiResponse<List<LeaderboardEntry>>>> GetWeeklyLeaderboard([FromQuery] int limit = 20)
+    {
+        var entries = await _friendsService.GetWeeklyLeaderboardAsync(limit);
         return Ok(ApiResponse<List<LeaderboardEntry>>.Ok(entries));
     }
 }

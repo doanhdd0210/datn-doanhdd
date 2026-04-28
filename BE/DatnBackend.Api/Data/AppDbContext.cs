@@ -21,6 +21,7 @@ public class AppDbContext : DbContext
     public DbSet<QaAnswer> QaAnswers => Set<QaAnswer>();
     public DbSet<UserFollow> UserFollows => Set<UserFollow>();
     public DbSet<NotificationRecord> NotificationHistory => Set<NotificationRecord>();
+    public DbSet<Achievement> Achievements => Set<Achievement>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -115,5 +116,7 @@ public class AppDbContext : DbContext
         });
 
         modelBuilder.Entity<NotificationRecord>(e => e.HasKey(n => n.Id));
+
+        modelBuilder.Entity<Achievement>(e => e.HasKey(a => a.Id));
     }
 }

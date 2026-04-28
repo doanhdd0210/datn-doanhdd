@@ -13,6 +13,19 @@ public class UsersController : ControllerBase
 
     public UsersController(IUserService userService) => _userService = userService;
 
+    private string? UserId => HttpContext.Items["FirebaseUid"]?.ToString();
+
+    /// <summary>Đăng ký FCM token cho thiết bị hiện tại</summary>
+    [HttpPost("me/fcm-token")]
+    public async Task<ActionResult<ApiResponse<object>>> RegisterFcmToken([FromBody] RegisterFcmTokenRequest request)
+    {
+        if (UserId == null) return Unauthorized(ApiResponse<object>.Fail("Unauthorized"));
+        if (string.IsNullOrWhiteSpace(request.Token))
+            return BadRequest(ApiResponse<object>.Fail("Token is required"));
+        await _userService.RegisterFcmTokenAsync(UserId, request.Token);
+        return Ok(ApiResponse<object>.Ok(null, "FCM token registered"));
+    }
+
     /// <summary>Lấy danh sách tất cả người dùng</summary>
     [HttpGet]
     public async Task<ActionResult<ApiResponse<List<AppUser>>>> List([FromQuery] int max = 500)

@@ -120,8 +120,9 @@ public class ProgressService
 
         await _db.SaveChangesAsync();
 
+        await UpdateUserStatsAsync(userId, xpEarned, 0);
         if (xpEarned > 0)
-            await UpdateUserStatsAsync(userId, xpEarned, 0);
+            await UpdateDailyProgressAsync(userId, 0, xpEarned, request.TimeSpentSeconds);
 
         return result;
     }

@@ -93,6 +93,50 @@ public class FriendsService
         await _cache.SetAsync(cacheKey, entries, TimeSpan.FromMinutes(1));
         return entries;
     }
+
+    public async Task<List<LeaderboardEntry>> GetWeeklyLeaderboardAsync(int limit = 20)
+    {
+        var cacheKey = $"leaderboard_weekly:{limit}";
+        var cached = await _cache.GetAsync<List<LeaderboardEntry>>(cacheKey);
+        if (cached != null) return cached;
+
+        var since = DateTime.UtcNow.AddDays(-7).ToString("yyyy-MM-dd");
+
+        // Sum XP from DailyProgress for the past 7 days, group by user
+        var weeklyXp = await _db.DailyProgresses
+            .Where(d => string.Compare(d.Date, since) >= 0)
+            .GroupBy(d => d.UserId)
+            .Select(g => new { UserId = g.Key, WeeklyXp = g.Sum(d => d.XpEarned) })
+            .OrderByDescending(x => x.WeeklyXp)
+            .Take(limit)
+            .ToListAsync();
+
+        if (weeklyXp.Count == 0) return [];
+
+        var userIds = weeklyXp.Select(x => x.UserId).ToList();
+        var profiles = await _db.UserProfiles
+            .Where(p => userIds.Contains(p.Uid))
+            .ToDictionaryAsync(p => p.Uid);
+
+        var entries = weeklyXp
+            .Select((x, i) => {
+                profiles.TryGetValue(x.UserId, out var profile);
+                return new LeaderboardEntry
+                {
+                    Rank = i + 1,
+                    UserId = x.UserId,
+                    DisplayName = profile?.DisplayName ?? "Unknown",
+                    PhotoUrl = profile?.PhotoUrl,
+                    TotalXp = x.WeeklyXp,
+                    LessonsCompleted = profile?.LessonsCompleted ?? 0,
+                    CurrentStreak = profile?.CurrentStreak ?? 0,
+                };
+            })
+            .ToList();
+
+        await _cache.SetAsync(cacheKey, entries, TimeSpan.FromMinutes(5));
+        return entries;
+    }
 }
 
 public class LeaderboardEntry

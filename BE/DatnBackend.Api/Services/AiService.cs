@@ -1,4 +1,3 @@
-using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using DatnBackend.Api.Models;
@@ -11,33 +10,33 @@ public class AiService
     private readonly ILogger<AiService> _logger;
     private readonly string _apiKey;
 
-    private const string GeminiUrl =
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent";
+    private const string GroqUrl = "https://api.groq.com/openai/v1/chat/completions";
+    private const string Model = "llama-3.1-8b-instant";
 
     public AiService(HttpClient http, ILogger<AiService> logger, IConfiguration config)
     {
         _http = http;
         _logger = logger;
-        _apiKey = Environment.GetEnvironmentVariable("GEMINI_API_KEY")
-                  ?? config["Gemini:ApiKey"]
+        _apiKey = Environment.GetEnvironmentVariable("GROQ_API_KEY")
+                  ?? config["Groq:ApiKey"]
                   ?? "";
     }
 
-    private async Task<string> CallGeminiAsync(string prompt)
+    private async Task<string> CallGroqAsync(string prompt)
     {
         if (string.IsNullOrEmpty(_apiKey))
-            return "Chưa cấu hình GEMINI_API_KEY trên server.";
+            return "Chưa cấu hình GROQ_API_KEY trên server.";
 
         var body = new
         {
-            contents = new[]
-            {
-                new { parts = new[] { new { text = prompt } } }
-            },
-            generationConfig = new { maxOutputTokens = 512, temperature = 0.4 }
+            model = Model,
+            messages = new[] { new { role = "user", content = prompt } },
+            max_tokens = 512,
+            temperature = 0.4
         };
 
-        var request = new HttpRequestMessage(HttpMethod.Post, $"{GeminiUrl}?key={_apiKey}");
+        var request = new HttpRequestMessage(HttpMethod.Post, GroqUrl);
+        request.Headers.Add("Authorization", $"Bearer {_apiKey}");
         request.Content = new StringContent(
             JsonSerializer.Serialize(body),
             Encoding.UTF8,
@@ -48,37 +47,22 @@ public class AiService
             var response = await _http.SendAsync(request);
             var json = await response.Content.ReadAsStringAsync();
 
-            // Retry once after 6s if rate-limited
-            if ((int)response.StatusCode == 429)
-            {
-                await Task.Delay(6000);
-                var retry = new HttpRequestMessage(HttpMethod.Post, $"{GeminiUrl}?key={_apiKey}");
-                retry.Content = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json");
-                response = await _http.SendAsync(retry);
-                json = await response.Content.ReadAsStringAsync();
-            }
-
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogWarning("Gemini error {Status}: {Body}", response.StatusCode, json);
-                return $"Gemini lỗi {(int)response.StatusCode}: {json[..Math.Min(json.Length, 200)]}";
+                _logger.LogWarning("Groq error {Status}: {Body}", response.StatusCode, json);
+                return $"AI lỗi {(int)response.StatusCode}. Thử lại sau.";
             }
 
             using var doc = JsonDocument.Parse(json);
-            var root = doc.RootElement;
-
-            if (!root.TryGetProperty("candidates", out var candidates) || candidates.GetArrayLength() == 0)
-                return "AI không trả về kết quả. Thử lại sau.";
-
-            return candidates[0]
+            return doc.RootElement
+                .GetProperty("choices")[0]
+                .GetProperty("message")
                 .GetProperty("content")
-                .GetProperty("parts")[0]
-                .GetProperty("text")
                 .GetString() ?? "Không có phản hồi từ AI.";
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Gemini call failed");
+            _logger.LogError(ex, "Groq call failed");
             return "Không thể kết nối AI lúc này. Thử lại sau.";
         }
     }
@@ -109,7 +93,7 @@ public class AiService
             Trả lời bằng tiếng Việt, ngắn gọn dưới 150 từ.
             """;
 
-        return await CallGeminiAsync(prompt);
+        return await CallGroqAsync(prompt);
     }
 
     public async Task<string> GenerateQuizHintAsync(AiHintRequest req)
@@ -130,7 +114,7 @@ public class AiService
             Trả lời bằng tiếng Việt, tối đa 2 câu.
             """;
 
-        return await CallGeminiAsync(prompt);
+        return await CallGroqAsync(prompt);
     }
 
     public async Task<string> SuggestQaAnswerAsync(AiQaRequest req)
@@ -145,6 +129,6 @@ public class AiService
             Trả lời bằng tiếng Việt, rõ ràng, dưới 200 từ. Nếu cần ví dụ code, đưa ra đoạn code ngắn gọn.
             """;
 
-        return await CallGeminiAsync(prompt);
+        return await CallGroqAsync(prompt);
     }
 }

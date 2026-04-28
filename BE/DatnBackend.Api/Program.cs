@@ -75,6 +75,8 @@ builder.Services.AddScoped<ProgressService>();
 builder.Services.AddScoped<CodeSnippetService>();
 builder.Services.AddScoped<QaService>();
 builder.Services.AddScoped<FriendsService>();
+builder.Services.AddScoped<AchievementsService>();
+builder.Services.AddHttpClient<AiService>();
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()

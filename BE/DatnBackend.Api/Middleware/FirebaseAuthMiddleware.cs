@@ -39,6 +39,7 @@ public class FirebaseAuthMiddleware
         // Skip Swagger UI, health check and bootstrap
         if (path.StartsWith("/swagger", StringComparison.OrdinalIgnoreCase)
             || path.StartsWith("/bootstrap", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/api/ai", StringComparison.OrdinalIgnoreCase)
             || PublicPaths.Contains(path))
         {
             await _next(context);

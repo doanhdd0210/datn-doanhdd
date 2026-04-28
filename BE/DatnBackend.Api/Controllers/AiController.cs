@@ -16,13 +16,10 @@ public class AiController : ControllerBase
         _ai = ai;
     }
 
-    private string? UserId => HttpContext.Items["FirebaseUid"]?.ToString();
-
     /// <summary>Giải thích lỗi code thực hành</summary>
     [HttpPost("explain")]
     public async Task<ActionResult<ApiResponse<string>>> ExplainCode([FromBody] AiExplainRequest req)
     {
-        if (UserId == null) return Unauthorized(ApiResponse<string>.Fail("Unauthorized"));
         var result = await _ai.ExplainCodeErrorAsync(req);
         return Ok(ApiResponse<string>.Ok(result));
     }
@@ -31,7 +28,6 @@ public class AiController : ControllerBase
     [HttpPost("hint")]
     public async Task<ActionResult<ApiResponse<string>>> QuizHint([FromBody] AiHintRequest req)
     {
-        if (UserId == null) return Unauthorized(ApiResponse<string>.Fail("Unauthorized"));
         var result = await _ai.GenerateQuizHintAsync(req);
         return Ok(ApiResponse<string>.Ok(result));
     }
@@ -40,7 +36,6 @@ public class AiController : ControllerBase
     [HttpPost("qa")]
     public async Task<ActionResult<ApiResponse<string>>> QaSuggest([FromBody] AiQaRequest req)
     {
-        if (UserId == null) return Unauthorized(ApiResponse<string>.Fail("Unauthorized"));
         var result = await _ai.SuggestQaAnswerAsync(req);
         return Ok(ApiResponse<string>.Ok(result));
     }

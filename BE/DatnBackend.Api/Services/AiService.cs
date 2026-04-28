@@ -12,7 +12,7 @@ public class AiService
     private readonly string _apiKey;
 
     private const string GeminiUrl =
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b:generateContent";
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent";
 
     public AiService(HttpClient http, ILogger<AiService> logger, IConfiguration config)
     {

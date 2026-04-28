@@ -51,7 +51,7 @@ public class AiService
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogWarning("Gemini error {Status}: {Body}", response.StatusCode, json);
-                return "AI không thể xử lý yêu cầu lúc này. Thử lại sau.";
+                return $"Gemini lỗi {(int)response.StatusCode}: {json[..Math.Min(json.Length, 200)]}";
             }
 
             using var doc = JsonDocument.Parse(json);

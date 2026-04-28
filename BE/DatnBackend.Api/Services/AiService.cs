@@ -12,7 +12,7 @@ public class AiService
     private readonly string _apiKey;
 
     private const string GeminiUrl =
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent";
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent";
 
     public AiService(HttpClient http, ILogger<AiService> logger, IConfiguration config)
     {
@@ -47,6 +47,16 @@ public class AiService
         {
             var response = await _http.SendAsync(request);
             var json = await response.Content.ReadAsStringAsync();
+
+            // Retry once after 6s if rate-limited
+            if ((int)response.StatusCode == 429)
+            {
+                await Task.Delay(6000);
+                var retry = new HttpRequestMessage(HttpMethod.Post, $"{GeminiUrl}?key={_apiKey}");
+                retry.Content = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json");
+                response = await _http.SendAsync(retry);
+                json = await response.Content.ReadAsStringAsync();
+            }
 
             if (!response.IsSuccessStatusCode)
             {

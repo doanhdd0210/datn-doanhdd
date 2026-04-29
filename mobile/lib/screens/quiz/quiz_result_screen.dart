@@ -1,13 +1,11 @@
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:percent_indicator/percent_indicator.dart';
-import 'package:provider/provider.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_text_styles.dart';
 import '../../constants/app_theme.dart';
 import '../../models/quiz_result.dart';
 import '../../models/question.dart';
-import '../../providers/user_provider.dart';
 import 'quiz_review_screen.dart';
 import 'quiz_screen.dart';
 
@@ -189,7 +187,7 @@ class _QuizResultScreenState extends State<QuizResultScreen>
                   const SizedBox(height: 28),
                   // Buttons
                   if (widget.isPerfect) ...[
-                    // 100% → Tiếp tục học (primary)
+                    // 100% → Tiếp tục học (primary, full width)
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -205,10 +203,10 @@ class _QuizResultScreenState extends State<QuizResultScreen>
                       ),
                     ),
                   ] else ...[
-                    // Chưa 100% → Làm lại là nút chính, không cho tiếp tục
+                    // Lock warning
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(14),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                       margin: const EdgeInsets.only(bottom: 12),
                       decoration: BoxDecoration(
                         color: AppColors.wrong.withValues(alpha: 0.07),
@@ -217,14 +215,14 @@ class _QuizResultScreenState extends State<QuizResultScreen>
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.lock_rounded, color: AppColors.wrong, size: 18),
-                          const SizedBox(width: 10),
+                          const Icon(Icons.lock_rounded, color: AppColors.wrong, size: 16),
+                          const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               'Cần trả lời đúng 100% để mở khoá bài tiếp theo!',
                               style: TextStyle(
                                 color: AppColors.wrong,
-                                fontSize: 13,
+                                fontSize: 12,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -232,54 +230,61 @@ class _QuizResultScreenState extends State<QuizResultScreen>
                         ],
                       ),
                     ),
-                    if (widget.lessonId != null)
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => QuizScreen(
-                                  lessonId: widget.lessonId!,
-                                  topicId: widget.topicId ?? '',
-                                  lessonTitle: widget.lessonTitle,
-                                  xpReward: widget.xpReward,
-                                ),
-                              ),
-                            );
-                          },
-                          icon: const Icon(Icons.refresh_rounded, size: 18),
-                          label: const Text('Làm lại ngay'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                            textStyle: AppTextStyles.buttonText,
+                    // Hai nút cùng hàng
+                    Row(
+                      children: [
+                        // Quay lại ôn bài (outlined, nhỏ hơn)
+                        Expanded(
+                          flex: 1,
+                          child: OutlinedButton.icon(
+                            onPressed: () => Navigator.pop(context),
+                            icon: const Icon(Icons.menu_book_rounded, size: 16),
+                            label: const Text('Ôn bài'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppColors.primary,
+                              side: BorderSide(color: AppColors.primary.withValues(alpha: 0.5)),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                            ),
                           ),
                         ),
-                      ),
-                    const SizedBox(height: 10),
-                    // Nút quay lại bài học để ôn lại
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: () => Navigator.pop(context),
-                        icon: const Icon(Icons.menu_book_rounded, size: 18),
-                        label: const Text('Quay lại ôn bài'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.primary,
-                          side: BorderSide(color: AppColors.primary.withValues(alpha: 0.5)),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                          textStyle: AppTextStyles.buttonText,
-                        ),
-                      ),
+                        const SizedBox(width: 10),
+                        // Làm lại ngay (primary, to hơn)
+                        if (widget.lessonId != null)
+                          Expanded(
+                            flex: 2,
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => QuizScreen(
+                                      lessonId: widget.lessonId!,
+                                      topicId: widget.topicId ?? '',
+                                      lessonTitle: widget.lessonTitle,
+                                      xpReward: widget.xpReward,
+                                    ),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.refresh_rounded, size: 16),
+                              label: const Text('Làm lại ngay'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ],
-                  const SizedBox(height: 12),
-                  if (widget.questions.isNotEmpty)
+                  // Xem lại câu trả lời — luôn hiện
+                  if (widget.questions.isNotEmpty) ...[
+                    const SizedBox(height: 10),
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton(
@@ -295,15 +300,16 @@ class _QuizResultScreenState extends State<QuizResultScreen>
                           );
                         },
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.primary,
-                          side: const BorderSide(color: AppColors.primary),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          foregroundColor: context.textSecondary,
+                          side: BorderSide(color: context.borderColor),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                          textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                          textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
                         ),
                         child: const Text('Xem lại câu trả lời'),
                       ),
                     ),
+                  ],
                   const SizedBox(height: 24),
                 ],
               ),

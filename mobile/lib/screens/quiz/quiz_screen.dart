@@ -381,25 +381,39 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
         ),
         // Submitting overlay
         if (_isSubmitting)
-          Container(
-            color: Colors.black54,
-            child: Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-                decoration: BoxDecoration(
-                  color: context.surfaceColor,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const CircularProgressIndicator(color: AppColors.primary, strokeWidth: 3),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Đang tính kết quả...',
-                      style: AppTextStyles.labelBold.copyWith(color: context.textPrimary),
-                    ),
-                  ],
+          Positioned.fill(
+            child: Container(
+              color: Colors.black.withValues(alpha: 0.55),
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 28),
+                  decoration: BoxDecoration(
+                    color: context.surfaceColor,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.3),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const CircularProgressIndicator(
+                        color: AppColors.primary,
+                        strokeWidth: 3,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Đang tính kết quả...',
+                        style: AppTextStyles.labelBold.copyWith(
+                          color: context.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

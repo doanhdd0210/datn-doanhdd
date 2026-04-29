@@ -912,7 +912,7 @@ class _DailyGoalPopup extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               'Bạn đã đạt mục tiêu XP hôm nay.\nCứ tiếp tục như vậy! 💪',
-              style: AppTextStyles.body.copyWith(color: AppColors.textGray),
+              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textGray),
               textAlign: TextAlign.center,
             ),
             if (bonusXp > 0) ...[

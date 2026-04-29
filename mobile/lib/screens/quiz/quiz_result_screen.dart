@@ -229,55 +229,58 @@ class _QuizResultScreenState extends State<QuizResultScreen>
                         ],
                       ),
                     ),
-                    // Hai nút cùng hàng
-                    Row(
-                      children: [
-                        // Quay lại ôn bài
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: () => Navigator.pop(context),
-                            icon: const Icon(Icons.menu_book_rounded, size: 16),
-                            label: const Text('Quay lại'),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: AppColors.primary,
-                              side: BorderSide(color: AppColors.primary.withValues(alpha: 0.5)),
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                              textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
-                            ),
-                          ),
-                        ),
-                        if (widget.lessonId != null) ...[
-                          const SizedBox(width: 10),
-                          // Làm lại ngay
+                    // Hai nút cùng hàng — IntrinsicHeight đảm bảo cao bằng nhau
+                    IntrinsicHeight(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // Quay lại ôn bài
                           Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: () {
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => QuizScreen(
-                                      lessonId: widget.lessonId!,
-                                      topicId: widget.topicId ?? '',
-                                      lessonTitle: widget.lessonTitle,
-                                      xpReward: widget.xpReward,
-                                    ),
-                                  ),
-                                );
-                              },
-                              icon: const Icon(Icons.refresh_rounded, size: 16),
-                              label: const Text('Làm lại'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primary,
-                                foregroundColor: Colors.white,
+                            child: OutlinedButton.icon(
+                              onPressed: () => Navigator.pop(context),
+                              icon: const Icon(Icons.menu_book_rounded, size: 16),
+                              label: const Text('Quay lại'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppColors.primary,
+                                side: BorderSide(color: AppColors.primary.withValues(alpha: 0.5)),
                                 padding: const EdgeInsets.symmetric(vertical: 14),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                                 textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
                               ),
                             ),
                           ),
+                          if (widget.lessonId != null) ...[
+                            const SizedBox(width: 10),
+                            // Làm lại ngay
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => QuizScreen(
+                                        lessonId: widget.lessonId!,
+                                        topicId: widget.topicId ?? '',
+                                        lessonTitle: widget.lessonTitle,
+                                        xpReward: widget.xpReward,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                icon: const Icon(Icons.refresh_rounded, size: 16),
+                                label: const Text('Làm lại'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primary,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                  textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
                   ],
                   // Xem lại câu trả lời — luôn hiện

@@ -233,13 +233,12 @@ class _QuizResultScreenState extends State<QuizResultScreen>
                     // Hai nút cùng hàng
                     Row(
                       children: [
-                        // Quay lại ôn bài (outlined, nhỏ hơn)
+                        // Quay lại ôn bài
                         Expanded(
-                          flex: 1,
                           child: OutlinedButton.icon(
                             onPressed: () => Navigator.pop(context),
                             icon: const Icon(Icons.menu_book_rounded, size: 16),
-                            label: const Text('Ôn bài'),
+                            label: const Text('Quay lại'),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: AppColors.primary,
                               side: BorderSide(color: AppColors.primary.withValues(alpha: 0.5)),
@@ -249,11 +248,10 @@ class _QuizResultScreenState extends State<QuizResultScreen>
                             ),
                           ),
                         ),
-                        const SizedBox(width: 10),
-                        // Làm lại ngay (primary, to hơn)
-                        if (widget.lessonId != null)
+                        if (widget.lessonId != null) ...[
+                          const SizedBox(width: 10),
+                          // Làm lại ngay
                           Expanded(
-                            flex: 2,
                             child: ElevatedButton.icon(
                               onPressed: () {
                                 Navigator.pushReplacement(
@@ -269,7 +267,7 @@ class _QuizResultScreenState extends State<QuizResultScreen>
                                 );
                               },
                               icon: const Icon(Icons.refresh_rounded, size: 16),
-                              label: const Text('Làm lại ngay'),
+                              label: const Text('Làm lại'),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.primary,
                                 foregroundColor: Colors.white,
@@ -279,6 +277,7 @@ class _QuizResultScreenState extends State<QuizResultScreen>
                               ),
                             ),
                           ),
+                        ],
                       ],
                     ),
                   ],

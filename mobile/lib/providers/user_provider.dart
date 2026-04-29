@@ -22,6 +22,8 @@ class UserProvider extends ChangeNotifier {
   // Daily goal tracking
   int _todayXp = 0;
   int _dailyGoal = 20;
+  bool _dailyGoalJustReached = false;
+  int _pendingBonusXp = 0;
 
   // Achievement tracking
   bool _hasPerfectQuiz = false;
@@ -60,6 +62,8 @@ class UserProvider extends ChangeNotifier {
   int get dailyGoal => _dailyGoal;
   bool get isDailyGoalReached => _todayXp >= _dailyGoal;
   double get dailyGoalProgress => _dailyGoal > 0 ? (_todayXp / _dailyGoal).clamp(0.0, 1.0) : 0.0;
+  bool get dailyGoalJustReached => _dailyGoalJustReached;
+  int get pendingBonusXp => _pendingBonusXp;
 
   bool get hasPerfectQuiz => _hasPerfectQuiz;
   bool get hasFollowed => _hasFollowed;
@@ -169,11 +173,40 @@ class UserProvider extends ChangeNotifier {
   }
 
   void addXp(int xp) {
+    final wasBelow = _todayXp < _dailyGoal;
     _totalXp += xp;
     _todayXp += xp;
+    final nowReached = _todayXp >= _dailyGoal;
+
+    // Detect first time crossing the goal today
+    if (wasBelow && nowReached) {
+      _claimDailyGoalBonus();
+    }
+
     _checkNewAchievements();
     _saveToCache();
     notifyListeners();
+  }
+
+  Future<void> _claimDailyGoalBonus() async {
+    try {
+      final result = await _api.claimDailyGoalBonus(_dailyGoal);
+      final success = result['success'] == true;
+      final bonusXp = result['bonusXp'] as int? ?? 0;
+      if (success && bonusXp > 0) {
+        _totalXp += bonusXp;
+        _todayXp += bonusXp;
+        _pendingBonusXp = bonusXp;
+        _dailyGoalJustReached = true;
+        _saveToCache();
+        notifyListeners();
+      }
+    } catch (_) {}
+  }
+
+  void consumeDailyGoalReached() {
+    _dailyGoalJustReached = false;
+    _pendingBonusXp = 0;
   }
 
   void markLessonCompleted(String lessonId, String topicId) {

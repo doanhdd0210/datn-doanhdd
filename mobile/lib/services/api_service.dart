@@ -220,6 +220,29 @@ class ApiService {
     return QuizResult.fromJson(data as Map<String, dynamic>);
   }
 
+  // Backend: POST /api/progress/claim-daily-goal-bonus
+  // Body: { goalTarget }
+  // Returns: { success, bonusXp, message }
+  Future<Map<String, dynamic>> claimDailyGoalBonus(int goalTarget) async {
+    try {
+      final data = await _post('/progress/claim-daily-goal-bonus', {'goalTarget': goalTarget});
+      if (data is Map<String, dynamic>) return data;
+      return {'success': false, 'bonusXp': 0, 'message': 'Invalid response'};
+    } catch (_) {
+      return {'success': false, 'bonusXp': 0, 'message': 'Network error'};
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getDailyGoalBonusConfigs() async {
+    try {
+      final data = await _get('/settings/daily-goal-bonuses');
+      if (data is List) return data.cast<Map<String, dynamic>>();
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
+
   Future<List<DailyProgress>> getDailyProgress() async {
     final data = await _get('/progress/daily');
     final list = (data as List<dynamic>?) ?? [];

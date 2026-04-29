@@ -1,4 +1,6 @@
+import 'dart:math';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -24,11 +26,48 @@ class _TopicsScreenState extends State<TopicsScreen> {
   List<Topic> _topics = [];
   final Map<String, List<Lesson>> _topicLessons = {};
   bool _isLoading = true;
+  late ConfettiController _confettiController;
 
   @override
   void initState() {
     super.initState();
+    _confettiController = ConfettiController(duration: const Duration(seconds: 4));
     _loadData();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final provider = context.read<UserProvider>();
+    if (provider.dailyGoalJustReached) {
+      provider.consumeDailyGoalReached();
+      final bonus = provider.pendingBonusXp;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _showGoalReachedPopup(bonus);
+      });
+    }
+  }
+
+  void _showGoalReachedPopup(int bonusXp) {
+    _confettiController.play();
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => _DailyGoalPopup(
+        bonusXp: bonusXp,
+        confettiController: _confettiController,
+        onClose: () {
+          _confettiController.stop();
+          Navigator.pop(ctx);
+        },
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _confettiController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadData() async {
@@ -79,7 +118,19 @@ class _TopicsScreenState extends State<TopicsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    // Listen for async goal-reached event (fired after API claim returns)
+    final provider = context.watch<UserProvider>();
+    if (provider.dailyGoalJustReached) {
+      provider.consumeDailyGoalReached();
+      final bonus = provider.pendingBonusXp;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _showGoalReachedPopup(bonus);
+      });
+    }
+
+    return Stack(
+      children: [
+        Scaffold(
       backgroundColor: context.bgColor,
       body: SafeArea(
         child: RefreshIndicator(
@@ -114,6 +165,28 @@ class _TopicsScreenState extends State<TopicsScreen> {
           ),
         ),
       ),
+        ),
+        // Confetti overlay — positioned at top center
+        Align(
+          alignment: Alignment.topCenter,
+          child: ConfettiWidget(
+            confettiController: _confettiController,
+            blastDirection: pi / 2,
+            blastDirectionality: BlastDirectionality.explosive,
+            emissionFrequency: 0.05,
+            numberOfParticles: 25,
+            gravity: 0.3,
+            colors: const [
+              AppColors.primary,
+              AppColors.xpGold,
+              AppColors.correct,
+              Colors.pink,
+              Colors.purple,
+              Colors.orange,
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -797,6 +870,94 @@ class _StatChip extends StatelessWidget {
           const SizedBox(width: 4),
           Text(value, style: TextStyle(color: color, fontWeight: FontWeight.w800, fontSize: 14)),
         ],
+      ),
+    );
+  }
+}
+
+// ── Daily Goal Reached Popup ──────────────────────────────────────────────────
+
+class _DailyGoalPopup extends StatelessWidget {
+  final int bonusXp;
+  final ConfettiController confettiController;
+  final VoidCallback onClose;
+
+  const _DailyGoalPopup({
+    required this.bonusXp,
+    required this.confettiController,
+    required this.onClose,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.all(28),
+        decoration: BoxDecoration(
+          color: context.surfaceColor,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 20, offset: const Offset(0, 8))],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('🎯', style: TextStyle(fontSize: 56)),
+            const SizedBox(height: 12),
+            Text(
+              'Mục tiêu hoàn thành!',
+              style: AppTextStyles.heading2.copyWith(color: AppColors.correct),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Bạn đã đạt mục tiêu XP hôm nay.\nCứ tiếp tục như vậy! 💪',
+              style: AppTextStyles.body.copyWith(color: AppColors.textGray),
+              textAlign: TextAlign.center,
+            ),
+            if (bonusXp > 0) ...[
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text('⚡', style: TextStyle(fontSize: 22)),
+                    const SizedBox(width: 8),
+                    Text(
+                      '+$bonusXp XP Thưởng!',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: onClose,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.correct,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Text('Tuyệt vời! 🎉', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

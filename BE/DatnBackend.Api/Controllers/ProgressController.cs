@@ -140,4 +140,23 @@ public class ProgressController : ControllerBase
         var stats = await _progressService.GetUserStatsAsync(uid);
         return Ok(ApiResponse<UserStatsResponse>.Ok(stats));
     }
+
+    /// <summary>Claim daily goal bonus XP (once per day)</summary>
+    [HttpPost("claim-daily-goal-bonus")]
+    public async Task<ActionResult<ApiResponse<ClaimBonusResult>>> ClaimDailyGoalBonus([FromBody] ClaimBonusRequest request)
+    {
+        var uid = UserId;
+        if (uid == null) return Unauthorized(ApiResponse<ClaimBonusResult>.Fail("Unauthorized"));
+
+        var result = await _progressService.ClaimDailyGoalBonusAsync(uid, request.GoalTarget);
+        if (!result.Success)
+            return BadRequest(ApiResponse<ClaimBonusResult>.Ok(result, result.Message));
+
+        return Ok(ApiResponse<ClaimBonusResult>.Ok(result, result.Message));
+    }
+}
+
+public class ClaimBonusRequest
+{
+    public int GoalTarget { get; set; }
 }

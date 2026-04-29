@@ -76,6 +76,7 @@ builder.Services.AddScoped<CodeSnippetService>();
 builder.Services.AddScoped<QaService>();
 builder.Services.AddScoped<FriendsService>();
 builder.Services.AddScoped<AchievementsService>();
+builder.Services.AddScoped<SettingsService>();
 builder.Services.AddHttpClient<AiService>();
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────

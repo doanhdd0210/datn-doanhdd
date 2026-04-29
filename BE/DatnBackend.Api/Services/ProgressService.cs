@@ -10,12 +10,14 @@ public class ProgressService
     private readonly AppDbContext _db;
     private readonly ICacheService _cache;
     private readonly ILogger<ProgressService> _logger;
+    private readonly SettingsService _settingsService;
 
-    public ProgressService(AppDbContext db, ICacheService cache, ILogger<ProgressService> logger)
+    public ProgressService(AppDbContext db, ICacheService cache, ILogger<ProgressService> logger, SettingsService settingsService)
     {
         _db = db;
         _cache = cache;
         _logger = logger;
+        _settingsService = settingsService;
     }
 
     /// <summary>Tạo UserProfile từ Firebase nếu chưa tồn tại trong DB.</summary>
@@ -286,6 +288,53 @@ public class ProgressService
         < 6000 => "Expert",
         _ => "Master",
     };
+
+    public async Task<ClaimBonusResult> ClaimDailyGoalBonusAsync(string userId, int goalTarget)
+    {
+        var today = DateTime.UtcNow.ToString("yyyy-MM-dd");
+
+        // Already claimed today?
+        var alreadyClaimed = await _db.DailyGoalBonusClaims
+            .AnyAsync(c => c.UserId == userId && c.Date == today);
+        if (alreadyClaimed)
+            return new ClaimBonusResult { Success = false, BonusXp = 0, Message = "Bạn đã nhận thưởng hôm nay rồi" };
+
+        // Verify XP earned today >= goalTarget
+        var todayProgress = await _db.DailyProgresses
+            .FirstOrDefaultAsync(d => d.UserId == userId && d.Date == today);
+        if (todayProgress == null || todayProgress.XpEarned < goalTarget)
+            return new ClaimBonusResult { Success = false, BonusXp = 0, Message = "Chưa đạt mục tiêu hôm nay" };
+
+        // Get configured bonus
+        var bonusXp = await _settingsService.GetBonusForGoalAsync(goalTarget);
+        if (bonusXp <= 0)
+            return new ClaimBonusResult { Success = false, BonusXp = 0, Message = "Mục tiêu không hợp lệ" };
+
+        // Mark claimed
+        _db.DailyGoalBonusClaims.Add(new DailyGoalBonusClaim
+        {
+            Id = Guid.NewGuid().ToString(),
+            UserId = userId,
+            Date = today,
+            GoalTarget = goalTarget,
+            BonusXp = bonusXp,
+            ClaimedAt = DateTime.UtcNow,
+        });
+
+        // Award bonus XP to profile + daily progress
+        var profile = await _db.UserProfiles.FirstOrDefaultAsync(p => p.Uid == userId);
+        if (profile != null)
+        {
+            profile.TotalXp += bonusXp;
+            profile.Rank = CalculateRank(profile.TotalXp);
+        }
+        todayProgress.XpEarned += bonusXp;
+
+        await _db.SaveChangesAsync();
+        await _cache.RemoveAsync($"stats:{userId}", "leaderboard");
+
+        return new ClaimBonusResult { Success = true, BonusXp = bonusXp, Message = "Nhận thưởng thành công!" };
+    }
 }
 
 public class UserStatsResponse
@@ -295,4 +344,11 @@ public class UserStatsResponse
     public int CurrentStreak { get; set; }
     public int LongestStreak { get; set; }
     public string Rank { get; set; } = "";
+}
+
+public class ClaimBonusResult
+{
+    public bool Success { get; set; }
+    public int BonusXp { get; set; }
+    public string Message { get; set; } = "";
 }

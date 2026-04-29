@@ -116,3 +116,9 @@ export const achievementsApi = {
   update: (id, data) => request('PUT', `/api/achievements/${id}`, data),
   delete: (id) => request('DELETE', `/api/achievements/${id}`),
 }
+
+// ─── Settings ────────────────────────────────────────────────────────────────
+export const settingsApi = {
+  getDailyGoalBonuses: () => request('GET', '/api/settings/daily-goal-bonuses'),
+  updateDailyGoalBonuses: (configs) => request('PUT', '/api/settings/daily-goal-bonuses', configs),
+}

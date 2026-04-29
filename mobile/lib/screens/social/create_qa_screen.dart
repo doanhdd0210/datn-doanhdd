@@ -64,7 +64,7 @@ class _CreateQaScreenState extends State<CreateQaScreen> {
             backgroundColor: AppColors.primary,
           ),
         );
-        Navigator.pop(context, true);
+        Navigator.of(context, rootNavigator: true).pop(true);
       }
     } catch (e) {
       if (mounted) {
@@ -124,10 +124,11 @@ class _CreateQaScreenState extends State<CreateQaScreen> {
             style: AppTextStyles.heading3.copyWith(color: context.textPrimary)),
         foregroundColor: context.textPrimary,
         automaticallyImplyLeading: false,
-        leading: IconButton(
-          icon: const Icon(Icons.close_rounded),
-          color: context.textPrimary,
-          onPressed: () => Navigator.of(context).pop(),
+        leading: Builder(
+          builder: (ctx) => IconButton(
+            icon: Icon(Icons.close_rounded, color: context.textPrimary),
+            onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(),
+          ),
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),

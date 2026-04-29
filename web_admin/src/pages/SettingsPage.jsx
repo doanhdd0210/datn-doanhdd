@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 
 export default function SettingsPage() {
   const { user } = useAuth()
-  const [apiUrl, setApiUrl] = useState(import.meta.env.VITE_API_URL || 'http://localhost:5000')
+  const [apiUrl, setApiUrl] = useState(import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000')
   const [health, setHealth] = useState(null)
   const [checking, setChecking] = useState(false)
 
@@ -43,7 +43,7 @@ export default function SettingsPage() {
         </div>
         <p style={s.hint}>
           Cấu hình trong <code>web_admin/.env.local</code>:&nbsp;
-          <code>VITE_API_URL=http://localhost:5000</code>
+          <code>VITE_API_BASE_URL=http://localhost:5000</code>
         </p>
 
         {health && (

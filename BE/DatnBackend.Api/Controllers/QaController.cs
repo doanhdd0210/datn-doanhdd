@@ -147,6 +147,25 @@ public class QaController : ControllerBase
         }
     }
 
+    /// <summary>Xoá bài đăng QA (admin only)</summary>
+    [HttpDelete("{id}")]
+    public async Task<ActionResult<ApiResponse<object>>> DeletePost(string id)
+    {
+        try
+        {
+            await _qaService.DeletePostAsync(id);
+            return Ok(ApiResponse<object>.Ok(null, "Post deleted"));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ApiResponse<object>.Fail(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ApiResponse<object>.Fail(ex.Message));
+        }
+    }
+
     /// <summary>Upvote an answer</summary>
     [HttpPost("answers/{id}/upvote")]
     public async Task<ActionResult<ApiResponse<object>>> UpvoteAnswer(string id)

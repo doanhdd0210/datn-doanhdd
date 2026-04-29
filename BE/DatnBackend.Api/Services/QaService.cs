@@ -130,4 +130,14 @@ public class QaService
         if (rows == 0)
             throw new KeyNotFoundException($"Answer '{answerId}' not found");
     }
+
+    public async Task DeletePostAsync(string postId)
+    {
+        var post = await _db.QaPosts.FindAsync(postId);
+        if (post == null) throw new KeyNotFoundException($"Post '{postId}' not found");
+        // Xoá answers liên quan trước
+        await _db.QaAnswers.Where(a => a.PostId == postId).ExecuteDeleteAsync();
+        _db.QaPosts.Remove(post);
+        await _db.SaveChangesAsync();
+    }
 }

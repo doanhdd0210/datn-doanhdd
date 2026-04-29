@@ -143,6 +143,25 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await db.Database.EnsureCreatedAsync();
+
+    // Tạo bảng mới nếu chưa tồn tại (EnsureCreated không thêm table mới vào DB cũ)
+    await db.Database.ExecuteSqlRawAsync(@"
+        CREATE TABLE IF NOT EXISTS ""UserNotifications"" (
+            ""Id"" text NOT NULL PRIMARY KEY,
+            ""UserId"" text NOT NULL,
+            ""Type"" text NOT NULL,
+            ""Title"" text NOT NULL,
+            ""Body"" text NOT NULL,
+            ""ActorId"" text,
+            ""ActorName"" text,
+            ""ActorAvatar"" text,
+            ""IsRead"" boolean NOT NULL DEFAULT false,
+            ""CreatedAt"" timestamp with time zone NOT NULL DEFAULT now()
+        );
+        CREATE INDEX IF NOT EXISTS ""IX_UserNotifications_UserId_CreatedAt""
+            ON ""UserNotifications"" (""UserId"", ""CreatedAt"" DESC);
+    ");
+
     await DbSeeder.SeedAsync(db);
 }
 

@@ -25,6 +25,7 @@ class _FriendsScreenState extends State<FriendsScreen>
   List<LeaderboardEntry> _leaderboard = [];
   List<LeaderboardEntry> _weeklyLeaderboard = [];
   List<UserFollow> _following = [];
+  List<UserFollow> _followers = [];
   Set<String> _followingIds = {};
   final Set<String> _loadingIds = {};
   bool _showWeekly = false;
@@ -72,11 +73,15 @@ class _FriendsScreenState extends State<FriendsScreen>
   Future<void> _loadFriends() async {
     setState(() => _isLoadingFriends = true);
     try {
-      final data = await _api.getFollowing();
+      final results = await Future.wait([
+        _api.getFollowing(),
+        _api.getFollowers(),
+      ]);
       if (mounted) {
         setState(() {
-          _following = data;
-          _followingIds = data.map((u) => u.userId).toSet();
+          _following = results[0];
+          _followers = results[1];
+          _followingIds = _following.map((u) => u.userId).toSet();
           _isLoadingFriends = false;
         });
       }
@@ -201,7 +206,15 @@ class _FriendsScreenState extends State<FriendsScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Bảng xếp hạng', style: AppTextStyles.heading2),
+                  Row(
+                    children: [
+                      const Text('Bảng xếp hạng', style: AppTextStyles.heading2),
+                      const Spacer(),
+                      _FollowStat(label: 'Đang theo', count: _following.length),
+                      const SizedBox(width: 16),
+                      _FollowStat(label: 'Người theo', count: _followers.length),
+                    ],
+                  ),
                   const SizedBox(height: 12),
                   TabBar(
                     controller: _tabController,
@@ -212,9 +225,9 @@ class _FriendsScreenState extends State<FriendsScreen>
                     labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
                     unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
                     dividerColor: context.borderColor,
-                    tabs: [
-                      const Tab(text: 'Xếp hạng'),
-                      Tab(text: 'Đang theo dõi (${_following.length})'),
+                    tabs: const [
+                      Tab(text: 'Xếp hạng'),
+                      Tab(text: 'Đang theo dõi'),
                     ],
                   ),
                 ],
@@ -646,6 +659,35 @@ class _FriendsScreenState extends State<FriendsScreen>
         }),
       ),
       ),
+    );
+  }
+}
+
+// ── Follow Stat ───────────────────────────────────────────────────────────────
+
+class _FollowStat extends StatelessWidget {
+  final String label;
+  final int count;
+  const _FollowStat({required this.label, required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Text(
+          '$count',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+            color: context.textPrimary,
+          ),
+        ),
+        Text(
+          label,
+          style: TextStyle(fontSize: 11, color: context.textSecondary),
+        ),
+      ],
     );
   }
 }

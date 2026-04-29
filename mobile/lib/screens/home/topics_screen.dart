@@ -813,7 +813,7 @@ class _LevelSubtitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const labels = {
-      'beginner': ('🔰', 'Người mới bắt đầu', AppColors.correct),
+      'beginner': ('🌱', 'Người mới bắt đầu', AppColors.correct),
       'intermediate': ('⭐', 'Trung cấp', AppColors.accentBlue),
       'advanced': ('💎', 'Nâng cao', AppColors.purple),
     };

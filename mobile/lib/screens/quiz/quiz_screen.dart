@@ -61,6 +61,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
   List<Question> _questions = [];
   List<_ShuffledQuestion> _shuffled = [];  // đáp án đã xáo trộn
   bool _isLoading = true;
+  bool _isSubmitting = false;
   int _currentIndex = 0;
   int? _selectedAnswer;
   bool _hasAnswered = false;
@@ -199,6 +200,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
   }
 
   Future<void> _finishQuiz() async {
+    setState(() => _isSubmitting = true);
     final timeSpent =
         ((DateTime.now().millisecondsSinceEpoch - _startTimestamp) / 1000)
             .round();
@@ -283,7 +285,9 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
     final progress = (_currentIndex + (_hasAnswered ? 1 : 0)) / _questions.length;
     final isCorrect = _hasAnswered && _selectedAnswer == shuffled.correctIndex;
 
-    return Scaffold(
+    return Stack(
+      children: [
+        Scaffold(
       backgroundColor: context.bgColor,
       body: SafeArea(
         child: Column(
@@ -370,6 +374,33 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
           ],
         ),
       ),
+        ),
+        // Submitting overlay
+        if (_isSubmitting)
+          Container(
+            color: Colors.black54,
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+                decoration: BoxDecoration(
+                  color: context.surfaceColor,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const CircularProgressIndicator(color: AppColors.primary, strokeWidth: 3),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Đang tính kết quả...',
+                      style: AppTextStyles.labelBold.copyWith(color: context.textPrimary),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 

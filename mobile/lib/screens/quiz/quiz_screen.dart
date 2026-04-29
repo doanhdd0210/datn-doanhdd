@@ -13,10 +13,18 @@ import 'quiz_result_screen.dart';
 
 /// Câu hỏi đã được shuffle đáp án
 class _ShuffledQuestion {
-  final List<String> options;     // đáp án đã xáo trộn
-  final int correctIndex;         // vị trí đúng sau khi xáo
+  final List<String> options;      // đáp án đã xáo trộn
+  final int correctIndex;          // vị trí đúng sau khi xáo (dùng để hiển thị UI)
+  final List<int> originalIndices; // originalIndices[shuffledPos] = originalPos
 
-  _ShuffledQuestion({required this.options, required this.correctIndex});
+  _ShuffledQuestion({
+    required this.options,
+    required this.correctIndex,
+    required this.originalIndices,
+  });
+
+  /// Chuyển shuffled index → original index để gửi lên server
+  int toOriginalIndex(int shuffledIndex) => originalIndices[shuffledIndex];
 
   static _ShuffledQuestion from(Question q) {
     final indexed = q.options.asMap().entries.toList()
@@ -25,6 +33,7 @@ class _ShuffledQuestion {
     return _ShuffledQuestion(
       options: indexed.map((e) => e.value).toList(),
       correctIndex: newCorrect,
+      originalIndices: indexed.map((e) => e.key).toList(),
     );
   }
 }
@@ -161,9 +170,11 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
 
     _feedbackController.forward(from: 0);
 
+    // Gửi original index lên server (không phải shuffled index)
+    final originalIndex = _shuffled[_currentIndex].toOriginalIndex(index);
     _userAnswers.add(UserAnswer(
       questionId: question.id,
-      selectedAnswerIndex: index,
+      selectedAnswerIndex: originalIndex,
       isCorrect: isCorrect,
     ));
 

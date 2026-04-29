@@ -1,3 +1,4 @@
+using FirebaseAdmin.Auth;
 using Microsoft.EntityFrameworkCore;
 using DatnBackend.Api.Data;
 using DatnBackend.Api.Models;
@@ -15,6 +16,35 @@ public class ProgressService
         _db = db;
         _cache = cache;
         _logger = logger;
+    }
+
+    /// <summary>Tạo UserProfile từ Firebase nếu chưa tồn tại trong DB.</summary>
+    private async Task EnsureProfileAsync(string userId)
+    {
+        var exists = await _db.UserProfiles.AnyAsync(p => p.Uid == userId);
+        if (exists) return;
+        try
+        {
+            var firebaseUser = await FirebaseAuth.DefaultInstance.GetUserAsync(userId);
+            var profile = new UserProfile
+            {
+                Uid = userId,
+                DisplayName = firebaseUser.DisplayName ?? firebaseUser.Email?.Split('@')[0] ?? "User",
+                PhotoUrl = firebaseUser.PhotoUrl,
+                TotalXp = 0,
+                CurrentStreak = 0,
+                LongestStreak = 0,
+                LessonsCompleted = 0,
+                Rank = "Beginner",
+                FcmTokens = [],
+            };
+            _db.UserProfiles.Add(profile);
+            await _db.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "EnsureProfile failed for {UserId}", userId);
+        }
     }
 
     public async Task<List<UserProgress>> GetTopicProgressAsync(string userId)
@@ -156,6 +186,7 @@ public class ProgressService
         var cached = await _cache.GetAsync<UserStatsResponse>(cacheKey);
         if (cached != null) return cached;
 
+        await EnsureProfileAsync(userId);
         var profile = await _db.UserProfiles.FirstOrDefaultAsync(p => p.Uid == userId);
         var stats = new UserStatsResponse
         {

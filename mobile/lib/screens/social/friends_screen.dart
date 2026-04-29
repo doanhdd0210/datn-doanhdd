@@ -1,10 +1,13 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_text_styles.dart';
+import '../../constants/app_theme.dart';
 import '../../models/leaderboard_entry.dart';
 import '../../models/user_follow.dart';
+import '../../providers/user_provider.dart';
 import '../../services/api_service.dart';
 
 class FriendsScreen extends StatefulWidget {
@@ -20,9 +23,12 @@ class _FriendsScreenState extends State<FriendsScreen>
   late TabController _tabController;
 
   List<LeaderboardEntry> _leaderboard = [];
+  List<LeaderboardEntry> _weeklyLeaderboard = [];
   List<UserFollow> _following = [];
   Set<String> _followingIds = {};
-  Set<String> _loadingIds = {};
+  final Set<String> _loadingIds = {};
+  bool _showWeekly = false;
+  String? _leaderboardError;
 
   bool _isLoadingLeaderboard = true;
   bool _isLoadingFriends = true;
@@ -45,12 +51,21 @@ class _FriendsScreenState extends State<FriendsScreen>
   }
 
   Future<void> _loadLeaderboard() async {
-    setState(() => _isLoadingLeaderboard = true);
+    setState(() { _isLoadingLeaderboard = true; _leaderboardError = null; });
     try {
-      final data = await _api.getLeaderboard();
-      if (mounted) setState(() { _leaderboard = data; _isLoadingLeaderboard = false; });
-    } catch (_) {
-      if (mounted) setState(() => _isLoadingLeaderboard = false);
+      final results = await Future.wait([
+        _api.getLeaderboard(),
+        _api.getWeeklyLeaderboard(),
+      ]);
+      if (mounted) {
+        setState(() {
+          _leaderboard = results[0];
+          _weeklyLeaderboard = results[1];
+          _isLoadingLeaderboard = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() { _isLoadingLeaderboard = false; _leaderboardError = e.toString(); });
     }
   }
 
@@ -83,6 +98,9 @@ class _FriendsScreenState extends State<FriendsScreen>
         });
       } else {
         await _api.followUser(entry.userId, entry.name, entry.avatar);
+        if (mounted) {
+          context.read<UserProvider>().markFollowed();
+        }
         setState(() {
           _followingIds.add(entry.userId);
           _following.add(UserFollow(
@@ -107,35 +125,66 @@ class _FriendsScreenState extends State<FriendsScreen>
   }
 
   Future<void> _unfollow(UserFollow user) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Bỏ theo dõi'),
+        content: Text('Bỏ theo dõi ${user.name}?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Hủy', style: TextStyle(color: AppColors.textGray)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.red,
+              foregroundColor: Colors.white,
+              minimumSize: const Size(80, 38),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text('Bỏ theo'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+    if (_loadingIds.contains(user.userId)) return;
+    setState(() => _loadingIds.add(user.userId));
     try {
       await _api.unfollowUser(user.userId);
-      setState(() {
-        _following.removeWhere((u) => u.userId == user.userId);
-        _followingIds.remove(user.userId);
-      });
+      if (mounted) {
+        setState(() {
+          _following.removeWhere((u) => u.userId == user.userId);
+          _followingIds.remove(user.userId);
+        });
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Lỗi: $e'), behavior: SnackBarBehavior.floating),
         );
       }
+    } finally {
+      if (mounted) setState(() => _loadingIds.remove(user.userId));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.bgColor,
       body: SafeArea(
         child: Column(
           children: [
             Container(
-              color: AppColors.surface,
+              color: context.surfaceColor,
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Bảng xếp hạng', style: AppTextStyles.heading2),
+                  const Text('Bảng xếp hạng', style: AppTextStyles.heading2),
                   const SizedBox(height: 12),
                   TabBar(
                     controller: _tabController,
@@ -145,7 +194,7 @@ class _FriendsScreenState extends State<FriendsScreen>
                     unselectedLabelColor: AppColors.textGray,
                     labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
                     unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                    dividerColor: AppColors.border,
+                    dividerColor: context.borderColor,
                     tabs: [
                       const Tab(text: 'Xếp hạng'),
                       Tab(text: 'Đang theo dõi (${_following.length})'),
@@ -172,32 +221,88 @@ class _FriendsScreenState extends State<FriendsScreen>
   Widget _buildLeaderboard() {
     if (_isLoadingLeaderboard) return _buildShimmer();
 
-    if (_leaderboard.isEmpty) {
-      return const Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('🏆', style: TextStyle(fontSize: 52)),
-            SizedBox(height: 12),
-            Text('Chưa có dữ liệu', style: AppTextStyles.heading4),
-          ],
+    if (_leaderboardError != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('⚠️', style: TextStyle(fontSize: 48)),
+              const SizedBox(height: 12),
+              const Text('Không tải được dữ liệu', style: AppTextStyles.heading4),
+              const SizedBox(height: 8),
+              Text(_leaderboardError!, style: AppTextStyles.bodySmall, textAlign: TextAlign.center),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                onPressed: _loadLeaderboard,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Thử lại'),
+              ),
+            ],
+          ),
         ),
       );
     }
 
-    final top3 = _leaderboard.take(3).toList();
-    final rest = _leaderboard.skip(3).toList();
+    final data = _showWeekly ? _weeklyLeaderboard : _leaderboard;
 
     return RefreshIndicator(
       onRefresh: _loadAll,
       color: AppColors.primary,
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         children: [
-          if (top3.length >= 3) _buildPodium(top3),
-          const SizedBox(height: 16),
-          ...rest.map((entry) => _buildLeaderboardRow(entry)),
+          _buildLeaderboardToggle(),
+          const SizedBox(height: 12),
+          if (data.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 60),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('🏆', style: TextStyle(fontSize: 52)),
+                  const SizedBox(height: 12),
+                  Text(
+                    _showWeekly ? 'Chưa có hoạt động tuần này' : 'Chưa có dữ liệu',
+                    style: AppTextStyles.heading4,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Hoàn thành bài học để xuất hiện trên bảng xếp hạng!',
+                    style: AppTextStyles.bodySmall,
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            )
+          else ...[
+            if (data.length >= 3) _buildPodium(data.take(3).toList()),
+            const SizedBox(height: 16),
+            ...data.skip(3).map((e) => _buildLeaderboardRow(e)),
+          ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildLeaderboardToggle() {
+    return Builder(
+      builder: (context) => Container(
+      height: 36,
+      decoration: BoxDecoration(
+        color: context.surfaceElevatedColor,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          _ToggleTab(label: 'Tổng', active: !_showWeekly,
+              onTap: () => setState(() => _showWeekly = false)),
+          _ToggleTab(label: 'Tuần này', active: _showWeekly,
+              onTap: () => setState(() => _showWeekly = true)),
+        ],
+      ),
       ),
     );
   }
@@ -217,14 +322,14 @@ class _FriendsScreenState extends State<FriendsScreen>
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppColors.primary.withOpacity(0.12),
-            AppColors.secondary.withOpacity(0.08),
+            AppColors.primary.withValues(alpha: 0.12),
+            AppColors.secondary.withValues(alpha: 0.08),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.borderColor),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
@@ -242,7 +347,7 @@ class _FriendsScreenState extends State<FriendsScreen>
                   decoration: BoxDecoration(shape: BoxShape.circle, color: colors[i]),
                   child: CircleAvatar(
                     radius: isCenter ? 32 : 24,
-                    backgroundColor: colors[i].withOpacity(0.2),
+                    backgroundColor: colors[i].withValues(alpha: 0.2),
                     backgroundImage: entry.avatar.isNotEmpty
                         ? CachedNetworkImageProvider(entry.avatar)
                         : null,
@@ -277,11 +382,20 @@ class _FriendsScreenState extends State<FriendsScreen>
                     color: colors[i],
                   ),
                 ),
+                if (entry.streak > 0)
+                  Text(
+                    '🔥 ${entry.streak} ngày',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 10,
+                      color: AppColors.textGray,
+                    ),
+                  ),
                 const SizedBox(height: 8),
                 Container(
                   height: heights[i],
                   decoration: BoxDecoration(
-                    color: colors[i].withOpacity(0.15),
+                    color: colors[i].withValues(alpha: 0.15),
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(8),
                       topRight: Radius.circular(8),
@@ -316,10 +430,10 @@ class _FriendsScreenState extends State<FriendsScreen>
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
       decoration: BoxDecoration(
-        color: isMe ? AppColors.primary.withOpacity(0.1) : AppColors.surface,
+        color: isMe ? AppColors.primary.withValues(alpha: 0.1) : context.surfaceColor,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isMe ? AppColors.primary.withOpacity(0.4) : AppColors.border,
+          color: isMe ? AppColors.primary.withValues(alpha: 0.4) : context.borderColor,
         ),
       ),
       child: Row(
@@ -338,7 +452,7 @@ class _FriendsScreenState extends State<FriendsScreen>
           const SizedBox(width: 8),
           CircleAvatar(
             radius: 20,
-            backgroundColor: AppColors.primary.withOpacity(0.2),
+            backgroundColor: AppColors.primary.withValues(alpha: 0.2),
             backgroundImage: entry.avatar.isNotEmpty
                 ? CachedNetworkImageProvider(entry.avatar)
                 : null,
@@ -377,8 +491,10 @@ class _FriendsScreenState extends State<FriendsScreen>
                     ],
                   ],
                 ),
-                Text('🔥 ${entry.streak} ngày  ⚡ ${entry.totalXp} XP',
-                    style: AppTextStyles.bodySmall),
+                Text(
+                  '🔥 ${entry.streak} ngày  ⚡ ${entry.totalXp} XP${entry.lessonsCompleted > 0 ? '  📚 ${entry.lessonsCompleted} bài' : ''}',
+                  style: AppTextStyles.bodySmall,
+                ),
               ],
             ),
           ),
@@ -389,10 +505,10 @@ class _FriendsScreenState extends State<FriendsScreen>
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: isFollowing ? AppColors.primary.withOpacity(0.1) : AppColors.primary,
+                  color: isFollowing ? AppColors.primary.withValues(alpha: 0.1) : AppColors.primary,
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: isFollowing ? AppColors.primary.withOpacity(0.4) : AppColors.primary,
+                    color: isFollowing ? AppColors.primary.withValues(alpha: 0.4) : AppColors.primary,
                   ),
                 ),
                 child: isLoading
@@ -454,19 +570,20 @@ class _FriendsScreenState extends State<FriendsScreen>
   }
 
   Widget _buildFriendRow(UserFollow user) {
+    final isLoading = _loadingIds.contains(user.userId);
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.surfaceColor,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.borderColor),
       ),
       child: Row(
         children: [
           CircleAvatar(
             radius: 22,
-            backgroundColor: AppColors.primary.withOpacity(0.2),
+            backgroundColor: AppColors.primary.withValues(alpha: 0.2),
             backgroundImage: user.avatar.isNotEmpty
                 ? CachedNetworkImageProvider(user.avatar)
                 : null,
@@ -489,18 +606,24 @@ class _FriendsScreenState extends State<FriendsScreen>
             ),
           ),
           GestureDetector(
-            onTap: () => _unfollow(user),
-            child: Container(
+            onTap: isLoading ? null : () => _unfollow(user),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
               decoration: BoxDecoration(
                 color: AppColors.surfaceLight,
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: AppColors.borderDark),
               ),
-              child: const Text(
-                'Bỏ theo',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textGray),
-              ),
+              child: isLoading
+                  ? const SizedBox(
+                      width: 14, height: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.textGray),
+                    )
+                  : const Text(
+                      'Bỏ theo',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textGray),
+                    ),
             ),
           ),
         ],
@@ -509,23 +632,62 @@ class _FriendsScreenState extends State<FriendsScreen>
   }
 
   Widget _buildShimmer() {
-    return Padding(
+    return Builder(
+      builder: (context) => Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
         children: List.generate(6, (_) {
           return Shimmer.fromColors(
-            baseColor: AppColors.surface,
-            highlightColor: AppColors.surfaceElevated,
+            baseColor: context.surfaceColor,
+            highlightColor: context.surfaceElevatedColor,
             child: Container(
               margin: const EdgeInsets.only(bottom: 10),
               height: 64,
               decoration: BoxDecoration(
-                color: AppColors.surface,
+                color: context.surfaceColor,
                 borderRadius: BorderRadius.circular(14),
               ),
             ),
           );
         }),
+      ),
+      ),
+    );
+  }
+}
+
+// ── Toggle Tab ────────────────────────────────────────────────────────────────
+
+class _ToggleTab extends StatelessWidget {
+  final String label;
+  final bool active;
+  final VoidCallback onTap;
+
+  const _ToggleTab({required this.label, required this.active, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          margin: const EdgeInsets.all(3),
+          decoration: BoxDecoration(
+            color: active ? AppColors.primary : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: active ? Colors.white : AppColors.textGray,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

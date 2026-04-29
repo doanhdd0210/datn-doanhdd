@@ -183,10 +183,12 @@ class ApiService {
 
   // ── Progress ──────────────────────────────────────────────────────────────
 
-  Future<Map<String, dynamic>> getTopicProgress() async {
+  /// Backend trả về List<UserProgress> — chuyển thành Map để provider parse
+  Future<List<Map<String, dynamic>>> getTopicProgress() async {
     final data = await _get('/progress/topics');
-    if (data == null) return {};
-    return data as Map<String, dynamic>;
+    if (data == null) return [];
+    if (data is List) return data.cast<Map<String, dynamic>>();
+    return [];
   }
 
   Future<Map<String, dynamic>> getLessonProgress(String topicId) async {

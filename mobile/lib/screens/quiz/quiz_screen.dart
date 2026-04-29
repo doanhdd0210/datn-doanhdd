@@ -233,6 +233,8 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
       if (mounted) {
         // Chỉ unlock bài tiếp theo khi đạt 100%
         if (isPerfect) {
+          // Ghi vào DB để persist qua các session
+          await _api.completeLesson(widget.lessonId, widget.topicId, timeSpentSeconds: timeSpent);
           context.read<UserProvider>().markLessonCompleted(widget.lessonId, widget.topicId);
         }
         context.read<UserProvider>().addXp(result.xpEarned);
@@ -241,6 +243,8 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
       if (mounted) {
         if (isPerfect) {
           context.read<UserProvider>().markLessonCompleted(widget.lessonId, widget.topicId);
+          // Best-effort server persist (ignore errors)
+          _api.completeLesson(widget.lessonId, widget.topicId, timeSpentSeconds: timeSpent).catchError((_) {});
         }
         context.read<UserProvider>().addXp(localXp);
       }

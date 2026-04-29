@@ -156,17 +156,20 @@ class UserProvider extends ChangeNotifier {
 
   Future<void> loadTopicProgress() async {
     try {
-      final data = await _api.getTopicProgress();
-      final progress = data['progress'] as List<dynamic>? ?? [];
-      for (final item in progress) {
-        final map = item as Map<String, dynamic>;
-        final topicId = map['topicId'] as String? ?? '';
-        final completed = map['completedLessons'] as int? ?? 0;
-        final lessonIds = (map['completedLessonIds'] as List<dynamic>? ?? [])
-            .map((e) => e.toString())
-            .toSet();
-        _topicProgressMap[topicId] = completed;
-        _completedLessons.addAll(lessonIds);
+      // Backend trả về List<UserProgress>: [{ lessonId, topicId, isCompleted, score }]
+      final list = await _api.getTopicProgress();
+      _topicProgressMap.clear();
+      _completedLessons.clear();
+      for (final map in list) {
+        final topicId  = map['topicId']    as String? ?? '';
+        final lessonId = map['lessonId']   as String? ?? '';
+        final isCompleted = map['isCompleted'] as bool? ?? false;
+        if (isCompleted && lessonId.isNotEmpty) {
+          _completedLessons.add(lessonId);
+          if (topicId.isNotEmpty) {
+            _topicProgressMap[topicId] = (_topicProgressMap[topicId] ?? 0) + 1;
+          }
+        }
       }
     } catch (_) {}
     notifyListeners();

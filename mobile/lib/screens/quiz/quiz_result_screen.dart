@@ -260,6 +260,23 @@ class _QuizResultScreenState extends State<QuizResultScreen>
                           ),
                         ),
                       ),
+                    const SizedBox(height: 10),
+                    // Nút quay lại bài học để ôn lại
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.menu_book_rounded, size: 18),
+                        label: const Text('Quay lại ôn bài'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.primary,
+                          side: BorderSide(color: AppColors.primary.withValues(alpha: 0.5)),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          textStyle: AppTextStyles.buttonText,
+                        ),
+                      ),
+                    ),
                   ],
                   const SizedBox(height: 12),
                   if (widget.questions.isNotEmpty)

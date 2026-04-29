@@ -15,9 +15,23 @@ class AuthService {
   // User hiện tại
   User? get currentUser => _auth.currentUser;
 
-  // Đăng nhập bằng Google
+  // Đăng nhập bằng Google (dùng tài khoản đã lưu nếu có)
   Future<UserCredential?> signInWithGoogle() async {
+    return _doGoogleSignIn(forceAccountPicker: false);
+  }
+
+  // Đăng nhập bằng Google — luôn hiện bảng chọn tài khoản
+  Future<UserCredential?> signInWithDifferentAccount() async {
+    return _doGoogleSignIn(forceAccountPicker: true);
+  }
+
+  Future<UserCredential?> _doGoogleSignIn({required bool forceAccountPicker}) async {
     try {
+      if (forceAccountPicker) {
+        // Sign out khỏi Google để force show account picker
+        await _googleSignIn.signOut();
+      }
+
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) return null; // User huỷ
 

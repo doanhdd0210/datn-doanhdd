@@ -814,8 +814,8 @@ class _LevelSubtitle extends StatelessWidget {
   Widget build(BuildContext context) {
     const labels = {
       'beginner': ('🌱', 'Người mới bắt đầu', AppColors.correct),
-      'intermediate': ('⭐', 'Trung cấp', AppColors.accentBlue),
-      'advanced': ('💎', 'Nâng cao', AppColors.purple),
+      'intermediate': ('🪴', 'Trung cấp', AppColors.correct),
+      'advanced': ('🌳', 'Nâng cao', AppColors.correct),
     };
     final entry = labels[level] ?? labels['beginner']!;
     return Row(

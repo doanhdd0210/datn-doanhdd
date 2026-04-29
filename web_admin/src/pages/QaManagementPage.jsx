@@ -38,37 +38,25 @@ export default function QaManagementPage() {
     setTimeout(() => setToast({ msg: '', type: 'success' }), 2500)
   }
 
-  const load = useCallback(async (reset = false) => {
+  const load = useCallback(async (pageNum = 1) => {
     setLoading(true)
     setError('')
-    const currentPage = reset ? 1 : page
     try {
-      const data = await qaApi.list(currentPage)
+      const data = await qaApi.list(pageNum)
       const items = data?.items ?? data ?? []
-      if (reset) {
-        setPosts(items)
-        setPage(1)
-      } else {
-        setPosts(prev => currentPage === 1 ? items : [...prev, ...items])
-      }
+      setPosts(prev => pageNum === 1 ? items : [...prev, ...items])
+      setPage(pageNum)
       setHasMore(items.length >= 20)
     } catch (e) {
       setError(e.message)
     } finally {
       setLoading(false)
     }
-  }, [page])
+  }, [])
 
-  useEffect(() => { load(true) }, []) // eslint-disable-line
+  useEffect(() => { load(1) }, [load])
 
-  const loadMore = () => {
-    const nextPage = page + 1
-    setPage(nextPage)
-  }
-
-  useEffect(() => {
-    if (page > 1) load(false)
-  }, [page]) // eslint-disable-line
+  const loadMore = () => load(page + 1)
 
   const filtered = posts.filter(p => {
     const q = search.toLowerCase()

@@ -86,12 +86,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       body: SafeArea(
         child: Consumer<UserProvider>(
           builder: (context, provider, _) {
-            if (provider.pendingAchievements.isNotEmpty) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (!mounted) return;
-                _showPendingAchievements(provider);
-              });
-            }
             return CustomScrollView(
               slivers: [
                 SliverToBoxAdapter(

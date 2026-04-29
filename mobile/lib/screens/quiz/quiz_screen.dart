@@ -191,7 +191,21 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
     final timeSpent =
         ((DateTime.now().millisecondsSinceEpoch - _startTimestamp) / 1000)
             .round();
-    QuizResult? result;
+
+    // Tính kết quả local làm fallback
+    final totalPoints = _questions.fold(0, (sum, q) => sum + q.points);
+    final ratio = _questions.isNotEmpty ? _correctCount / _questions.length : 0.0;
+    final localXp = (ratio * totalPoints).round();
+    QuizResult result = QuizResult(
+      id: 'local',
+      lessonId: widget.lessonId,
+      totalQuestions: _questions.length,
+      correctAnswers: _correctCount,
+      score: (ratio * 100).round(),
+      xpEarned: localXp,
+      answers: _userAnswers,
+      completedAt: DateTime.now(),
+    );
 
     // Mark perfect quiz nếu không sai câu nào
     if (_correctCount == _questions.length && _questions.isNotEmpty) {
@@ -199,28 +213,16 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
     }
 
     try {
-      result = await _api.submitQuiz(widget.lessonId, _userAnswers, timeSpent);
+      final serverResult = await _api.submitQuiz(widget.lessonId, _userAnswers, timeSpent);
+      result = serverResult;
       if (mounted) {
         context.read<UserProvider>().markLessonCompleted(widget.lessonId, widget.topicId);
         context.read<UserProvider>().addXp(result.xpEarned);
       }
     } catch (_) {
-      final totalPoints = _questions.fold(0, (sum, q) => sum + q.points);
-      final ratio = _questions.isNotEmpty ? _correctCount / _questions.length : 0.0;
-      final xpEarned = (ratio * totalPoints).round();
-      result = QuizResult(
-        id: 'local',
-        lessonId: widget.lessonId,
-        totalQuestions: _questions.length,
-        correctAnswers: _correctCount,
-        score: (ratio * 100).round(),
-        xpEarned: xpEarned,
-        answers: _userAnswers,
-        completedAt: DateTime.now(),
-      );
       if (mounted) {
         context.read<UserProvider>().markLessonCompleted(widget.lessonId, widget.topicId);
-        context.read<UserProvider>().addXp(xpEarned);
+        context.read<UserProvider>().addXp(localXp);
       }
     }
 
@@ -229,7 +231,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
         context,
         MaterialPageRoute(
           builder: (_) => QuizResultScreen(
-            result: result!,
+            result: result,
             questions: _questions,
             lessonTitle: widget.lessonTitle,
             lessonId: widget.lessonId,

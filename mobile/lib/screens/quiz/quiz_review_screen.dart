@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_text_styles.dart';
+import '../../constants/app_theme.dart';
 import '../../models/quiz_result.dart';
 import '../../models/question.dart';
 
@@ -17,19 +18,19 @@ class QuizReviewScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.bgColor,
       appBar: AppBar(
         title: const Text('Xem lại câu trả lời'),
-        backgroundColor: AppColors.background,
-        foregroundColor: AppColors.textDark,
+        backgroundColor: context.bgColor,
+        foregroundColor: context.textPrimary,
         elevation: 0,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: AppColors.border),
+          child: Container(height: 1, color: context.borderColor),
         ),
       ),
       body: ListView.builder(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
         itemCount: questions.length,
         itemBuilder: (context, index) {
           final question = questions[index];
@@ -66,184 +67,252 @@ class _ReviewItem extends StatefulWidget {
 class _ReviewItemState extends State<_ReviewItem> {
   bool _showExplanation = false;
 
+  static const _correctColor = Color(0xFF4CAF50);
+  static const _wrongColor   = Color(0xFFF44336);
+
   @override
   Widget build(BuildContext context) {
-    final userAnswer = widget.userAnswer;
-    final isCorrect = userAnswer?.isCorrect ?? false;
-    final question = widget.question;
-    const optionLabels = ['A', 'B', 'C', 'D'];
+    final userAnswer  = widget.userAnswer;
+    final isCorrect   = userAnswer?.isCorrect ?? false;
+    final question    = widget.question;
+    const labels      = ['A', 'B', 'C', 'D'];
+
+    final accentColor = isCorrect ? _correctColor : _wrongColor;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isCorrect ? AppColors.correct.withValues(alpha: 0.4) : AppColors.wrong.withValues(alpha: 0.4),
-        ),
+        color: context.surfaceColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: accentColor.withValues(alpha: 0.3), width: 1.5),
       ),
+      clipBehavior: Clip.hardEdge,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
+          // ── Header strip ────────────────────────────────────────────────
           Container(
-            padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
-            decoration: BoxDecoration(
-              color: isCorrect ? AppColors.correctBg.withValues(alpha: 0.6) : AppColors.wrongBg.withValues(alpha: 0.6),
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(14),
-                topRight: Radius.circular(14),
-              ),
-            ),
+            padding: const EdgeInsets.fromLTRB(14, 10, 12, 10),
+            color: accentColor.withValues(alpha: 0.07),
             child: Row(
               children: [
-                Icon(
-                  isCorrect ? Icons.check_circle : Icons.cancel,
-                  color: isCorrect ? AppColors.correct : AppColors.wrong,
-                  size: 18,
+                Container(
+                  width: 24, height: 24,
+                  decoration: BoxDecoration(
+                    color: accentColor.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    isCorrect ? Icons.check_rounded : Icons.close_rounded,
+                    color: accentColor, size: 15,
+                  ),
                 ),
                 const SizedBox(width: 8),
                 Text(
                   'Câu hỏi ${widget.questionIndex + 1}',
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
-                    color: isCorrect ? AppColors.correct : AppColors.wrong,
+                    color: accentColor,
                     fontSize: 13,
                   ),
                 ),
                 const Spacer(),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
                   decoration: BoxDecoration(
-                    color: isCorrect ? AppColors.correct : AppColors.wrong,
+                    color: accentColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: accentColor.withValues(alpha: 0.3)),
                   ),
                   child: Text(
                     isCorrect ? '+${question.points} đ' : '0 đ',
-                    style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
+                    style: TextStyle(
+                      color: accentColor,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
+
+          // ── Question text ────────────────────────────────────────────────
           Padding(
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 6),
-            child: Text(question.questionText, style: AppTextStyles.labelBold),
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+            child: Text(question.questionText, style: AppTextStyles.labelBold.copyWith(height: 1.5)),
           ),
-          // Options
-          ...question.options.asMap().entries.map((entry) {
-            final i = entry.key;
-            final option = entry.value;
-            final isCorrectOption = i == question.correctAnswerIndex;
-            final isUserSelected = userAnswer?.selectedAnswerIndex == i;
 
-            Color? bg;
-            Color? border;
+          // ── Options ──────────────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
+            child: Column(
+              children: question.options.asMap().entries.map((entry) {
+                final i             = entry.key;
+                final option        = entry.value;
+                final isCorrectOpt  = i == question.correctAnswerIndex;
+                final isUserPick    = userAnswer?.selectedAnswerIndex == i;
 
-            if (isCorrectOption) {
-              bg = AppColors.correctBg;
-              border = AppColors.correct;
-            } else if (isUserSelected && !isCorrectOption) {
-              bg = AppColors.wrongBg;
-              border = AppColors.wrong;
-            }
+                Color bgColor     = context.surfaceElevatedColor;
+                Color borderColor = context.borderColor;
+                Color textColor   = context.textSecondary;
+                Color labelBg     = context.surfaceElevatedColor;
+                Color labelColor  = context.textTertiary;
+                Color stripColor  = Colors.transparent;
+                Widget? trailing;
 
-            return Container(
-              margin: const EdgeInsets.fromLTRB(14, 4, 14, 4),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: bg ?? AppColors.surfaceElevated,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: border ?? AppColors.border,
-                  width: (isCorrectOption || isUserSelected) ? 1.5 : 1,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 24,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: (border ?? AppColors.border).withValues(alpha: 0.15),
-                    ),
-                    child: Center(
-                      child: Text(
-                        optionLabels[i],
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          color: border ?? AppColors.textGray,
-                        ),
-                      ),
-                    ),
+                if (isCorrectOpt) {
+                  bgColor     = _correctColor.withValues(alpha: 0.07);
+                  borderColor = _correctColor.withValues(alpha: 0.45);
+                  textColor   = const Color(0xFF2E7D32);
+                  labelBg     = _correctColor;
+                  labelColor  = Colors.white;
+                  stripColor  = _correctColor;
+                  trailing    = const Icon(Icons.check_circle_rounded,
+                      color: _correctColor, size: 18);
+                } else if (isUserPick) {
+                  bgColor     = _wrongColor.withValues(alpha: 0.06);
+                  borderColor = _wrongColor.withValues(alpha: 0.4);
+                  textColor   = const Color(0xFFC62828);
+                  labelBg     = _wrongColor;
+                  labelColor  = Colors.white;
+                  stripColor  = _wrongColor;
+                  trailing    = const Icon(Icons.cancel_rounded,
+                      color: _wrongColor, size: 18);
+                } else {
+                  textColor   = context.textSecondary.withValues(alpha: 0.5);
+                  labelColor  = context.textTertiary.withValues(alpha: 0.5);
+                  borderColor = context.borderColor.withValues(alpha: 0.4);
+                }
+
+                final showStrip = stripColor != Colors.transparent;
+
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  decoration: BoxDecoration(
+                    color: bgColor,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: borderColor, width: 1.5),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      option,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: border ?? AppColors.textGray,
-                        fontWeight: (isCorrectOption || isUserSelected) ? FontWeight.w600 : FontWeight.w400,
+                  clipBehavior: Clip.hardEdge,
+                  child: Row(
+                    children: [
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        width: showStrip ? 3 : 0,
+                        color: stripColor,
                       ),
-                    ),
-                  ),
-                  if (isCorrectOption)
-                    const Icon(Icons.check_circle, color: AppColors.correct, size: 16),
-                  if (isUserSelected && !isCorrectOption)
-                    const Icon(Icons.cancel, color: AppColors.wrong, size: 16),
-                ],
-              ),
-            );
-          }),
-          // Explanation toggle
-          if (question.explanation.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 8, 14, 12),
-              child: Column(
-                children: [
-                  GestureDetector(
-                    onTap: () => setState(() => _showExplanation = !_showExplanation),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.lightbulb_outline, size: 16, color: AppColors.orange),
-                        const SizedBox(width: 6),
-                        Text(
-                          _showExplanation ? 'Ẩn giải thích' : 'Xem giải thích',
-                          style: const TextStyle(
-                            color: AppColors.orange,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 26, height: 26,
+                                decoration: BoxDecoration(
+                                  color: labelBg,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    labels[i],
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w800,
+                                      color: labelColor,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  option,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: textColor,
+                                    fontWeight: (isCorrectOpt || isUserPick)
+                                        ? FontWeight.w600
+                                        : FontWeight.w400,
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ),
+                              if (trailing != null) ...[
+                                const SizedBox(width: 6),
+                                trailing,
+                              ],
+                            ],
                           ),
                         ),
-                        const Spacer(),
-                        Icon(
-                          _showExplanation ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                          color: AppColors.orange,
-                          size: 18,
-                        ),
-                      ],
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+
+          // ── Explanation toggle ───────────────────────────────────────────
+          if (question.explanation.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+              child: Column(
+                children: [
+                  InkWell(
+                    onTap: () => setState(() => _showExplanation = !_showExplanation),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.lightbulb_outline_rounded,
+                              size: 15, color: AppColors.orange),
+                          const SizedBox(width: 6),
+                          Text(
+                            _showExplanation ? 'Ẩn giải thích' : 'Xem giải thích',
+                            style: const TextStyle(
+                              color: AppColors.orange,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                            ),
+                          ),
+                          const Spacer(),
+                          Icon(
+                            _showExplanation
+                                ? Icons.keyboard_arrow_up_rounded
+                                : Icons.keyboard_arrow_down_rounded,
+                            color: AppColors.orange, size: 18,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  if (_showExplanation) ...[
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppColors.orange.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: AppColors.orange.withValues(alpha: 0.2)),
-                      ),
-                      child: Text(question.explanation, style: AppTextStyles.bodySmall.copyWith(height: 1.5)),
-                    ),
-                  ],
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 220),
+                    curve: Curves.easeInOut,
+                    child: _showExplanation
+                        ? Container(
+                            margin: const EdgeInsets.only(top: 6),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: AppColors.orange.withValues(alpha: 0.06),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                  color: AppColors.orange.withValues(alpha: 0.2)),
+                            ),
+                            child: Text(
+                              question.explanation,
+                              style: AppTextStyles.bodySmall.copyWith(height: 1.6),
+                            ),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
                 ],
               ),
             )
           else
-            const SizedBox(height: 12),
+            const SizedBox(height: 4),
         ],
       ),
     );

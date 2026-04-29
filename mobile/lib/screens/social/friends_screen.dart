@@ -85,6 +85,23 @@ class _FriendsScreenState extends State<FriendsScreen>
     }
   }
 
+  void _showUserProfile(LeaderboardEntry entry) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => _UserProfileSheet(
+        entry: entry,
+        isFollowing: _followingIds.contains(entry.userId),
+        isLoading: _loadingIds.contains(entry.userId),
+        onToggleFollow: () {
+          Navigator.pop(context);
+          _toggleFollow(entry);
+        },
+      ),
+    );
+  }
+
   Future<void> _toggleFollow(LeaderboardEntry entry) async {
     if (_loadingIds.contains(entry.userId)) return;
     setState(() => _loadingIds.add(entry.userId));
@@ -342,25 +359,28 @@ class _FriendsScreenState extends State<FriendsScreen>
               children: [
                 Text(crowns[i], style: const TextStyle(fontSize: 26)),
                 const SizedBox(height: 6),
-                Container(
-                  padding: const EdgeInsets.all(3),
-                  decoration: BoxDecoration(shape: BoxShape.circle, color: colors[i]),
-                  child: CircleAvatar(
-                    radius: isCenter ? 32 : 24,
-                    backgroundColor: colors[i].withValues(alpha: 0.2),
-                    backgroundImage: entry.avatar.isNotEmpty
-                        ? CachedNetworkImageProvider(entry.avatar)
-                        : null,
-                    child: entry.avatar.isEmpty
-                        ? Text(
-                            entry.name.isNotEmpty ? entry.name[0].toUpperCase() : 'U',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w800,
-                              fontSize: isCenter ? 24 : 18,
-                              color: Colors.white,
-                            ),
-                          )
-                        : null,
+                GestureDetector(
+                  onTap: () => _showUserProfile(entry),
+                  child: Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(shape: BoxShape.circle, color: colors[i]),
+                    child: CircleAvatar(
+                      radius: isCenter ? 32 : 24,
+                      backgroundColor: colors[i].withValues(alpha: 0.2),
+                      backgroundImage: entry.avatar.isNotEmpty
+                          ? CachedNetworkImageProvider(entry.avatar)
+                          : null,
+                      child: entry.avatar.isEmpty
+                          ? Text(
+                              entry.name.isNotEmpty ? entry.name[0].toUpperCase() : 'U',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: isCenter ? 24 : 18,
+                                color: Colors.white,
+                              ),
+                            )
+                          : null,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -423,10 +443,10 @@ class _FriendsScreenState extends State<FriendsScreen>
 
   Widget _buildLeaderboardRow(LeaderboardEntry entry) {
     final isMe = entry.isCurrentUser;
-    final isFollowing = _followingIds.contains(entry.userId);
-    final isLoading = _loadingIds.contains(entry.userId);
 
-    return Container(
+    return GestureDetector(
+      onTap: () => _showUserProfile(entry),
+      child: Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
       decoration: BoxDecoration(
@@ -498,36 +518,10 @@ class _FriendsScreenState extends State<FriendsScreen>
               ],
             ),
           ),
-          if (!isMe)
-            GestureDetector(
-              onTap: isLoading ? null : () => _toggleFollow(entry),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: isFollowing ? AppColors.primary.withValues(alpha: 0.1) : AppColors.primary,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: isFollowing ? AppColors.primary.withValues(alpha: 0.4) : AppColors.primary,
-                  ),
-                ),
-                child: isLoading
-                    ? const SizedBox(
-                        width: 14, height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
-                      )
-                    : Text(
-                        isFollowing ? 'Đang theo' : '+ Theo dõi',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: isFollowing ? AppColors.primary : Colors.white,
-                        ),
-                      ),
-              ),
-            ),
+          const Icon(Icons.chevron_right_rounded, color: AppColors.textGray, size: 18),
         ],
       ),
+    ),
     );
   }
 
@@ -652,6 +646,198 @@ class _FriendsScreenState extends State<FriendsScreen>
         }),
       ),
       ),
+    );
+  }
+}
+
+// ── User Profile Bottom Sheet ─────────────────────────────────────────────────
+
+class _UserProfileSheet extends StatelessWidget {
+  final LeaderboardEntry entry;
+  final bool isFollowing;
+  final bool isLoading;
+  final VoidCallback onToggleFollow;
+
+  const _UserProfileSheet({
+    required this.entry,
+    required this.isFollowing,
+    required this.isLoading,
+    required this.onToggleFollow,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final rankColors = {
+      1: AppColors.xpGold,
+      2: const Color(0xFFC0C0C0),
+      3: const Color(0xFFCD7F32),
+    };
+    final rankColor = rankColors[entry.rank] ?? AppColors.primary;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: context.surfaceColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: EdgeInsets.fromLTRB(24, 12, 24, MediaQuery.of(context).padding.bottom + 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Handle bar
+          Container(
+            width: 40, height: 4,
+            decoration: BoxDecoration(
+              color: context.borderColor,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 20),
+          // Avatar
+          Stack(
+            alignment: Alignment.bottomRight,
+            children: [
+              CircleAvatar(
+                radius: 44,
+                backgroundColor: rankColor.withValues(alpha: 0.2),
+                backgroundImage: entry.avatar.isNotEmpty
+                    ? CachedNetworkImageProvider(entry.avatar)
+                    : null,
+                child: entry.avatar.isEmpty
+                    ? Text(
+                        entry.name.isNotEmpty ? entry.name[0].toUpperCase() : 'U',
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.w800,
+                          color: rankColor,
+                        ),
+                      )
+                    : null,
+              ),
+              if (entry.rank <= 3)
+                Container(
+                  width: 28, height: 28,
+                  decoration: BoxDecoration(
+                    color: rankColor,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: context.surfaceColor, width: 2),
+                  ),
+                  child: Center(
+                    child: Text(
+                      '#${entry.rank}',
+                      style: const TextStyle(
+                        fontSize: 9, fontWeight: FontWeight.w900, color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // Name
+          Text(
+            entry.name,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              color: context.textPrimary,
+            ),
+          ),
+          if (entry.isCurrentUser) ...[
+            const SizedBox(height: 4),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Text(
+                'Đây là bạn',
+                style: TextStyle(
+                  fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primary,
+                ),
+              ),
+            ),
+          ],
+          const SizedBox(height: 20),
+          // Stats row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _StatChip(label: 'XP', value: '${entry.totalXp}', emoji: '⚡', color: AppColors.xpGold),
+              Container(width: 1, height: 36, color: context.borderColor),
+              _StatChip(label: 'Streak', value: '${entry.streak} ngày', emoji: '🔥', color: AppColors.orange),
+              if (entry.lessonsCompleted > 0) ...[
+                Container(width: 1, height: 36, color: context.borderColor),
+                _StatChip(label: 'Bài học', value: '${entry.lessonsCompleted}', emoji: '📚', color: AppColors.primary),
+              ],
+            ],
+          ),
+          const SizedBox(height: 24),
+          // Follow button — ẩn nếu là chính mình
+          if (!entry.isCurrentUser)
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: isLoading ? null : onToggleFollow,
+                icon: isLoading
+                    ? const SizedBox(
+                        width: 16, height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : Icon(
+                        isFollowing ? Icons.person_remove_rounded : Icons.person_add_rounded,
+                        size: 18,
+                      ),
+                label: Text(isFollowing ? 'Bỏ theo dõi' : '+ Theo dõi'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isFollowing ? context.surfaceElevatedColor : AppColors.primary,
+                  foregroundColor: isFollowing ? AppColors.red : Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    side: isFollowing
+                        ? BorderSide(color: AppColors.red.withValues(alpha: 0.4))
+                        : BorderSide.none,
+                  ),
+                  textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                  elevation: 0,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatChip extends StatelessWidget {
+  final String label;
+  final String value;
+  final String emoji;
+  final Color color;
+
+  const _StatChip({
+    required this.label,
+    required this.value,
+    required this.emoji,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(emoji, style: const TextStyle(fontSize: 20)),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: color),
+        ),
+        Text(
+          label,
+          style: TextStyle(fontSize: 11, color: context.textSecondary, fontWeight: FontWeight.w500),
+        ),
+      ],
     );
   }
 }

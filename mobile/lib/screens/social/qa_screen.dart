@@ -205,7 +205,10 @@ class _QaScreenState extends State<QaScreen> {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 16),
+        // extendBody=true nên cần bù thêm chiều cao bottom nav (64) + padding (20) + safe area
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).padding.bottom + 84,
+        ),
         child: FloatingActionButton.extended(
           onPressed: () async {
             await Navigator.push(

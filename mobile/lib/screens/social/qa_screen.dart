@@ -203,21 +203,25 @@ class _QaScreenState extends State<QaScreen> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const CreateQaScreen()),
-          );
-          _loadPosts(reset: true);
-        },
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Đặt câu hỏi',
-            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: FloatingActionButton.extended(
+          onPressed: () async {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const CreateQaScreen()),
+            );
+            _loadPosts(reset: true);
+          },
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          icon: const Icon(Icons.add_rounded),
+          label: const Text('Đặt câu hỏi',
+              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+        ),
       ),
     );
   }

@@ -191,7 +191,7 @@ class _QuizResultScreenState extends State<QuizResultScreen>
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () => Navigator.pop(context),
+                        onPressed: () => Navigator.popUntil(context, (route) => route.isFirst),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.correct,
                           foregroundColor: Colors.white,

@@ -271,10 +271,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return Scaffold(
-        backgroundColor: context.bgColor,
-        body: const Center(child: CircularProgressIndicator(color: AppColors.primary)),
-      );
+      return _QuizLoadingScreen(lessonTitle: widget.lessonTitle);
     }
 
     if (_questions.isEmpty) {
@@ -382,37 +379,36 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
         // Submitting overlay
         if (_isSubmitting)
           Positioned.fill(
-            child: Container(
+            child: Material(
               color: Colors.black.withValues(alpha: 0.55),
               child: Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 28),
-                  decoration: BoxDecoration(
-                    color: context.surfaceColor,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.3),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const CircularProgressIndicator(
-                        color: AppColors.primary,
-                        strokeWidth: 3,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Đang tính kết quả...',
-                        style: AppTextStyles.labelBold.copyWith(
-                          color: context.textPrimary,
+                child: Material(
+                  color: context.surfaceColor,
+                  borderRadius: BorderRadius.circular(20),
+                  elevation: 8,
+                  child: Container(
+                    width: 200,
+                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 28),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const CircularProgressIndicator(
+                          color: AppColors.primary,
+                          strokeWidth: 3,
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 16),
+                        Text(
+                          'Đang tính kết quả...',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: context.textPrimary,
+                            decoration: TextDecoration.none,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -914,6 +910,173 @@ class _IdleCheckBar extends StatelessWidget {
               fontSize: 16,
               letterSpacing: 0.5,
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Quiz Loading Screen ──────────────────────────────────────────────────────
+
+class _QuizLoadingScreen extends StatefulWidget {
+  final String lessonTitle;
+
+  const _QuizLoadingScreen({required this.lessonTitle});
+
+  @override
+  State<_QuizLoadingScreen> createState() => _QuizLoadingScreenState();
+}
+
+class _QuizLoadingScreenState extends State<_QuizLoadingScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _fadeAnim;
+  late Animation<double> _scaleAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat(reverse: false);
+
+    _fadeAnim = CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.4, curve: Curves.easeOut));
+    _scaleAnim = Tween<double>(begin: 0.92, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.4, curve: Curves.easeOut)),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Scaffold(
+      backgroundColor: context.bgColor,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32),
+          child: Column(
+            children: [
+              const Spacer(flex: 2),
+              // Icon bài kiểm tra
+              FadeTransition(
+                opacity: _fadeAnim,
+                child: ScaleTransition(
+                  scale: _scaleAnim,
+                  child: Container(
+                    width: 88,
+                    height: 88,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppColors.primary.withValues(alpha: 0.25),
+                        width: 2,
+                      ),
+                    ),
+                    child: const Center(
+                      child: Text('📝', style: TextStyle(fontSize: 40)),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 28),
+              // Tiêu đề bài
+              Text(
+                widget.lessonTitle,
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: context.textPrimary,
+                  height: 1.3,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Bài trắc nghiệm',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: context.textSecondary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 40),
+              // Loading dots
+              AnimatedBuilder(
+                animation: _controller,
+                builder: (context, _) {
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(3, (i) {
+                      final delay = i / 3;
+                      final raw = (_controller.value - delay) % 1.0;
+                      final t = raw < 0.5 ? raw * 2 : (1.0 - raw) * 2;
+                      return Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 5),
+                        width: 8 + t * 4,
+                        height: 8 + t * 4,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.4 + t * 0.6),
+                          shape: BoxShape.circle,
+                        ),
+                      );
+                    }),
+                  );
+                },
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Đang tải câu hỏi...',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: context.textSecondary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const Spacer(flex: 2),
+              // Tips card
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? AppColors.primary.withValues(alpha: 0.08)
+                      : AppColors.primary.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.15),
+                  ),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('💡', style: TextStyle(fontSize: 18)),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Cần trả lời đúng 100% để mở khoá bài học tiếp theo!',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppColors.primary.withValues(alpha: 0.85),
+                          fontWeight: FontWeight.w600,
+                          height: 1.5,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 32),
+            ],
           ),
         ),
       ),

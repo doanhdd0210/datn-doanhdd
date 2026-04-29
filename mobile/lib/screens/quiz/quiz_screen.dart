@@ -1,12 +1,33 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_text_styles.dart';
+import '../../constants/app_theme.dart';
 import '../../models/question.dart';
 import '../../models/quiz_result.dart';
 import '../../providers/user_provider.dart';
 import '../../services/api_service.dart';
+import '../../services/ai_service.dart';
 import 'quiz_result_screen.dart';
+
+/// Câu hỏi đã được shuffle đáp án
+class _ShuffledQuestion {
+  final List<String> options;     // đáp án đã xáo trộn
+  final int correctIndex;         // vị trí đúng sau khi xáo
+
+  _ShuffledQuestion({required this.options, required this.correctIndex});
+
+  static _ShuffledQuestion from(Question q) {
+    final indexed = q.options.asMap().entries.toList()
+      ..shuffle(Random());
+    final newCorrect = indexed.indexWhere((e) => e.key == q.correctAnswerIndex);
+    return _ShuffledQuestion(
+      options: indexed.map((e) => e.value).toList(),
+      correctIndex: newCorrect,
+    );
+  }
+}
 
 class QuizScreen extends StatefulWidget {
   final String lessonId;
@@ -29,6 +50,7 @@ class QuizScreen extends StatefulWidget {
 class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
   final _api = ApiService();
   List<Question> _questions = [];
+  List<_ShuffledQuestion> _shuffled = [];  // đáp án đã xáo trộn
   bool _isLoading = true;
   int _currentIndex = 0;
   int? _selectedAnswer;
@@ -81,15 +103,19 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
     try {
       final questions = await _api.getQuestions(widget.lessonId);
       if (mounted) {
+        final qs = questions.isNotEmpty ? questions : _mockQuestions();
         setState(() {
-          _questions = questions.isNotEmpty ? questions : _mockQuestions();
+          _questions = qs;
+          _shuffled = qs.map(_ShuffledQuestion.from).toList();
           _isLoading = false;
         });
       }
     } catch (_) {
       if (mounted) {
+        final qs = _mockQuestions();
         setState(() {
-          _questions = _mockQuestions();
+          _questions = qs;
+          _shuffled = qs.map(_ShuffledQuestion.from).toList();
           _isLoading = false;
         });
       }
@@ -99,34 +125,25 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
   List<Question> _mockQuestions() {
     return [
       const Question(
-        id: 'q1',
-        lessonId: 'mock',
+        id: 'q1', lessonId: 'mock',
         questionText: 'What is the output of: System.out.println("Hello " + "World");',
         explanation: 'String concatenation with + operator combines the two strings.',
         options: ['Hello', 'World', 'Hello World', 'Error'],
-        correctAnswerIndex: 2,
-        order: 1,
-        points: 10,
+        correctAnswerIndex: 2, order: 1, points: 10,
       ),
       const Question(
-        id: 'q2',
-        lessonId: 'mock',
+        id: 'q2', lessonId: 'mock',
         questionText: 'Which keyword is used to define a class in Java?',
         explanation: 'The "class" keyword is used to declare a class in Java.',
         options: ['object', 'class', 'type', 'define'],
-        correctAnswerIndex: 1,
-        order: 2,
-        points: 10,
+        correctAnswerIndex: 1, order: 2, points: 10,
       ),
       const Question(
-        id: 'q3',
-        lessonId: 'mock',
+        id: 'q3', lessonId: 'mock',
         questionText: 'What is the default value of an int variable in Java?',
         explanation: 'Uninitialized int fields default to 0 in Java.',
         options: ['null', '-1', '0', '1'],
-        correctAnswerIndex: 2,
-        order: 3,
-        points: 10,
+        correctAnswerIndex: 2, order: 3, points: 10,
       ),
     ];
   }
@@ -135,7 +152,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
     if (_hasAnswered) return;
 
     final question = _questions[_currentIndex];
-    final isCorrect = index == question.correctAnswerIndex;
+    final isCorrect = index == _shuffled[_currentIndex].correctIndex;
 
     setState(() {
       _selectedAnswer = index;
@@ -153,7 +170,6 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
     if (isCorrect) {
       _correctCount++;
     } else {
-      context.read<UserProvider>().loseHeart();
       _shakeController.forward(from: 0);
     }
   }
@@ -177,31 +193,33 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
             .round();
     QuizResult? result;
 
+    // Mark perfect quiz nếu không sai câu nào
+    if (_correctCount == _questions.length && _questions.isNotEmpty) {
+      context.read<UserProvider>().markPerfectQuiz();
+    }
+
     try {
       result = await _api.submitQuiz(widget.lessonId, _userAnswers, timeSpent);
       if (mounted) {
-        context
-            .read<UserProvider>()
-            .markLessonCompleted(widget.lessonId, widget.topicId);
+        context.read<UserProvider>().markLessonCompleted(widget.lessonId, widget.topicId);
         context.read<UserProvider>().addXp(result.xpEarned);
       }
     } catch (_) {
-      final xpEarned =
-          (_correctCount / _questions.length * widget.xpReward).round();
+      final totalPoints = _questions.fold(0, (sum, q) => sum + q.points);
+      final ratio = _questions.isNotEmpty ? _correctCount / _questions.length : 0.0;
+      final xpEarned = (ratio * totalPoints).round();
       result = QuizResult(
         id: 'local',
         lessonId: widget.lessonId,
         totalQuestions: _questions.length,
         correctAnswers: _correctCount,
-        score: (_correctCount / _questions.length * 100).round(),
+        score: (ratio * 100).round(),
         xpEarned: xpEarned,
         answers: _userAnswers,
         completedAt: DateTime.now(),
       );
       if (mounted) {
-        context
-            .read<UserProvider>()
-            .markLessonCompleted(widget.lessonId, widget.topicId);
+        context.read<UserProvider>().markLessonCompleted(widget.lessonId, widget.topicId);
         context.read<UserProvider>().addXp(xpEarned);
       }
     }
@@ -214,6 +232,9 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
             result: result!,
             questions: _questions,
             lessonTitle: widget.lessonTitle,
+            lessonId: widget.lessonId,
+            topicId: widget.topicId,
+            xpReward: widget.xpReward,
           ),
         ),
       );
@@ -223,9 +244,9 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        backgroundColor: AppColors.background,
-        body: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+      return Scaffold(
+        backgroundColor: context.bgColor,
+        body: const Center(child: CircularProgressIndicator(color: AppColors.primary)),
       );
     }
 
@@ -237,20 +258,16 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
     }
 
     final question = _questions[_currentIndex];
+    final shuffled = _shuffled[_currentIndex];
     final progress = (_currentIndex + (_hasAnswered ? 1 : 0)) / _questions.length;
-    final isCorrect = _hasAnswered && _selectedAnswer == question.correctAnswerIndex;
+    final isCorrect = _hasAnswered && _selectedAnswer == shuffled.correctIndex;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.bgColor,
       body: SafeArea(
         child: Column(
           children: [
-            // ── Header ──────────────────────────────────────
-            _QuizHeader(
-              progress: progress,
-              onClose: _showExitDialog,
-            ),
-            // ── Question + Options ───────────────────────────
+            _QuizHeader(progress: progress, onClose: _showExitDialog),
             Expanded(
               child: AnimatedBuilder(
                 animation: _shakeAnimation,
@@ -259,61 +276,76 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                   child: child,
                 ),
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Category label
-                      Text(
-                        'Chọn câu trả lời đúng',
-                        style: AppTextStyles.labelGray,
+                      // Câu hỏi số mấy
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              'Câu ${_currentIndex + 1}/${_questions.length}',
+                              style: const TextStyle(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text('Chọn câu trả lời đúng', style: AppTextStyles.labelGray),
+                        ],
                       ),
-                      const SizedBox(height: 16),
-                      // Question text
+                      const SizedBox(height: 18),
                       Text(
                         question.questionText,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w800,
-                          color: AppColors.textDark,
+                          color: context.textPrimary,
                           height: 1.4,
                         ),
                       ),
                       const SizedBox(height: 24),
-                      // Answer options
-                      ...question.options.asMap().entries.map(
-                            (entry) => _AnswerOption(
-                              index: entry.key,
-                              text: entry.value,
-                              hasAnswered: _hasAnswered,
-                              selectedAnswer: _selectedAnswer,
-                              correctAnswer: question.correctAnswerIndex,
-                              onTap: () => _selectAnswer(entry.key),
-                            ),
-                          ),
+                      ...shuffled.options.asMap().entries.map(
+                        (entry) => _AnswerOption(
+                          index: entry.key,
+                          text: entry.value,
+                          hasAnswered: _hasAnswered,
+                          selectedAnswer: _selectedAnswer,
+                          correctAnswer: shuffled.correctIndex,
+                          onTap: () => _selectAnswer(entry.key),
+                        ),
+                      ),
                     ],
                   ),
                 ),
               ),
             ),
-            // ── Feedback + CTA ───────────────────────────────
+            // Feedback bar (sau khi trả lời)
             SizeTransition(
               sizeFactor: _feedbackAnimation,
               axisAlignment: 1,
               child: _hasAnswered
                   ? _FeedbackBar(
+                      key: ValueKey(_currentIndex),
                       isCorrect: isCorrect,
                       explanation: question.explanation,
                       isLast: _currentIndex == _questions.length - 1,
                       onContinue: _nextQuestion,
+                      question: question,
                     )
                   : const SizedBox.shrink(),
             ),
-            // ── Idle CTA (no answer yet) ─────────────────────
+            // Nút kiểm tra (trước khi trả lời)
             if (!_hasAnswered)
-              _IdleCheckBar(
-                hasSelected: _selectedAnswer != null,
-              ),
+              _IdleCheckBar(hasSelected: _selectedAnswer != null),
           ],
         ),
       ),
@@ -326,33 +358,26 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Thoát bài trắc nghiệm?', style: AppTextStyles.heading4),
-        content: const Text(
-          'Tiến độ của bạn sẽ không được lưu.',
-          style: AppTextStyles.bodyMedium,
-        ),
+        content: const Text('Tiến độ của bạn sẽ không được lưu.', style: AppTextStyles.bodyMedium),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: const Text('Ở lại',
-                style: TextStyle(
-                    color: AppColors.primary, fontWeight: FontWeight.w700)),
+                style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700)),
           ),
           TextButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              Navigator.pop(context);
-            },
+            onPressed: () { Navigator.pop(ctx); Navigator.pop(context); },
             child: const Text('Thoát',
-                style: TextStyle(
-                    color: AppColors.heartRed, fontWeight: FontWeight.w700)),
+                style: TextStyle(color: AppColors.heartRed, fontWeight: FontWeight.w700)),
           ),
         ],
       ),
     );
   }
+
 }
 
-// ─── Quiz Header ─────────────────────────────────────────────────────────────
+// ─── Quiz Header ──────────────────────────────────────────────────────────────
 
 class _QuizHeader extends StatelessWidget {
   final double progress;
@@ -362,67 +387,38 @@ class _QuizHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<UserProvider>(
-      builder: (context, provider, _) {
-        return Container(
-          color: AppColors.background,
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-          child: Row(
-            children: [
-              // X button
-              GestureDetector(
-                onTap: onClose,
-                child: Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceElevated,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(
-                    Icons.close_rounded,
-                    color: AppColors.textGray,
-                    size: 20,
-                  ),
-                ),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      child: Row(
+        children: [
+          // X button
+          GestureDetector(
+            onTap: onClose,
+            child: Container(
+              width: 36, height: 36,
+              decoration: BoxDecoration(
+                color: context.surfaceElevatedColor,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: context.borderColor),
               ),
-              const SizedBox(width: 12),
-              // Progress bar
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: LinearProgressIndicator(
-                    value: progress,
-                    backgroundColor: AppColors.border,
-                    valueColor:
-                        const AlwaysStoppedAnimation(AppColors.primary),
-                    minHeight: 12,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              // Hearts
-              Row(
-                children: List.generate(
-                  3,
-                  (i) => Padding(
-                    padding: const EdgeInsets.only(left: 2),
-                    child: Icon(
-                      i < provider.hearts
-                          ? Icons.favorite_rounded
-                          : Icons.favorite_border_rounded,
-                      size: 22,
-                      color: i < provider.hearts
-                          ? AppColors.heartRed
-                          : AppColors.border,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+              child: Icon(Icons.close_rounded, color: context.textSecondary, size: 20),
+            ),
           ),
-        );
-      },
+          const SizedBox(width: 12),
+          // Progress bar
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: LinearProgressIndicator(
+                value: progress,
+                backgroundColor: context.borderColor,
+                valueColor: const AlwaysStoppedAnimation(AppColors.primary),
+                minHeight: 10,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -451,41 +447,42 @@ class _AnswerOption extends StatelessWidget {
     final isSelected = selectedAnswer == index;
     final isCorrectAnswer = index == correctAnswer;
 
-    Color bgColor = AppColors.surface;
-    Color borderColor = AppColors.border;
-    Color borderBottomColor = AppColors.borderDark;
-    Color textColor = AppColors.textDark;
-    Color labelBg = AppColors.surfaceElevated;
-    Color labelColor = AppColors.textGray;
+    Color bgColor = context.surfaceColor;
+    Color borderColor = context.borderColor;
+    Color shadowColor = context.borderColor;
+    Color textColor = context.textPrimary;
+    Color labelBg = context.surfaceElevatedColor;
+    Color labelColor = context.textSecondary;
 
     if (hasAnswered) {
       if (isCorrectAnswer) {
-        bgColor = AppColors.correctBg;
+        bgColor = AppColors.correct.withValues(alpha: 0.12);
         borderColor = AppColors.correct;
-        borderBottomColor = AppColors.correctDark;
-        textColor = Colors.white;
+        shadowColor = AppColors.correctDark;
+        textColor = AppColors.correct;
         labelBg = AppColors.correct;
         labelColor = Colors.white;
       } else if (isSelected) {
-        bgColor = AppColors.wrongBg;
+        bgColor = AppColors.wrong.withValues(alpha: 0.1);
         borderColor = AppColors.wrong;
-        borderBottomColor = AppColors.wrongDark;
-        textColor = Colors.white;
+        shadowColor = AppColors.wrongDark;
+        textColor = AppColors.wrong;
         labelBg = AppColors.wrong;
         labelColor = Colors.white;
       } else {
-        bgColor = AppColors.surface;
-        borderColor = AppColors.border;
-        borderBottomColor = AppColors.border;
-        textColor = AppColors.textMuted;
-        labelBg = AppColors.surfaceElevated;
-        labelColor = AppColors.textMuted;
+        // Các option không chọn và không đúng — mờ nhẹ
+        bgColor = context.surfaceColor;
+        borderColor = context.borderColor.withValues(alpha: 0.5);
+        shadowColor = Colors.transparent;
+        textColor = context.textSecondary.withValues(alpha: 0.5);
+        labelBg = context.surfaceElevatedColor;
+        labelColor = context.textTertiary;
       }
     } else if (isSelected) {
-      bgColor = AppColors.primary.withOpacity(0.15);
+      bgColor = AppColors.primary.withValues(alpha: 0.08);
       borderColor = AppColors.primary;
-      borderBottomColor = AppColors.primaryDark;
-      textColor = AppColors.textDark;
+      shadowColor = AppColors.primaryDark;
+      textColor = AppColors.primary;
       labelBg = AppColors.primary;
       labelColor = Colors.white;
     }
@@ -500,24 +497,18 @@ class _AnswerOption extends StatelessWidget {
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: borderColor, width: 2),
-          boxShadow: [
-            BoxShadow(
-              color: borderBottomColor,
-              offset: const Offset(0, 4),
-              blurRadius: 0,
-            ),
-          ],
+          border: Border.all(color: borderColor, width: 1.5),
+          boxShadow: shadowColor != Colors.transparent
+              ? [BoxShadow(color: shadowColor, offset: const Offset(0, 3), blurRadius: 0)]
+              : null,
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           child: Row(
             children: [
-              // Letter label
               AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                width: 32,
-                height: 32,
+                width: 32, height: 32,
                 decoration: BoxDecoration(
                   color: labelBg,
                   borderRadius: BorderRadius.circular(8),
@@ -533,7 +524,7 @@ class _AnswerOption extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   text,
@@ -546,11 +537,9 @@ class _AnswerOption extends StatelessWidget {
                 ),
               ),
               if (hasAnswered && isCorrectAnswer)
-                const Icon(Icons.check_circle_rounded,
-                    color: AppColors.primary, size: 22),
+                const Icon(Icons.check_circle_rounded, color: AppColors.correct, size: 22),
               if (hasAnswered && isSelected && !isCorrectAnswer)
-                const Icon(Icons.cancel_rounded,
-                    color: AppColors.heartRed, size: 22),
+                const Icon(Icons.cancel_rounded, color: AppColors.wrong, size: 22),
             ],
           ),
         ),
@@ -559,92 +548,150 @@ class _AnswerOption extends StatelessWidget {
   }
 }
 
-// ─── Feedback Bar (correct / incorrect) ──────────────────────────────────────
+// ─── Feedback Bar ─────────────────────────────────────────────────────────────
 
-class _FeedbackBar extends StatelessWidget {
+class _FeedbackBar extends StatefulWidget {
   final bool isCorrect;
   final String explanation;
   final bool isLast;
   final VoidCallback onContinue;
+  final Question question;
 
   const _FeedbackBar({
+    super.key,
     required this.isCorrect,
     required this.explanation,
     required this.isLast,
     required this.onContinue,
+    required this.question,
   });
 
   @override
+  State<_FeedbackBar> createState() => _FeedbackBarState();
+}
+
+class _FeedbackBarState extends State<_FeedbackBar> {
+  final _aiService = AiService();
+  String? _aiHint;
+  bool _aiLoading = false;
+  bool _aiRequested = false;
+
+  Future<void> _askAiHint() async {
+    setState(() { _aiLoading = true; _aiRequested = true; });
+    final hint = await _aiService.generateQuizHint(
+      question: widget.question.questionText,
+      options: widget.question.options,
+      correctIndex: widget.question.correctAnswerIndex,
+    );
+    if (!mounted) return;
+    setState(() { _aiLoading = false; _aiHint = hint; });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final bgColor = isCorrect ? AppColors.correctBg : AppColors.wrongBg;
+    final isCorrect = widget.isCorrect;
     final accentColor = isCorrect ? AppColors.correct : AppColors.wrong;
-    final btnColor = isCorrect ? AppColors.correct : AppColors.wrong;
-    final btnShadow = isCorrect ? AppColors.correctDark : AppColors.wrongDark;
-    final icon = isCorrect ? '🎉' : '❌';
-    final title = isCorrect ? 'Tuyệt vời!' : 'Sai rồi!';
+    final bgColor = isCorrect
+        ? AppColors.correct.withValues(alpha: 0.08)
+        : AppColors.wrong.withValues(alpha: 0.08);
 
     return Container(
-      width: double.infinity,
       decoration: BoxDecoration(
-        color: bgColor,
-        border: Border(top: BorderSide(color: accentColor.withOpacity(0.3))),
+        color: context.surfaceColor,
+        border: Border(
+          top: BorderSide(color: accentColor, width: 2),
+        ),
       ),
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Text(icon, style: const TextStyle(fontSize: 22)),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: TextStyle(
-                  color: accentColor,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 18,
-                ),
-              ),
-            ],
-          ),
-          if (explanation.isNotEmpty) ...[
-            const SizedBox(height: 6),
-            Text(
-              explanation,
-              style: TextStyle(
-                color: accentColor.withOpacity(0.8),
-                fontSize: 13,
-                height: 1.4,
-              ),
-            ),
-          ],
-          const SizedBox(height: 16),
-          // CONTINUE button — Duolingo style with 3D border
-          GestureDetector(
-            onTap: onContinue,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              decoration: BoxDecoration(
-                color: btnColor,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: btnShadow,
-                    offset: const Offset(0, 4),
-                    blurRadius: 0,
+          // ── Colored header strip ──
+          Container(
+            color: bgColor,
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 40, height: 40,
+                  decoration: BoxDecoration(
+                    color: accentColor.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
                   ),
-                ],
-              ),
-              child: Text(
-                isLast ? 'XEM KẾT QUẢ' : 'TIẾP TỤC',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 16,
-                  letterSpacing: 0.5,
+                  child: Center(
+                    child: Text(
+                      isCorrect ? '🎉' : '❌',
+                      style: const TextStyle(fontSize: 20),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isCorrect ? 'Tuyệt vời!' : 'Sai rồi!',
+                        style: TextStyle(
+                          color: accentColor,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 17,
+                        ),
+                      ),
+                      if (widget.explanation.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          widget.explanation,
+                          style: TextStyle(
+                            color: context.textSecondary,
+                            fontSize: 13,
+                            height: 1.45,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // ── AI hint section (chỉ khi sai) ──
+          if (!isCorrect)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+              child: _buildAiSection(context),
+            ),
+
+          // ── Button ──
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+            child: GestureDetector(
+              onTap: widget.onContinue,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 15),
+                decoration: BoxDecoration(
+                  color: accentColor,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: isCorrect ? AppColors.correctDark : AppColors.wrongDark,
+                      offset: const Offset(0, 4),
+                      blurRadius: 0,
+                    ),
+                  ],
+                ),
+                child: Text(
+                  widget.isLast ? 'XEM KẾT QUẢ' : 'TIẾP TỤC',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                    letterSpacing: 0.5,
+                  ),
                 ),
               ),
             ),
@@ -652,6 +699,93 @@ class _FeedbackBar extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Widget _buildAiSection(BuildContext context) {
+    if (_aiLoading) {
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: context.surfaceElevatedColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: context.borderColor),
+        ),
+        child: const Row(
+          children: [
+            SizedBox(
+              width: 16, height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+            ),
+            SizedBox(width: 10),
+            Text('AI đang phân tích...', style: TextStyle(fontSize: 13, color: AppColors.textGray)),
+          ],
+        ),
+      );
+    }
+
+    if (_aiHint != null) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.primary.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Text('🤖', style: TextStyle(fontSize: 13)),
+                const SizedBox(width: 6),
+                const Text('Gemini AI',
+                    style: TextStyle(color: AppColors.primary, fontSize: 11, fontWeight: FontWeight.w800)),
+                const Spacer(),
+                GestureDetector(
+                  onTap: () => setState(() { _aiHint = null; _aiRequested = false; }),
+                  child: const Icon(Icons.close_rounded, size: 16, color: AppColors.textGray),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(_aiHint!, style: TextStyle(color: context.textPrimary, fontSize: 13, height: 1.45)),
+          ],
+        ),
+      );
+    }
+
+    // Nút gọi AI
+    if (!_aiRequested) {
+      return GestureDetector(
+        onTap: _askAiHint,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+          decoration: BoxDecoration(
+            color: context.surfaceElevatedColor,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: context.borderColor),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('🤖', style: TextStyle(fontSize: 14)),
+              const SizedBox(width: 8),
+              Text('Hỏi AI tại sao sai?',
+                  style: TextStyle(
+                    color: context.textPrimary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  )),
+              const SizedBox(width: 6),
+              Icon(Icons.arrow_forward_ios_rounded, size: 12, color: context.textSecondary),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return const SizedBox.shrink();
   }
 }
 
@@ -666,19 +800,19 @@ class _IdleCheckBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      color: AppColors.background,
+      color: context.surfaceColor,
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
       child: AnimatedOpacity(
         opacity: hasSelected ? 1.0 : 0.4,
         duration: const Duration(milliseconds: 200),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 14),
+          padding: const EdgeInsets.symmetric(vertical: 15),
           decoration: BoxDecoration(
-            color: hasSelected ? AppColors.primary : AppColors.border,
+            color: hasSelected ? AppColors.primary : context.borderColor,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: hasSelected ? AppColors.primaryDark : AppColors.borderDark,
+                color: hasSelected ? AppColors.primaryDark : Colors.transparent,
                 offset: const Offset(0, 4),
                 blurRadius: 0,
               ),

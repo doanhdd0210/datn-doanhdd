@@ -69,17 +69,16 @@ class _QuizResultScreenState extends State<QuizResultScreen>
 
   String get _resultMessage {
     if (widget.isPerfect) return 'Hoàn hảo! 🏆';
-    final pct = widget.result.percentage;
-    if (pct >= 0.8) return 'Gần đúng rồi! Thử lại nhé 💪';
-    if (pct >= 0.5) return 'Cần cố gắng hơn! Làm lại thôi 📚';
-    return 'Ôn lại và thử lại nhé! 📖';
+    final correct = widget.result.correctAnswers;
+    if (correct <= 1) return 'Ôn lại và thử lại nhé! 📖';
+    return 'Gần đúng rồi! Thử lại nhé 💪';
   }
 
   Color get _resultColor {
-    if (widget.isPerfect) return AppColors.correct;
-    final pct = widget.result.percentage;
-    if (pct >= 0.7) return AppColors.orange;
-    return AppColors.red;
+    if (widget.isPerfect) return AppColors.correct;   // xanh
+    final correct = widget.result.correctAnswers;
+    if (correct <= 1) return AppColors.red;            // đỏ: 0–1 câu đúng
+    return AppColors.orange;                           // vàng: còn lại
   }
 
   @override

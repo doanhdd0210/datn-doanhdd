@@ -207,8 +207,10 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
       completedAt: DateTime.now(),
     );
 
-    // Mark perfect quiz nếu không sai câu nào
-    if (_correctCount == _questions.length && _questions.isNotEmpty) {
+    final isPerfect = _correctCount == _questions.length && _questions.isNotEmpty;
+
+    // Mark perfect quiz achievement
+    if (isPerfect) {
       context.read<UserProvider>().markPerfectQuiz();
     }
 
@@ -216,12 +218,17 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
       final serverResult = await _api.submitQuiz(widget.lessonId, _userAnswers, timeSpent);
       result = serverResult;
       if (mounted) {
-        context.read<UserProvider>().markLessonCompleted(widget.lessonId, widget.topicId);
+        // Chỉ unlock bài tiếp theo khi đạt 100%
+        if (isPerfect) {
+          context.read<UserProvider>().markLessonCompleted(widget.lessonId, widget.topicId);
+        }
         context.read<UserProvider>().addXp(result.xpEarned);
       }
     } catch (_) {
       if (mounted) {
-        context.read<UserProvider>().markLessonCompleted(widget.lessonId, widget.topicId);
+        if (isPerfect) {
+          context.read<UserProvider>().markLessonCompleted(widget.lessonId, widget.topicId);
+        }
         context.read<UserProvider>().addXp(localXp);
       }
     }
@@ -237,6 +244,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
             lessonId: widget.lessonId,
             topicId: widget.topicId,
             xpReward: widget.xpReward,
+            isPerfect: isPerfect,
           ),
         ),
       );

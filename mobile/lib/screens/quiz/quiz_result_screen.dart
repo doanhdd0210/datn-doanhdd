@@ -18,6 +18,7 @@ class QuizResultScreen extends StatefulWidget {
   final String? lessonId;
   final String? topicId;
   final int xpReward;
+  final bool isPerfect;
 
   const QuizResultScreen({
     super.key,
@@ -27,6 +28,7 @@ class QuizResultScreen extends StatefulWidget {
     this.lessonId,
     this.topicId,
     this.xpReward = 0,
+    this.isPerfect = false,
   });
 
   @override
@@ -51,16 +53,8 @@ class _QuizResultScreenState extends State<QuizResultScreen>
       CurvedAnimation(parent: _xpController, curve: Curves.easeOut),
     );
 
-    if (widget.result.isPassing) {
+    if (widget.isPerfect) {
       _confettiController.play();
-    }
-
-    if (widget.result.percentage == 1.0) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          context.read<UserProvider>().markPerfectQuiz();
-        }
-      });
     }
 
     Future.delayed(const Duration(milliseconds: 300), () {
@@ -76,18 +70,17 @@ class _QuizResultScreenState extends State<QuizResultScreen>
   }
 
   String get _resultMessage {
+    if (widget.isPerfect) return 'Hoàn hảo! 🏆';
     final pct = widget.result.percentage;
-    if (pct == 1.0) return 'Hoàn hảo! 🏆';
-    if (pct >= 0.8) return 'Tuyệt vời! 🎉';
-    if (pct >= 0.7) return 'Làm tốt lắm! 👏';
-    if (pct >= 0.5) return 'Tiếp tục nào! 💪';
-    return 'Thử lại thôi! 📚';
+    if (pct >= 0.8) return 'Gần đúng rồi! Thử lại nhé 💪';
+    if (pct >= 0.5) return 'Cần cố gắng hơn! Làm lại thôi 📚';
+    return 'Ôn lại và thử lại nhé! 📖';
   }
 
   Color get _resultColor {
+    if (widget.isPerfect) return AppColors.correct;
     final pct = widget.result.percentage;
-    if (pct >= 0.8) return AppColors.primary;
-    if (pct >= 0.6) return AppColors.blue;
+    if (pct >= 0.7) return AppColors.orange;
     return AppColors.red;
   }
 
@@ -195,49 +188,78 @@ class _QuizResultScreenState extends State<QuizResultScreen>
                   _buildStatsGrid(result),
                   const SizedBox(height: 28),
                   // Buttons
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                        textStyle: AppTextStyles.buttonText,
-                      ),
-                      child: const Text('Tiếp tục học'),
-                    ),
-                  ),
-                  if (!result.isPassing && widget.lessonId != null) ...[
-                    const SizedBox(height: 12),
+                  if (widget.isPerfect) ...[
+                    // 100% → Tiếp tục học (primary)
                     SizedBox(
                       width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => QuizScreen(
-                                lessonId: widget.lessonId!,
-                                topicId: widget.topicId ?? '',
-                                lessonTitle: widget.lessonTitle,
-                                xpReward: widget.xpReward,
-                              ),
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.refresh_rounded, size: 18),
-                        label: const Text('Thử lại'),
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(context),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.orange,
+                          backgroundColor: AppColors.correct,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                           textStyle: AppTextStyles.buttonText,
                         ),
+                        child: const Text('Tiếp tục học 🎉'),
                       ),
                     ),
+                  ] else ...[
+                    // Chưa 100% → Làm lại là nút chính, không cho tiếp tục
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: AppColors.wrong.withValues(alpha: 0.07),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.wrong.withValues(alpha: 0.25)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.lock_rounded, color: AppColors.wrong, size: 18),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Cần trả lời đúng 100% để mở khoá bài tiếp theo!',
+                              style: TextStyle(
+                                color: AppColors.wrong,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (widget.lessonId != null)
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => QuizScreen(
+                                  lessonId: widget.lessonId!,
+                                  topicId: widget.topicId ?? '',
+                                  lessonTitle: widget.lessonTitle,
+                                  xpReward: widget.xpReward,
+                                ),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.refresh_rounded, size: 18),
+                          label: const Text('Làm lại ngay'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            textStyle: AppTextStyles.buttonText,
+                          ),
+                        ),
+                      ),
                   ],
                   const SizedBox(height: 12),
                   if (widget.questions.isNotEmpty)

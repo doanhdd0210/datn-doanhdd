@@ -362,9 +362,9 @@ class ApiService {
 
   Future<void> followUser(String userId, String name, String avatar) async {
     await _post('/friends/follow', {
-      'userId': userId,
-      'name': name,
-      'avatar': avatar,
+      'followingId': userId,
+      'followingName': name,
+      'followingAvatar': avatar,
     });
   }
 

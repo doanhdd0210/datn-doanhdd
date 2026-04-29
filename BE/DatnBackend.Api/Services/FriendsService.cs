@@ -17,20 +17,56 @@ public class FriendsService
         _logger = logger;
     }
 
-    public async Task<List<UserFollow>> GetFollowingAsync(string userId)
+    public async Task<List<UserFollowDto>> GetFollowingAsync(string userId)
     {
-        return await _db.UserFollows
+        var follows = await _db.UserFollows
             .Where(f => f.FollowerId == userId)
             .OrderByDescending(f => f.CreatedAt)
             .ToListAsync();
+
+        var ids = follows.Select(f => f.FollowingId).ToList();
+        var profiles = await _db.UserProfiles
+            .Where(p => ids.Contains(p.Uid))
+            .ToDictionaryAsync(p => p.Uid);
+
+        return follows.Select(f => {
+            profiles.TryGetValue(f.FollowingId, out var profile);
+            return new UserFollowDto
+            {
+                Id = f.Id,
+                FollowingId = f.FollowingId,
+                FollowingName = profile?.DisplayName ?? f.FollowingName,
+                FollowingAvatar = profile?.PhotoUrl ?? f.FollowingAvatar,
+                TotalXp = profile?.TotalXp ?? 0,
+                Streak = profile?.CurrentStreak ?? 0,
+            };
+        }).ToList();
     }
 
-    public async Task<List<UserFollow>> GetFollowersAsync(string userId)
+    public async Task<List<UserFollowDto>> GetFollowersAsync(string userId)
     {
-        return await _db.UserFollows
+        var follows = await _db.UserFollows
             .Where(f => f.FollowingId == userId)
             .OrderByDescending(f => f.CreatedAt)
             .ToListAsync();
+
+        var ids = follows.Select(f => f.FollowerId).ToList();
+        var profiles = await _db.UserProfiles
+            .Where(p => ids.Contains(p.Uid))
+            .ToDictionaryAsync(p => p.Uid);
+
+        return follows.Select(f => {
+            profiles.TryGetValue(f.FollowerId, out var profile);
+            return new UserFollowDto
+            {
+                Id = f.Id,
+                FollowingId = f.FollowerId,
+                FollowingName = profile?.DisplayName ?? "Unknown",
+                FollowingAvatar = profile?.PhotoUrl ?? "",
+                TotalXp = profile?.TotalXp ?? 0,
+                Streak = profile?.CurrentStreak ?? 0,
+            };
+        }).ToList();
     }
 
     public async Task<UserFollow> FollowUserAsync(string followerId, FollowRequest request)
@@ -148,4 +184,14 @@ public class LeaderboardEntry
     public int TotalXp { get; set; }
     public int LessonsCompleted { get; set; }
     public int CurrentStreak { get; set; }
+}
+
+public class UserFollowDto
+{
+    public string Id { get; set; } = "";
+    public string FollowingId { get; set; } = "";
+    public string FollowingName { get; set; } = "";
+    public string FollowingAvatar { get; set; } = "";
+    public int TotalXp { get; set; }
+    public int Streak { get; set; }
 }

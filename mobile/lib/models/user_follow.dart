@@ -16,15 +16,13 @@ class UserFollow {
   });
 
   factory UserFollow.fromJson(Map<String, dynamic> json) {
-    final user = json['user'] as Map<String, dynamic>?;
-
     return UserFollow(
-      id: json['_id'] as String? ?? json['id'] as String? ?? '',
-      userId: user?['_id'] as String? ?? json['userId'] as String? ?? '',
-      name: user?['name'] as String? ?? json['name'] as String? ?? 'Unknown',
-      avatar: user?['avatar'] as String? ?? json['avatar'] as String? ?? '',
-      totalXp: user?['totalXp'] as int? ?? json['totalXp'] as int? ?? 0,
-      streak: user?['streak'] as int? ?? json['streak'] as int? ?? 0,
+      id: json['id'] as String? ?? json['_id'] as String? ?? '',
+      userId: json['followingId'] as String? ?? json['userId'] as String? ?? '',
+      name: json['followingName'] as String? ?? json['name'] as String? ?? 'Unknown',
+      avatar: json['followingAvatar'] as String? ?? json['avatar'] as String? ?? '',
+      totalXp: json['totalXp'] as int? ?? 0,
+      streak: json['streak'] as int? ?? 0,
     );
   }
 }

@@ -20,24 +20,24 @@ public class FriendsController : ControllerBase
 
     /// <summary>List users I follow</summary>
     [HttpGet("following")]
-    public async Task<ActionResult<ApiResponse<List<UserFollow>>>> GetFollowing()
+    public async Task<ActionResult<ApiResponse<List<UserFollowDto>>>> GetFollowing()
     {
         var uid = UserId;
-        if (uid == null) return Unauthorized(ApiResponse<List<UserFollow>>.Fail("Unauthorized"));
+        if (uid == null) return Unauthorized(ApiResponse<List<UserFollowDto>>.Fail("Unauthorized"));
 
         var following = await _friendsService.GetFollowingAsync(uid);
-        return Ok(ApiResponse<List<UserFollow>>.Ok(following, $"{following.Count} following"));
+        return Ok(ApiResponse<List<UserFollowDto>>.Ok(following, $"{following.Count} following"));
     }
 
     /// <summary>List users who follow me</summary>
     [HttpGet("followers")]
-    public async Task<ActionResult<ApiResponse<List<UserFollow>>>> GetFollowers()
+    public async Task<ActionResult<ApiResponse<List<UserFollowDto>>>> GetFollowers()
     {
         var uid = UserId;
-        if (uid == null) return Unauthorized(ApiResponse<List<UserFollow>>.Fail("Unauthorized"));
+        if (uid == null) return Unauthorized(ApiResponse<List<UserFollowDto>>.Fail("Unauthorized"));
 
         var followers = await _friendsService.GetFollowersAsync(uid);
-        return Ok(ApiResponse<List<UserFollow>>.Ok(followers, $"{followers.Count} followers"));
+        return Ok(ApiResponse<List<UserFollowDto>>.Ok(followers, $"{followers.Count} followers"));
     }
 
     /// <summary>Follow a user</summary>

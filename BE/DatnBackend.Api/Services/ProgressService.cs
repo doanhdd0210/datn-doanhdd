@@ -125,7 +125,12 @@ public class ProgressService
 
         int total = questions.Count;
         int scorePercent = total > 0 ? (int)Math.Round((double)correct / total * 100) : 0;
-        int xpEarned = (int)(scorePercent / 100.0 * questions.Sum(q => q.Points));
+        int potentialXp = (int)(scorePercent / 100.0 * questions.Sum(q => q.Points));
+
+        // Chỉ award XP lần đầu tiên làm quiz này (không cộng dồn khi làm lại)
+        bool hasAttemptedBefore = await _db.QuizResults
+            .AnyAsync(r => r.UserId == userId && r.LessonId == request.LessonId);
+        int xpEarned = hasAttemptedBefore ? 0 : potentialXp;
 
         var result = new QuizResult
         {
@@ -142,19 +147,22 @@ public class ProgressService
 
         _db.QuizResults.Add(result);
 
-        // Update lesson progress score
+        // Update lesson progress score (luôn cập nhật điểm cao nhất)
         var progress = await _db.UserProgresses
             .FirstOrDefaultAsync(p => p.UserId == userId && p.LessonId == request.LessonId);
-        if (progress != null)
+        if (progress != null && scorePercent > progress.Score)
         {
             progress.Score = scorePercent;
         }
 
         await _db.SaveChangesAsync();
 
-        await UpdateUserStatsAsync(userId, xpEarned, 0);
+        // Chỉ cập nhật stats nếu có XP mới (lần đầu làm)
         if (xpEarned > 0)
+        {
+            await UpdateUserStatsAsync(userId, xpEarned, 0);
             await UpdateDailyProgressAsync(userId, 0, xpEarned, request.TimeSpentSeconds);
+        }
 
         return result;
     }

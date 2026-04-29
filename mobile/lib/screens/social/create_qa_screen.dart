@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_text_styles.dart';
+import '../../constants/app_theme.dart';
 import '../../services/api_service.dart';
 
 class CreateQaScreen extends StatefulWidget {
@@ -79,17 +80,58 @@ class _CreateQaScreenState extends State<CreateQaScreen> {
     }
   }
 
+  InputDecoration _fieldDecoration({
+    required BuildContext context,
+    required String hint,
+  }) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: TextStyle(color: context.textSecondary.withValues(alpha: 0.6), fontSize: 14),
+      filled: true,
+      fillColor: context.surfaceColor,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: context.borderColor),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: context.borderColor),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.primary, width: 2),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: AppColors.red.withValues(alpha: 0.8)),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.red, width: 2),
+      ),
+      counterStyle: TextStyle(color: context.textSecondary, fontSize: 11),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.bgColor,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: context.bgColor,
         elevation: 0,
-        title: const Text('Đặt câu hỏi', style: AppTextStyles.heading3),
+        title: Text('Đặt câu hỏi',
+            style: AppTextStyles.heading3.copyWith(color: context.textPrimary)),
+        foregroundColor: context.textPrimary,
+        automaticallyImplyLeading: false,
         leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => Navigator.pop(context),
+          icon: const Icon(Icons.close_rounded),
+          color: context.textPrimary,
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(height: 1, color: context.borderColor),
         ),
         actions: [
           Padding(
@@ -107,10 +149,7 @@ class _CreateQaScreenState extends State<CreateQaScreen> {
                   ? const SizedBox(
                       width: 18,
                       height: 18,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
-                      ),
+                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                     )
                   : const Text('Đăng', style: TextStyle(fontWeight: FontWeight.w700)),
             ),
@@ -122,13 +161,44 @@ class _CreateQaScreenState extends State<CreateQaScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            _buildTip(),
+            _buildTip(context),
+            const SizedBox(height: 20),
+            _buildLabel(context, 'Tiêu đề câu hỏi *'),
+            const SizedBox(height: 8),
+            TextFormField(
+              controller: _titleController,
+              maxLength: 150,
+              style: TextStyle(color: context.textPrimary, fontSize: 15),
+              decoration: _fieldDecoration(
+                context: context,
+                hint: 'VD: Sự khác nhau giữa ArrayList và LinkedList?',
+              ),
+              validator: (v) {
+                if (v == null || v.trim().isEmpty) return 'Vui lòng nhập tiêu đề';
+                if (v.trim().length < 10) return 'Tiêu đề quá ngắn (ít nhất 10 ký tự)';
+                return null;
+              },
+            ),
             const SizedBox(height: 16),
-            _buildTitleField(),
+            _buildLabel(context, 'Nội dung chi tiết *'),
+            const SizedBox(height: 8),
+            TextFormField(
+              controller: _contentController,
+              maxLines: 8,
+              maxLength: 2000,
+              style: TextStyle(color: context.textPrimary, fontSize: 14, height: 1.5),
+              decoration: _fieldDecoration(
+                context: context,
+                hint: 'Mô tả chi tiết vấn đề bạn gặp phải, đính kèm code nếu có...',
+              ).copyWith(alignLabelWithHint: true),
+              validator: (v) {
+                if (v == null || v.trim().isEmpty) return 'Vui lòng nhập nội dung';
+                if (v.trim().length < 20) return 'Nội dung quá ngắn (ít nhất 20 ký tự)';
+                return null;
+              },
+            ),
             const SizedBox(height: 16),
-            _buildContentField(),
-            const SizedBox(height: 16),
-            _buildTagsSection(),
+            _buildTagsSection(context),
             const SizedBox(height: 32),
           ],
         ),
@@ -136,7 +206,18 @@ class _CreateQaScreenState extends State<CreateQaScreen> {
     );
   }
 
-  Widget _buildTip() {
+  Widget _buildLabel(BuildContext context, String text) {
+    return Text(
+      text,
+      style: TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        color: context.textPrimary,
+      ),
+    );
+  }
+
+  Widget _buildTip(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -144,12 +225,12 @@ class _CreateQaScreenState extends State<CreateQaScreen> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.blue.withValues(alpha: 0.3)),
       ),
-      child: const Row(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.lightbulb_outline, color: AppColors.blue, size: 18),
-          SizedBox(width: 8),
-          Expanded(
+          const Icon(Icons.lightbulb_outline, color: AppColors.blue, size: 18),
+          const SizedBox(width: 8),
+          const Expanded(
             child: Text(
               'Câu hỏi rõ ràng, có ví dụ cụ thể sẽ được trả lời nhanh hơn. Hãy mô tả vấn đề bạn gặp phải và những gì bạn đã thử.',
               style: TextStyle(fontSize: 13, color: AppColors.blue, height: 1.4),
@@ -160,102 +241,12 @@ class _CreateQaScreenState extends State<CreateQaScreen> {
     );
   }
 
-  Widget _buildTitleField() {
+  Widget _buildTagsSection(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Tiêu đề câu hỏi *',
-          style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.w600),
-        ),
+        _buildLabel(context, 'Tags (tối đa 5)'),
         const SizedBox(height: 8),
-        TextFormField(
-          controller: _titleController,
-          maxLength: 150,
-          style: AppTextStyles.bodyLarge,
-          decoration: InputDecoration(
-            hintText: 'VD: Sự khác nhau giữa ArrayList và LinkedList?',
-            hintStyle: const TextStyle(color: AppColors.textGray, fontSize: 14),
-            filled: true,
-            fillColor: Colors.white,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.border),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.border),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.primary, width: 2),
-            ),
-            counterStyle: const TextStyle(color: AppColors.textGray, fontSize: 11),
-          ),
-          validator: (v) {
-            if (v == null || v.trim().isEmpty) return 'Vui lòng nhập tiêu đề';
-            if (v.trim().length < 10) return 'Tiêu đề quá ngắn (ít nhất 10 ký tự)';
-            return null;
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildContentField() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Nội dung chi tiết *',
-          style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: _contentController,
-          maxLines: 8,
-          maxLength: 2000,
-          style: AppTextStyles.bodyMedium,
-          decoration: InputDecoration(
-            hintText: 'Mô tả chi tiết vấn đề bạn gặp phải, đính kèm code nếu có...',
-            hintStyle: const TextStyle(color: AppColors.textGray, fontSize: 14),
-            alignLabelWithHint: true,
-            filled: true,
-            fillColor: Colors.white,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.border),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.border),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.primary, width: 2),
-            ),
-            counterStyle: const TextStyle(color: AppColors.textGray, fontSize: 11),
-          ),
-          validator: (v) {
-            if (v == null || v.trim().isEmpty) return 'Vui lòng nhập nội dung';
-            if (v.trim().length < 20) return 'Nội dung quá ngắn (ít nhất 20 ký tự)';
-            return null;
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTagsSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Tags (tối đa 5)',
-          style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 8),
-        // Current tags
         if (_tags.isNotEmpty) ...[
           Wrap(
             spacing: 8,
@@ -275,29 +266,34 @@ class _CreateQaScreenState extends State<CreateQaScreen> {
           ),
           const SizedBox(height: 12),
         ],
-        // Tag input
         if (_tags.length < 5)
           Row(
             children: [
               Expanded(
                 child: TextField(
                   controller: _tagController,
-                  style: const TextStyle(fontSize: 14),
+                  style: TextStyle(fontSize: 14, color: context.textPrimary),
                   onSubmitted: _addTag,
                   decoration: InputDecoration(
                     hintText: 'Thêm tag...',
-                    hintStyle: const TextStyle(color: AppColors.textGray, fontSize: 13),
+                    hintStyle: TextStyle(
+                        color: context.textSecondary.withValues(alpha: 0.6), fontSize: 13),
                     filled: true,
-                    fillColor: Colors.white,
+                    fillColor: context.surfaceColor,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: AppColors.border),
+                      borderSide: BorderSide(color: context.borderColor),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: AppColors.border),
+                      borderSide: BorderSide(color: context.borderColor),
                     ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: AppColors.primary),
+                    ),
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   ),
                 ),
               ),
@@ -309,10 +305,9 @@ class _CreateQaScreenState extends State<CreateQaScreen> {
             ],
           ),
         const SizedBox(height: 12),
-        // Suggested tags
-        const Text(
+        Text(
           'Gợi ý:',
-          style: TextStyle(fontSize: 12, color: AppColors.textGray),
+          style: TextStyle(fontSize: 12, color: context.textSecondary),
         ),
         const SizedBox(height: 6),
         Wrap(
@@ -324,12 +319,16 @@ class _CreateQaScreenState extends State<CreateQaScreen> {
               .map((tag) => GestureDetector(
                     onTap: () => _addTag(tag),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        border: Border.all(color: AppColors.border),
+                        border: Border.all(color: context.borderColor),
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: Text(tag, style: TextStyle(fontSize: 12, color: AppColors.textGray)),
+                      child: Text(
+                        tag,
+                        style: TextStyle(fontSize: 12, color: context.textSecondary),
+                      ),
                     ),
                   ))
               .toList(),

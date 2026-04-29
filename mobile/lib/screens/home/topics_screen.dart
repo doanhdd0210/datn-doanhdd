@@ -216,11 +216,10 @@ class _TopicsScreenState extends State<TopicsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(user?.displayName ?? '', style: AppTextStyles.heading4, overflow: TextOverflow.ellipsis),
-                  Text(user?.email ?? 'Tiếp tục học mỗi ngày!', style: AppTextStyles.bodySmall, overflow: TextOverflow.ellipsis),
+                  _LevelSubtitle(level: provider.level),
                 ],
               ),
             ),
-            _LevelChip(level: provider.level),
             const SizedBox(width: 8),
             _StatChip(icon: '🔥', value: provider.streak.toString(), color: AppColors.streakOrange),
             const SizedBox(width: 8),
@@ -807,46 +806,33 @@ class _PathShimmer extends StatelessWidget {
 
 // ─── Level Chip ───────────────────────────────────────────────────────────────
 
-class _LevelChip extends StatelessWidget {
+class _LevelSubtitle extends StatelessWidget {
   final String level;
-  const _LevelChip({required this.level});
+  const _LevelSubtitle({required this.level});
 
   @override
   Widget build(BuildContext context) {
-    final Map<String, _LevelStyle> styles = {
-      'beginner': _LevelStyle('🌱', AppColors.correct, context.surfaceElevatedColor),
-      'intermediate': _LevelStyle('⚡', AppColors.accentBlue, context.surfaceElevatedColor),
-      'advanced': _LevelStyle('🔥', AppColors.streakOrange, context.surfaceElevatedColor),
+    const labels = {
+      'beginner': ('🌱', 'Người mới bắt đầu', AppColors.correct),
+      'intermediate': ('⚡', 'Trung cấp', AppColors.accentBlue),
+      'advanced': ('🔥', 'Nâng cao', AppColors.streakOrange),
     };
-    final s = styles[level] ?? styles['beginner']!;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-      decoration: BoxDecoration(
-        color: s.bg,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: s.color.withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(s.icon, style: const TextStyle(fontSize: 13)),
-          const SizedBox(width: 3),
-          Text(
-            level[0].toUpperCase() + level.substring(1),
-            style: TextStyle(color: s.color, fontWeight: FontWeight.w800, fontSize: 11),
-          ),
-        ],
-      ),
+    final entry = labels[level] ?? labels['beginner']!;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(entry.$1, style: const TextStyle(fontSize: 11)),
+        const SizedBox(width: 3),
+        Text(
+          entry.$2,
+          style: TextStyle(fontSize: 12, color: entry.$3, fontWeight: FontWeight.w600),
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
     );
   }
 }
 
-class _LevelStyle {
-  final String icon;
-  final Color color;
-  final Color bg;
-  const _LevelStyle(this.icon, this.color, this.bg);
-}
 
 // ─── Stat Chip ───────────────────────────────────────────────────────────────
 

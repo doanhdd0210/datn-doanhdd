@@ -116,7 +116,7 @@ class UserProvider extends ChangeNotifier {
   Future<void> setDailyGoal(int goal) async {
     _dailyGoal = goal;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('daily_goal', goal);
+    await prefs.setInt('${_uidPrefix()}daily_goal', goal);
     notifyListeners();
   }
 
@@ -214,7 +214,7 @@ class UserProvider extends ChangeNotifier {
   Future<void> _saveSeenAchievements() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setStringList('seen_achievements', _seenAchievements.toList());
+      await prefs.setStringList('${_uidPrefix()}seen_achievements', _seenAchievements.toList());
     } catch (_) {}
   }
 
@@ -257,25 +257,31 @@ class UserProvider extends ChangeNotifier {
     });
   }
 
+  String _uidPrefix() {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    return uid != null ? '${uid}_' : '';
+  }
+
   Future<void> _loadFromCache() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      _totalXp = prefs.getInt('user_xp') ?? 0;
-      _streak = prefs.getInt('user_streak') ?? 0;
-      _longestStreak = prefs.getInt('user_longest_streak') ?? 0;
-      _lessonsCompleted = prefs.getInt('user_lessons_completed') ?? 0;
-      _hearts = prefs.getInt('user_hearts') ?? maxHearts;
-      _dailyGoal = prefs.getInt('daily_goal') ?? 20;
+      final p = _uidPrefix();
+      _totalXp = prefs.getInt('${p}user_xp') ?? 0;
+      _streak = prefs.getInt('${p}user_streak') ?? 0;
+      _longestStreak = prefs.getInt('${p}user_longest_streak') ?? 0;
+      _lessonsCompleted = prefs.getInt('${p}user_lessons_completed') ?? 0;
+      _hearts = prefs.getInt('${p}user_hearts') ?? maxHearts;
+      _dailyGoal = prefs.getInt('${p}daily_goal') ?? 20;
 
       // Load todayXp — reset if stored date differs from today
       final today = _todayKey();
-      final storedDate = prefs.getString('today_xp_date') ?? '';
-      _todayXp = storedDate == today ? (prefs.getInt('today_xp') ?? 0) : 0;
+      final storedDate = prefs.getString('${p}today_xp_date') ?? '';
+      _todayXp = storedDate == today ? (prefs.getInt('${p}today_xp') ?? 0) : 0;
 
       // Achievement flags
-      _hasPerfectQuiz = prefs.getBool('has_perfect_quiz') ?? false;
-      _hasFollowed = prefs.getBool('has_followed') ?? false;
-      final seen = prefs.getStringList('seen_achievements') ?? [];
+      _hasPerfectQuiz = prefs.getBool('${p}has_perfect_quiz') ?? false;
+      _hasFollowed = prefs.getBool('${p}has_followed') ?? false;
+      final seen = prefs.getStringList('${p}seen_achievements') ?? [];
       _seenAchievements = seen.toSet();
     } catch (_) {}
   }
@@ -283,15 +289,16 @@ class UserProvider extends ChangeNotifier {
   Future<void> _saveToCache() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setInt('user_xp', _totalXp);
-      await prefs.setInt('user_streak', _streak);
-      await prefs.setInt('user_longest_streak', _longestStreak);
-      await prefs.setInt('user_lessons_completed', _lessonsCompleted);
-      await prefs.setInt('user_hearts', _hearts);
-      await prefs.setInt('today_xp', _todayXp);
-      await prefs.setString('today_xp_date', _todayKey());
-      await prefs.setBool('has_perfect_quiz', _hasPerfectQuiz);
-      await prefs.setBool('has_followed', _hasFollowed);
+      final p = _uidPrefix();
+      await prefs.setInt('${p}user_xp', _totalXp);
+      await prefs.setInt('${p}user_streak', _streak);
+      await prefs.setInt('${p}user_longest_streak', _longestStreak);
+      await prefs.setInt('${p}user_lessons_completed', _lessonsCompleted);
+      await prefs.setInt('${p}user_hearts', _hearts);
+      await prefs.setInt('${p}today_xp', _todayXp);
+      await prefs.setString('${p}today_xp_date', _todayKey());
+      await prefs.setBool('${p}has_perfect_quiz', _hasPerfectQuiz);
+      await prefs.setBool('${p}has_followed', _hasFollowed);
     } catch (_) {}
   }
 

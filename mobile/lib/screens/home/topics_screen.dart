@@ -609,7 +609,7 @@ class _LessonNodeRow extends StatelessWidget {
             left: nodeLeft,
             top: 8,
             child: GestureDetector(
-              onTap: isTopicLocked ? null : onTap,
+              onTap: (isDone || isCurrent) && !isTopicLocked ? onTap : null,
               child: Column(
                 children: [
                   _NodeCircle(

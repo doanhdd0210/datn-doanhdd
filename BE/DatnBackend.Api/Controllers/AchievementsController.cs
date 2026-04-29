@@ -28,18 +28,18 @@ public class AchievementsController : ControllerBase
 
     /// <summary>Create a new achievement (admin only)</summary>
     [HttpPost]
-    public async Task<ActionResult<ApiResponse<Achievement>>> Create([FromBody] CreateAchievementRequest req)
+    public async Task<ActionResult> Create([FromBody] CreateAchievementRequest req)
     {
-        if (!IsAdmin) return Forbid();
+        if (!IsAdmin) return StatusCode(403, ApiResponse<object>.Fail("Forbidden: Admin access required"));
         var item = await _service.CreateAsync(req);
         return Ok(ApiResponse<Achievement>.Ok(item, "Achievement created"));
     }
 
     /// <summary>Update an achievement (admin only)</summary>
     [HttpPut("{id}")]
-    public async Task<ActionResult<ApiResponse<Achievement>>> Update(string id, [FromBody] UpdateAchievementRequest req)
+    public async Task<ActionResult> Update(string id, [FromBody] UpdateAchievementRequest req)
     {
-        if (!IsAdmin) return Forbid();
+        if (!IsAdmin) return StatusCode(403, ApiResponse<object>.Fail("Forbidden: Admin access required"));
         try
         {
             var item = await _service.UpdateAsync(id, req);
@@ -55,7 +55,7 @@ public class AchievementsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<ActionResult<ApiResponse<object>>> Delete(string id)
     {
-        if (!IsAdmin) return Forbid();
+        if (!IsAdmin) return StatusCode(403, ApiResponse<object>.Fail("Forbidden: Admin access required"));
         try
         {
             await _service.DeleteAsync(id);

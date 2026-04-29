@@ -19,6 +19,7 @@ public class QaController : ControllerBase
     }
 
     private string? UserId => HttpContext.Items["FirebaseUid"]?.ToString();
+    private bool IsAdmin => HttpContext.Items.TryGetValue("FirebaseIsAdmin", out var v) && v is true;
 
     /// <summary>List QA posts (optional lessonId and page filters)</summary>
     [HttpGet]
@@ -151,6 +152,7 @@ public class QaController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<ActionResult<ApiResponse<object>>> DeletePost(string id)
     {
+        if (!IsAdmin) return StatusCode(403, ApiResponse<object>.Fail("Forbidden: Admin access required"));
         try
         {
             await _qaService.DeletePostAsync(id);

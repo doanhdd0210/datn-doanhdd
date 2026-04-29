@@ -284,7 +284,7 @@ class ApiService {
   // ── QA ────────────────────────────────────────────────────────────────────
 
   Future<List<QaPost>> getQaPosts({String? lessonId, int page = 1}) async {
-    final query = StringBuffer('?page=$page&limit=20');
+    final query = StringBuffer('?page=$page');
     if (lessonId != null) query.write('&lessonId=$lessonId');
     final data = await _get('/qa$query');
     List<dynamic> list;

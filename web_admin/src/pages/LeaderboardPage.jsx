@@ -89,7 +89,7 @@ export default function LeaderboardPage() {
       <div style={s.statsRow}>
         <span style={s.stat}>Tổng: <strong>{users.length}</strong></span>
         <span style={s.stat}>Hiển thị: <strong>{filtered.length}</strong></span>
-        {tab === 'weekly' && <span style={{ ...s.stat, color: '#4f46e5', fontWeight: 600 }}>📅 Dữ liệu trong tuần này</span>}
+        {tab === 'weekly' && <span style={{ ...s.stat, color: '#1a73e8', fontWeight: 600 }}>📅 Dữ liệu trong tuần này</span>}
       </div>
 
       {loading ? (
@@ -167,7 +167,7 @@ export default function LeaderboardPage() {
 const s = {
   tabRow: { display: 'flex', gap: 8, marginBottom: 20, borderBottom: '2px solid #e2e8f0', paddingBottom: 0 },
   tabBtn: { padding: '8px 18px', border: 'none', borderRadius: '8px 8px 0 0', cursor: 'pointer', fontSize: 14, fontWeight: 500, background: '#f1f5f9', color: '#64748b', marginBottom: -2, borderBottom: '2px solid transparent' },
-  tabBtnActive: { background: '#fff', color: '#4f46e5', borderBottom: '2px solid #4f46e5', fontWeight: 700 },
+  tabBtnActive: { background: '#fff', color: '#1a73e8', borderBottom: '2px solid #1a73e8', fontWeight: 700 },
   toolbar: { display: 'flex', gap: 10, marginBottom: 16, alignItems: 'center', flexWrap: 'wrap' },
   searchInput: { flex: 1, minWidth: 200, padding: '8px 14px', border: '1.5px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none' },
   btnSecondary: { padding: '8px 14px', background: '#f1f5f9', color: '#334155', border: '1.5px solid #e2e8f0', borderRadius: 8, cursor: 'pointer', fontSize: 14 },
@@ -184,7 +184,7 @@ const s = {
   tr: { borderBottom: '1px solid #f1f5f9', transition: 'background 0.15s' },
   td: { padding: '12px 16px', verticalAlign: 'middle' },
   userCell: { display: 'flex', alignItems: 'center', gap: 10 },
-  avatar: { width: 36, height: 36, borderRadius: '50%', background: '#e0e7ff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#4f46e5', flexShrink: 0, overflow: 'hidden' },
+  avatar: { width: 36, height: 36, borderRadius: '50%', background: '#dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#1a73e8', flexShrink: 0, overflow: 'hidden' },
   avatarImg: { width: 36, height: 36, objectFit: 'cover' },
   badge: { display: 'inline-block', padding: '2px 10px', borderRadius: 99, background: '#f1f5f9', color: '#475569', fontSize: 12, fontWeight: 500 },
 }

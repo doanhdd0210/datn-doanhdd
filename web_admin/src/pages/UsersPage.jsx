@@ -369,7 +369,7 @@ const s = {
   tr: { borderBottom: '1px solid #f1f5f9', transition: 'background 0.1s' },
   td: { padding: '12px 16px', verticalAlign: 'middle' },
   userCell: { display: 'flex', alignItems: 'center', gap: 10 },
-  avatar: { width: 36, height: 36, borderRadius: '50%', background: '#e0e7ff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#4f46e5', flexShrink: 0, overflow: 'hidden' },
+  avatar: { width: 36, height: 36, borderRadius: '50%', background: '#dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#1a73e8', flexShrink: 0, overflow: 'hidden' },
   avatarImg: { width: 36, height: 36, objectFit: 'cover' },
   name: { fontWeight: 600, color: '#1e293b' },
   email: { fontSize: 12, color: '#64748b' },

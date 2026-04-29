@@ -81,7 +81,7 @@ export const lessonsApi = {
 
 // ─── Questions ───────────────────────────────────────────────────────────────
 export const questionsApi = {
-  list: (lessonId) => request('GET', `/api/questions?lessonId=${lessonId}`),
+  list: (lessonId) => request('GET', lessonId ? `/api/questions?lessonId=${lessonId}` : '/api/questions'),
   create: (data) => request('POST', '/api/questions', data),
   update: (id, data) => request('PUT', `/api/questions/${id}`, data),
   delete: (id) => request('DELETE', `/api/questions/${id}`),

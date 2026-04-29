@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { signOut } from '../services/auth'
 import { useAuth } from '../context/AuthContext'
-import { usersApi, topicsApi, lessonsApi } from '../services/api'
+import { usersApi, topicsApi, lessonsApi, questionsApi, codeSnippetsApi } from '../services/api'
 import UsersPage from './UsersPage'
 import NotificationsPage from './NotificationsPage'
 import SettingsPage from './SettingsPage'
@@ -140,7 +140,7 @@ export default function Dashboard() {
 function OverviewCards() {
   const [stats, setStats] = useState({
     totalUsers: '…', activeUsers: '…', admins: '…', disabled: '…',
-    totalTopics: '…', totalLessons: '…', totalQuestions: '…',
+    totalTopics: '…', totalLessons: '…', totalQuestions: '…', totalSnippets: '…',
   })
   const [loading, setLoading] = useState(true)
 
@@ -149,18 +149,23 @@ function OverviewCards() {
       usersApi.list(1000),
       topicsApi.list(),
       lessonsApi.list(),
-    ]).then(([usersRes, topicsRes, lessonsRes]) => {
-      const users = usersRes.status === 'fulfilled' ? (usersRes.value ?? []) : []
-      const topics = topicsRes.status === 'fulfilled' ? (topicsRes.value ?? []) : []
-      const lessons = lessonsRes.status === 'fulfilled' ? (lessonsRes.value ?? []) : []
+      questionsApi.list(),       // list all questions (no lessonId = all)
+      codeSnippetsApi.list(),    // list all snippets
+    ]).then(([usersRes, topicsRes, lessonsRes, qRes, snipRes]) => {
+      const users     = usersRes.status     === 'fulfilled' ? (usersRes.value     ?? []) : []
+      const topics    = topicsRes.status    === 'fulfilled' ? (topicsRes.value    ?? []) : []
+      const lessons   = lessonsRes.status   === 'fulfilled' ? (lessonsRes.value   ?? []) : []
+      const questions = qRes.status         === 'fulfilled' ? (qRes.value         ?? []) : []
+      const snippets  = snipRes.status      === 'fulfilled' ? (snipRes.value      ?? []) : []
       setStats({
-        totalUsers: users.length,
-        activeUsers: users.filter((u) => !u.disabled).length,
-        admins: users.filter((u) => u.isAdmin).length,
-        disabled: users.filter((u) => u.disabled).length,
-        totalTopics: topics.length,
-        totalLessons: lessons.length,
-        totalQuestions: '—',
+        totalUsers:     users.length,
+        activeUsers:    users.filter((u) => !u.disabled).length,
+        admins:         users.filter((u) => u.isAdmin).length,
+        disabled:       users.filter((u) => u.disabled).length,
+        totalTopics:    topics.length,
+        totalLessons:   lessons.length,
+        totalQuestions: questions.length,
+        totalSnippets:  snippets.length,
       })
     }).finally(() => setLoading(false))
   }, [])
@@ -170,6 +175,8 @@ function OverviewCards() {
     { label: 'Đang hoạt động',   value: loading ? '…' : stats.activeUsers,   icon: '✅', color: '#e6f4ea' },
     { label: 'Chủ đề',           value: loading ? '…' : stats.totalTopics,   icon: '📚', color: '#fef9c3' },
     { label: 'Bài học',          value: loading ? '…' : stats.totalLessons,  icon: '📖', color: '#f3e8ff' },
+    { label: 'Câu hỏi Quiz',     value: loading ? '…' : stats.totalQuestions,icon: '❓', color: '#ecfdf5' },
+    { label: 'Demo Code',        value: loading ? '…' : stats.totalSnippets, icon: '💻', color: '#fffbeb' },
     { label: 'Tài khoản Admin',  value: loading ? '…' : stats.admins,        icon: '🛡️', color: '#ede9fe' },
     { label: 'Bị khoá',          value: loading ? '…' : stats.disabled,      icon: '🔒', color: '#fce8e6' },
   ]
@@ -284,7 +291,7 @@ const styles = {
     position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)',
     display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100,
   },
-  modal: { background: '#fff', borderRadius: 12, padding: '28px 32px', width: 320 },
+  modal: { background: '#fff', borderRadius: 14, padding: '28px 32px', width: 320 },
   modalActions: { display: 'flex', justifyContent: 'flex-end', gap: 12 },
   cancelBtn: { padding: '8px 20px', border: '1.5px solid #d1d5db', borderRadius: 8, background: '#fff', cursor: 'pointer', fontWeight: 500 },
   confirmBtn: { padding: '8px 20px', border: 'none', borderRadius: 8, background: '#dc2626', color: '#fff', cursor: 'pointer', fontWeight: 500 },

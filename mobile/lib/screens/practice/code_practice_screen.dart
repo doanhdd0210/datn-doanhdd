@@ -386,7 +386,7 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
                       children: [
                         Text('🤖', style: TextStyle(fontSize: 13)),
                         SizedBox(width: 6),
-                        Text('Gemini AI', style: TextStyle(color: Color(0xFF90CAF9), fontSize: 11, fontWeight: FontWeight.w700)),
+                        Text('AI Giải thích', style: TextStyle(color: Color(0xFF90CAF9), fontSize: 11, fontWeight: FontWeight.w700)),
                       ],
                     ),
                     const SizedBox(height: 6),

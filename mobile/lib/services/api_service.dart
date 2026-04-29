@@ -435,7 +435,7 @@ class ApiService {
     }).toList();
   }
 
-  // ── AI (Gemini qua BE) ────────────────────────────────────────────────────
+  // ── AI (Groq qua BE) ─────────────────────────────────────────────────────
 
   Future<String> aiExplainCode({
     required String language,

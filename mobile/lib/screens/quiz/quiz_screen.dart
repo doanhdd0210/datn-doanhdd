@@ -741,7 +741,7 @@ class _FeedbackBarState extends State<_FeedbackBar> {
               children: [
                 const Text('🤖', style: TextStyle(fontSize: 13)),
                 const SizedBox(width: 6),
-                const Text('Gemini AI',
+                const Text('AI Gợi ý',
                     style: TextStyle(color: AppColors.primary, fontSize: 11, fontWeight: FontWeight.w800)),
                 const Spacer(),
                 GestureDetector(

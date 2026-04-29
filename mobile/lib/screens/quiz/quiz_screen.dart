@@ -449,99 +449,116 @@ class _AnswerOption extends StatelessWidget {
     final isSelected = selectedAnswer == index;
     final isCorrectAnswer = index == correctAnswer;
 
-    Color bgColor = context.surfaceColor;
-    Color borderColor = context.borderColor;
-    Color shadowColor = context.borderColor;
-    Color textColor = context.textPrimary;
-    Color labelBg = context.surfaceElevatedColor;
-    Color labelColor = context.textSecondary;
+    // ── State colours ──────────────────────────────────────────────────────
+    Color bgColor      = context.surfaceColor;
+    Color borderColor  = context.borderColor;
+    Color textColor    = context.textPrimary;
+    Color labelBg      = context.surfaceElevatedColor;
+    Color labelColor   = context.textSecondary;
+    Color accentStrip  = Colors.transparent;
+    Widget? trailingIcon;
 
     if (hasAnswered) {
       if (isCorrectAnswer) {
-        bgColor = AppColors.correct.withValues(alpha: 0.12);
-        borderColor = AppColors.correct;
-        shadowColor = AppColors.correctDark;
-        textColor = AppColors.correct;
-        labelBg = AppColors.correct;
-        labelColor = Colors.white;
+        bgColor     = const Color(0xFF4CAF50).withValues(alpha: 0.08);
+        borderColor = const Color(0xFF4CAF50).withValues(alpha: 0.5);
+        textColor   = const Color(0xFF2E7D32);
+        labelBg     = const Color(0xFF4CAF50);
+        labelColor  = Colors.white;
+        accentStrip = const Color(0xFF4CAF50);
+        trailingIcon = const Icon(Icons.check_circle_rounded,
+            color: Color(0xFF4CAF50), size: 20);
       } else if (isSelected) {
-        bgColor = AppColors.wrong.withValues(alpha: 0.1);
-        borderColor = AppColors.wrong;
-        shadowColor = AppColors.wrongDark;
-        textColor = AppColors.wrong;
-        labelBg = AppColors.wrong;
-        labelColor = Colors.white;
+        bgColor     = const Color(0xFFF44336).withValues(alpha: 0.07);
+        borderColor = const Color(0xFFF44336).withValues(alpha: 0.4);
+        textColor   = const Color(0xFFC62828);
+        labelBg     = const Color(0xFFF44336);
+        labelColor  = Colors.white;
+        accentStrip = const Color(0xFFF44336);
+        trailingIcon = const Icon(Icons.cancel_rounded,
+            color: Color(0xFFF44336), size: 20);
       } else {
-        // Các option không chọn và không đúng — mờ nhẹ
-        bgColor = context.surfaceColor;
-        borderColor = context.borderColor.withValues(alpha: 0.5);
-        shadowColor = Colors.transparent;
-        textColor = context.textSecondary.withValues(alpha: 0.5);
-        labelBg = context.surfaceElevatedColor;
-        labelColor = context.textTertiary;
+        // unselected, wrong — dim out
+        borderColor = context.borderColor.withValues(alpha: 0.35);
+        textColor   = context.textSecondary.withValues(alpha: 0.4);
+        labelColor  = context.textTertiary.withValues(alpha: 0.4);
       }
     } else if (isSelected) {
-      bgColor = AppColors.primary.withValues(alpha: 0.08);
-      borderColor = AppColors.primary;
-      shadowColor = AppColors.primaryDark;
-      textColor = AppColors.primary;
-      labelBg = AppColors.primary;
-      labelColor = Colors.white;
+      bgColor     = AppColors.primary.withValues(alpha: 0.06);
+      borderColor = AppColors.primary.withValues(alpha: 0.7);
+      textColor   = AppColors.primary;
+      labelBg     = AppColors.primary;
+      labelColor  = Colors.white;
+      accentStrip = AppColors.primary;
     }
 
     const labels = ['A', 'B', 'C', 'D'];
+    final showStrip = accentStrip != Colors.transparent;
 
     return GestureDetector(
       onTap: hasAnswered ? null : onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        margin: const EdgeInsets.only(bottom: 12),
+        duration: const Duration(milliseconds: 180),
+        margin: const EdgeInsets.only(bottom: 10),
         decoration: BoxDecoration(
           color: bgColor,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(color: borderColor, width: 1.5),
-          boxShadow: shadowColor != Colors.transparent
-              ? [BoxShadow(color: shadowColor, offset: const Offset(0, 3), blurRadius: 0)]
-              : null,
         ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(13),
           child: Row(
             children: [
+              // Left accent strip
               AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                width: 32, height: 32,
-                decoration: BoxDecoration(
-                  color: labelBg,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Center(
-                  child: Text(
-                    labels[index],
-                    style: TextStyle(
-                      color: labelColor,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
+                duration: const Duration(milliseconds: 180),
+                width: showStrip ? 4 : 0,
+                color: accentStrip,
               ),
-              const SizedBox(width: 12),
               Expanded(
-                child: Text(
-                  text,
-                  style: TextStyle(
-                    color: textColor,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
-                    height: 1.4,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+                  child: Row(
+                    children: [
+                      // Label badge
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        width: 30, height: 30,
+                        decoration: BoxDecoration(
+                          color: labelBg,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Center(
+                          child: Text(
+                            labels[index],
+                            style: TextStyle(
+                              color: labelColor,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          text,
+                          style: TextStyle(
+                            color: textColor,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
+                      if (trailingIcon != null) ...[
+                        const SizedBox(width: 8),
+                        trailingIcon,
+                      ],
+                    ],
                   ),
                 ),
               ),
-              if (hasAnswered && isCorrectAnswer)
-                const Icon(Icons.check_circle_rounded, color: AppColors.correct, size: 22),
-              if (hasAnswered && isSelected && !isCorrectAnswer)
-                const Icon(Icons.cancel_rounded, color: AppColors.wrong, size: 22),
             ],
           ),
         ),

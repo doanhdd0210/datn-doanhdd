@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using DatnBackend.Api.Data;
 using DatnBackend.Api.Models;
 using DatnBackend.Api.Services;
 
@@ -11,11 +13,61 @@ public class NotificationsController : ControllerBase
 {
     private readonly INotificationService _notificationService;
     private readonly IUserService _userService;
+    private readonly AppDbContext _db;
 
-    public NotificationsController(INotificationService notificationService, IUserService userService)
+    public NotificationsController(INotificationService notificationService, IUserService userService, AppDbContext db)
     {
         _notificationService = notificationService;
         _userService = userService;
+        _db = db;
+    }
+
+    /// <summary>Lấy in-app notifications của user hiện tại</summary>
+    [HttpGet("me")]
+    public async Task<ActionResult<ApiResponse<object>>> GetMyNotifications([FromQuery] int limit = 30)
+    {
+        var uid = HttpContext.Items["FirebaseUid"] as string;
+        if (string.IsNullOrEmpty(uid))
+            return Unauthorized(ApiResponse<object>.Fail("Unauthorized"));
+
+        var notifs = await _db.UserNotifications
+            .Where(n => n.UserId == uid)
+            .OrderByDescending(n => n.CreatedAt)
+            .Take(limit)
+            .ToListAsync();
+
+        var unreadCount = notifs.Count(n => !n.IsRead);
+
+        return Ok(ApiResponse<object>.Ok(new { notifications = notifs, unreadCount }));
+    }
+
+    /// <summary>Đánh dấu tất cả là đã đọc</summary>
+    [HttpPost("me/read-all")]
+    public async Task<ActionResult<ApiResponse<object>>> MarkAllRead()
+    {
+        var uid = HttpContext.Items["FirebaseUid"] as string;
+        if (string.IsNullOrEmpty(uid))
+            return Unauthorized(ApiResponse<object>.Fail("Unauthorized"));
+
+        await _db.UserNotifications
+            .Where(n => n.UserId == uid && !n.IsRead)
+            .ExecuteUpdateAsync(s => s.SetProperty(n => n.IsRead, true));
+
+        return Ok(ApiResponse<object>.Ok(null, "Marked all as read"));
+    }
+
+    /// <summary>Số thông báo chưa đọc</summary>
+    [HttpGet("me/unread-count")]
+    public async Task<ActionResult<ApiResponse<object>>> GetUnreadCount()
+    {
+        var uid = HttpContext.Items["FirebaseUid"] as string;
+        if (string.IsNullOrEmpty(uid))
+            return Unauthorized(ApiResponse<object>.Fail("Unauthorized"));
+
+        var count = await _db.UserNotifications
+            .CountAsync(n => n.UserId == uid && !n.IsRead);
+
+        return Ok(ApiResponse<object>.Ok(new { count }));
     }
 
     /// <summary>Gửi thông báo — chọn một trong: token, topic, uid, broadcastAll</summary>

@@ -9,12 +9,14 @@ public class FriendsService
     private readonly AppDbContext _db;
     private readonly ICacheService _cache;
     private readonly ILogger<FriendsService> _logger;
+    private readonly INotificationService _notifService;
 
-    public FriendsService(AppDbContext db, ICacheService cache, ILogger<FriendsService> logger)
+    public FriendsService(AppDbContext db, ICacheService cache, ILogger<FriendsService> logger, INotificationService notifService)
     {
         _db = db;
         _cache = cache;
         _logger = logger;
+        _notifService = notifService;
     }
 
     public async Task<List<UserFollowDto>> GetFollowingAsync(string userId)
@@ -90,7 +92,47 @@ public class FriendsService
         };
 
         _db.UserFollows.Add(follow);
+
+        // In-app notification cho người được follow
+        var followerProfile = await _db.UserProfiles.FirstOrDefaultAsync(p => p.Uid == followerId);
+        var followerName = followerProfile?.DisplayName ?? "Ai đó";
+        var followerAvatar = followerProfile?.PhotoUrl ?? "";
+
+        _db.UserNotifications.Add(new UserNotification
+        {
+            Id = Guid.NewGuid().ToString(),
+            UserId = request.FollowingId,
+            Type = "follow",
+            Title = "Người theo dõi mới",
+            Body = $"{followerName} đã bắt đầu theo dõi bạn!",
+            ActorId = followerId,
+            ActorName = followerName,
+            ActorAvatar = followerAvatar,
+            IsRead = false,
+            CreatedAt = DateTime.UtcNow,
+        });
+
         await _db.SaveChangesAsync();
+
+        // Push notification qua FCM nếu có token
+        try
+        {
+            var targetProfile = await _db.UserProfiles.FirstOrDefaultAsync(p => p.Uid == request.FollowingId);
+            if (targetProfile?.FcmTokens.Count > 0)
+            {
+                await _notifService.SendToTokensAsync(new SendNotificationRequest
+                {
+                    Title = "Người theo dõi mới 👤",
+                    Body = $"{followerName} đã bắt đầu theo dõi bạn!",
+                    Data = new Dictionary<string, string> { ["screen"] = "friends", ["type"] = "follow" },
+                }, targetProfile.FcmTokens);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to send follow push notification");
+        }
+
         return follow;
     }
 

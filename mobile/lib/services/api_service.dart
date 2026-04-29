@@ -497,16 +497,36 @@ class ApiService {
   Future<List<Map<String, dynamic>>> getNotificationHistory() async {
     try {
       final data = await _get('/notifications/history');
-      if (data is List) {
-        return data.map((e) => e as Map<String, dynamic>).toList();
-      }
-      if (data is Map && data['data'] is List) {
-        return (data['data'] as List).map((e) => e as Map<String, dynamic>).toList();
-      }
+      if (data is List) return data.cast<Map<String, dynamic>>();
+      if (data is Map && data['data'] is List) return (data['data'] as List).cast<Map<String, dynamic>>();
       return [];
+    } catch (_) { return []; }
+  }
+
+  /// In-app notifications của user hiện tại
+  Future<Map<String, dynamic>> getMyNotifications({int limit = 30}) async {
+    try {
+      final data = await _get('/notifications/me?limit=$limit');
+      if (data is Map) {
+        final inner = data['data'] as Map<String, dynamic>? ?? data as Map<String, dynamic>;
+        return inner;
+      }
+      return {'notifications': [], 'unreadCount': 0};
     } catch (_) {
-      return [];
+      return {'notifications': [], 'unreadCount': 0};
     }
+  }
+
+  Future<int> getUnreadNotificationCount() async {
+    try {
+      final data = await _get('/notifications/me/unread-count');
+      final inner = data is Map ? (data['data'] ?? data) : data;
+      return (inner as Map?)?['count'] as int? ?? 0;
+    } catch (_) { return 0; }
+  }
+
+  Future<void> markAllNotificationsRead() async {
+    try { await _post('/notifications/me/read-all', {}); } catch (_) {}
   }
 }
 

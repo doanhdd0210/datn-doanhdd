@@ -13,6 +13,7 @@ import '../../providers/user_provider.dart';
 import '../../services/api_service.dart';
 import 'lesson_detail_screen.dart';
 import 'lessons_screen.dart';
+import '../notifications/notifications_screen.dart';
 
 class TopicsScreen extends StatefulWidget {
   const TopicsScreen({super.key});
@@ -224,6 +225,8 @@ class _TopicsScreenState extends State<TopicsScreen> {
             _StatChip(icon: '🔥', value: provider.streak.toString(), color: AppColors.streakOrange),
             const SizedBox(width: 8),
             _StatChip(icon: '⚡', value: provider.totalXp.toString(), color: AppColors.xpGold),
+            const SizedBox(width: 8),
+            _NotifBell(),
           ],
         ),
       ),
@@ -958,6 +961,76 @@ class _DailyGoalPopup extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ── Notification Bell ─────────────────────────────────────────────────────────
+
+class _NotifBell extends StatefulWidget {
+  @override
+  State<_NotifBell> createState() => _NotifBellState();
+}
+
+class _NotifBellState extends State<_NotifBell> {
+  final _api = ApiService();
+  int _unread = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchCount();
+  }
+
+  Future<void> _fetchCount() async {
+    final count = await _api.getUnreadNotificationCount();
+    if (mounted) setState(() => _unread = count);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () async {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+        );
+        _fetchCount();
+      },
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: 36, height: 36,
+            decoration: BoxDecoration(
+              color: context.surfaceColor,
+              shape: BoxShape.circle,
+              border: Border.all(color: context.borderColor),
+            ),
+            child: Icon(
+              Icons.notifications_rounded,
+              size: 18,
+              color: _unread > 0 ? AppColors.primary : context.textSecondary,
+            ),
+          ),
+          if (_unread > 0)
+            Positioned(
+              top: -4, right: -4,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                decoration: BoxDecoration(
+                  color: AppColors.red,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: context.bgColor, width: 1.5),
+                ),
+                child: Text(
+                  _unread > 9 ? '9+' : '$_unread',
+                  style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w800),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

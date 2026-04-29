@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_text_styles.dart';
+import '../../constants/app_theme.dart';
+import '../../providers/theme_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../services/auth_service.dart';
 import '../login_screen.dart';
@@ -71,7 +73,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Hủy', style: TextStyle(color: AppColors.textGray)),
+            child: const Text('Hủy', style: TextStyle(color: AppColors.textGray)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -108,17 +110,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final user = FirebaseAuth.instance.currentUser;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.bgColor,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
         elevation: 0,
-        title: Text('Cài đặt', style: AppTextStyles.heading3),
+        title: const Text('Cài đặt', style: AppTextStyles.heading3),
         centerTitle: false,
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _buildSection('Tài khoản', [
+          _buildSection(context, 'Tài khoản', [
             _buildInfoTile(
               icon: Icons.person_outline,
               label: 'Tên hiển thị',
@@ -132,7 +133,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ]),
           const SizedBox(height: 16),
-          _buildSection('Thông báo', [
+          _buildSection(context, 'Giao diện', [
+            _buildThemeTile(),
+          ]),
+          const SizedBox(height: 16),
+          _buildSection(context, 'Thông báo', [
             _buildSwitchTile(
               icon: Icons.notifications_outlined,
               label: 'Nhận thông báo',
@@ -153,11 +158,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ]),
           const SizedBox(height: 16),
-          _buildSection('Nhà phát triển', [
+          _buildSection(context, 'Nhà phát triển', [
             _buildUrlTile(),
           ]),
           const SizedBox(height: 16),
-          _buildSection('Ứng dụng', [
+          _buildSection(context, 'Ứng dụng', [
             _buildInfoTile(
               icon: Icons.info_outline,
               label: 'Phiên bản',
@@ -166,12 +171,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _buildInfoTile(
               icon: Icons.description_outlined,
               label: 'Điều khoản sử dụng',
-              onTap: () {},
+              onTap: () => _showTextDialog(
+                title: 'Điều khoản sử dụng',
+                content:
+                    'Bằng cách sử dụng JavaLearn, bạn đồng ý:\n\n'
+                    '• Sử dụng ứng dụng cho mục đích học tập cá nhân.\n'
+                    '• Không chia sẻ tài khoản với người khác.\n'
+                    '• Không phát tán nội dung vi phạm pháp luật trên Q&A.\n'
+                    '• Chúng tôi có quyền tạm khóa tài khoản vi phạm quy định.\n\n'
+                    'Ứng dụng được phát triển phục vụ mục đích học thuật (DATN).',
+              ),
             ),
             _buildInfoTile(
               icon: Icons.privacy_tip_outlined,
               label: 'Chính sách bảo mật',
-              onTap: () {},
+              onTap: () => _showTextDialog(
+                title: 'Chính sách bảo mật',
+                content:
+                    'JavaLearn thu thập và sử dụng dữ liệu như sau:\n\n'
+                    '• Email và tên hiển thị: dùng để xác thực và hiển thị hồ sơ.\n'
+                    '• Tiến độ học tập: lưu trên server để đồng bộ giữa các thiết bị.\n'
+                    '• FCM token: dùng để gửi thông báo học tập.\n\n'
+                    'Chúng tôi không bán dữ liệu cá nhân cho bên thứ ba.\n'
+                    'Dữ liệu được bảo vệ bằng Firebase Authentication.',
+              ),
             ),
           ]),
           const SizedBox(height: 24),
@@ -196,7 +219,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildSection(String title, List<Widget> children) {
+  Widget _buildSection(BuildContext context, String title, List<Widget> children) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -204,7 +227,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           padding: const EdgeInsets.only(left: 4, bottom: 8),
           child: Text(
             title.toUpperCase(),
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w700,
               color: AppColors.textGray,
@@ -214,9 +237,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         Container(
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: context.surfaceColor,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.border),
+            border: Border.all(color: context.borderColor),
           ),
           child: Column(
             children: List.generate(children.length, (i) {
@@ -224,7 +247,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   children[i],
                   if (i < children.length - 1)
-                    Divider(height: 1, color: AppColors.border, indent: 56),
+                    Divider(height: 1, color: context.borderColor, indent: 56),
                 ],
               );
             }),
@@ -245,7 +268,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         width: 36,
         height: 36,
         decoration: BoxDecoration(
-          color: AppColors.primary.withOpacity(0.1),
+          color: AppColors.primary.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(icon, color: AppColors.primary, size: 20),
@@ -261,6 +284,73 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  Widget _buildThemeTile() {
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, _) {
+        final isDark = themeProvider.isDark;
+        return ListTile(
+          leading: Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: AppColors.secondary.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+              color: isDark ? AppColors.secondaryLight : AppColors.streakOrange,
+              size: 20,
+            ),
+          ),
+          title: Text(
+            isDark ? 'Giao diện tối' : 'Giao diện sáng',
+            style: AppTextStyles.bodyLarge,
+          ),
+          subtitle: Text(
+            isDark ? 'Nhấn để chuyển sang sáng' : 'Nhấn để chuyển sang tối',
+            style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textGray),
+          ),
+          trailing: GestureDetector(
+            onTap: () => themeProvider.toggle(),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              width: 52,
+              height: 28,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(14),
+                color: isDark ? AppColors.primary : AppColors.border,
+              ),
+              child: AnimatedAlign(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOutCubic,
+                alignment: isDark ? Alignment.centerRight : Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.all(3),
+                  child: Container(
+                    width: 22,
+                    height: 22,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Icon(
+                        isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+                        size: 12,
+                        color: isDark ? AppColors.primary : AppColors.streakOrange,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          onTap: () => themeProvider.toggle(),
+        );
+      },
+    );
+  }
+
   Widget _buildSwitchTile({
     required IconData icon,
     required String label,
@@ -272,7 +362,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         width: 36,
         height: 36,
         decoration: BoxDecoration(
-          color: AppColors.primary.withOpacity(0.1),
+          color: AppColors.primary.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(icon, color: AppColors.primary, size: 20),
@@ -281,13 +371,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
       trailing: Switch(
         value: value,
         onChanged: onChanged,
-        activeColor: AppColors.primary,
+        activeThumbColor: AppColors.primary,
       ),
     );
   }
 
   Widget _buildUrlTile() {
-    return Padding(
+    return Builder(
+      builder: (context) => Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -298,13 +389,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: AppColors.blue.withOpacity(0.1),
+                  color: AppColors.blue.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(Icons.dns_outlined, color: AppColors.blue, size: 20),
               ),
               const SizedBox(width: 12),
-              Text('Địa chỉ server API', style: AppTextStyles.bodyLarge),
+              const Text('Địa chỉ server API', style: AppTextStyles.bodyLarge),
             ],
           ),
           const SizedBox(height: 12),
@@ -316,16 +407,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   style: const TextStyle(fontSize: 13),
                   decoration: InputDecoration(
                     hintText: 'https://...',
-                    hintStyle: TextStyle(color: AppColors.textGray),
+                    hintStyle: const TextStyle(color: AppColors.textGray),
                     filled: true,
-                    fillColor: AppColors.background,
+                    fillColor: context.bgColor,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: AppColors.border),
+                      borderSide: BorderSide(color: context.borderColor),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: AppColors.border),
+                      borderSide: BorderSide(color: context.borderColor),
                     ),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   ),
@@ -343,6 +434,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: const Text('Lưu'),
               ),
             ],
+          ),
+        ],
+      ),
+      ),
+    );
+  }
+
+  void _showTextDialog({required String title, required String content}) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(title),
+        content: SingleChildScrollView(
+          child: Text(content, style: const TextStyle(height: 1.6)),
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              minimumSize: const Size(80, 40),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text('Đóng'),
           ),
         ],
       ),
@@ -365,23 +482,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Hủy', style: TextStyle(color: AppColors.textGray)),
+            child: const Text('Hủy', style: TextStyle(color: AppColors.textGray)),
           ),
           ElevatedButton(
             onPressed: () async {
               final name = _nameController.text.trim();
               if (name.isNotEmpty) {
                 await FirebaseAuth.instance.currentUser?.updateDisplayName(name);
-                if (mounted) {
-                  context.read<UserProvider>().refreshStats();
-                  Navigator.pop(ctx);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Đã cập nhật tên'),
-                      backgroundColor: AppColors.primary,
-                    ),
-                  );
-                }
+                if (!mounted) return;
+                final provider = context.read<UserProvider>();
+                final messenger = ScaffoldMessenger.of(context);
+                provider.refreshStats();
+                if (!ctx.mounted) return;
+                Navigator.pop(ctx);
+                messenger.showSnackBar(
+                  const SnackBar(
+                    content: Text('Đã cập nhật tên'),
+                    backgroundColor: AppColors.primary,
+                  ),
+                );
               }
             },
             style: ElevatedButton.styleFrom(

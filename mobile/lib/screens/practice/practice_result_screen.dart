@@ -76,7 +76,7 @@ class PracticeResultScreen extends StatelessWidget {
               animation: true,
               animationDuration: 1000,
               progressColor: _resultColor,
-              backgroundColor: _resultColor.withOpacity(0.15),
+              backgroundColor: _resultColor.withValues(alpha: 0.15),
               circularStrokeCap: CircularStrokeCap.round,
               center: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -94,9 +94,9 @@ class PracticeResultScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               decoration: BoxDecoration(
-                color: AppColors.xpGold.withOpacity(0.12),
+                color: AppColors.xpGold.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.xpGold.withOpacity(0.3)),
+                border: Border.all(color: AppColors.xpGold.withValues(alpha: 0.3)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,

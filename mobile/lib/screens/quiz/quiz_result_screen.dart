@@ -1,22 +1,32 @@
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:percent_indicator/percent_indicator.dart';
+import 'package:provider/provider.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_text_styles.dart';
+import '../../constants/app_theme.dart';
 import '../../models/quiz_result.dart';
 import '../../models/question.dart';
+import '../../providers/user_provider.dart';
 import 'quiz_review_screen.dart';
+import 'quiz_screen.dart';
 
 class QuizResultScreen extends StatefulWidget {
   final QuizResult result;
   final List<Question> questions;
   final String lessonTitle;
+  final String? lessonId;
+  final String? topicId;
+  final int xpReward;
 
   const QuizResultScreen({
     super.key,
     required this.result,
     required this.questions,
     required this.lessonTitle,
+    this.lessonId,
+    this.topicId,
+    this.xpReward = 0,
   });
 
   @override
@@ -43,6 +53,14 @@ class _QuizResultScreenState extends State<QuizResultScreen>
 
     if (widget.result.isPassing) {
       _confettiController.play();
+    }
+
+    if (widget.result.percentage == 1.0) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          context.read<UserProvider>().markPerfectQuiz();
+        }
+      });
     }
 
     Future.delayed(const Duration(milliseconds: 300), () {
@@ -78,7 +96,7 @@ class _QuizResultScreenState extends State<QuizResultScreen>
     final result = widget.result;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.bgColor,
       body: Stack(
         alignment: Alignment.topCenter,
         children: [
@@ -88,6 +106,31 @@ class _QuizResultScreenState extends State<QuizResultScreen>
               child: Column(
                 children: [
                   const SizedBox(height: 20),
+                  // Pass/Fail badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: result.isPassing
+                          ? AppColors.correct.withValues(alpha: 0.15)
+                          : AppColors.wrong.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: result.isPassing
+                            ? AppColors.correct.withValues(alpha: 0.5)
+                            : AppColors.wrong.withValues(alpha: 0.5),
+                      ),
+                    ),
+                    child: Text(
+                      result.isPassing ? '✓ ĐẠT' : '✗ KHÔNG ĐẠT',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1,
+                        color: result.isPassing ? AppColors.correct : AppColors.wrong,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
                   // Result message
                   Text(
                     _resultMessage,
@@ -103,7 +146,7 @@ class _QuizResultScreenState extends State<QuizResultScreen>
                     animation: true,
                     animationDuration: 1000,
                     progressColor: _resultColor,
-                    backgroundColor: _resultColor.withOpacity(0.15),
+                    backgroundColor: _resultColor.withValues(alpha: 0.15),
                     circularStrokeCap: CircularStrokeCap.round,
                     center: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -128,10 +171,10 @@ class _QuizResultScreenState extends State<QuizResultScreen>
                         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: [AppColors.xpGold.withOpacity(0.15), AppColors.xpGold.withOpacity(0.05)],
+                            colors: [AppColors.xpGold.withValues(alpha: 0.15), AppColors.xpGold.withValues(alpha: 0.05)],
                           ),
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppColors.xpGold.withOpacity(0.4)),
+                          border: Border.all(color: AppColors.xpGold.withValues(alpha: 0.4)),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -166,6 +209,36 @@ class _QuizResultScreenState extends State<QuizResultScreen>
                       child: const Text('Tiếp tục học'),
                     ),
                   ),
+                  if (!result.isPassing && widget.lessonId != null) ...[
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => QuizScreen(
+                                lessonId: widget.lessonId!,
+                                topicId: widget.topicId ?? '',
+                                lessonTitle: widget.lessonTitle,
+                                xpReward: widget.xpReward,
+                              ),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.refresh_rounded, size: 18),
+                        label: const Text('Thử lại'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.orange,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          textStyle: AppTextStyles.buttonText,
+                        ),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 12),
                   if (widget.questions.isNotEmpty)
                     SizedBox(
@@ -222,9 +295,9 @@ class _QuizResultScreenState extends State<QuizResultScreen>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.surfaceColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

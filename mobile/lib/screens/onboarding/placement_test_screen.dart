@@ -169,14 +169,15 @@ class _PlacementTestScreenState extends State<PlacementTestScreen>
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(onboardingDoneKey(uid), true);
     }
-    if (mounted) {
-      await context.read<UserProvider>().setLevel(_resultLevel);
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
-        (_) => false,
-      );
-    }
+    if (!mounted) return;
+    final provider = context.read<UserProvider>();
+    await provider.setLevel(_resultLevel);
+    if (!mounted) return;
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
+      (_) => false,
+    );
   }
 
   @override
@@ -262,7 +263,7 @@ class _PlacementTestScreenState extends State<PlacementTestScreen>
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: diffColor.withOpacity(0.1),
+                          color: diffColor.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -507,7 +508,7 @@ class _PlacementTestScreenState extends State<PlacementTestScreen>
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 15,
-                    color: r.shadowColor.withOpacity(0.8),
+                    color: r.shadowColor.withValues(alpha: 0.8),
                     height: 1.5,
                   ),
                 ),
@@ -542,7 +543,7 @@ class _PlacementTestScreenState extends State<PlacementTestScreen>
                                   fontSize: 15)),
                           Text(r.unlockText,
                               style: TextStyle(
-                                  color: Colors.white.withOpacity(0.85),
+                                  color: Colors.white.withValues(alpha: 0.85),
                                   fontSize: 12)),
                         ],
                       ),
@@ -612,7 +613,7 @@ class _FeedbackBar extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: bgColor,
-        border: Border(top: BorderSide(color: accentColor.withOpacity(0.3))),
+        border: Border(top: BorderSide(color: accentColor.withValues(alpha: 0.3))),
       ),
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
       child: Column(

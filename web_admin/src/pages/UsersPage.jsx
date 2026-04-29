@@ -1,14 +1,15 @@
 import { useState, useEffect, useCallback } from 'react'
-import { usersApi } from '../services/api'
+import { usersApi, statsApi } from '../services/api'
 
 const PROVIDER_LABEL = { 'google.com': 'Google', password: 'Email', phone: 'Phone' }
 
 export default function UsersPage() {
   const [users, setUsers] = useState([])
+  const [leaderboard, setLeaderboard] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
-  const [modal, setModal] = useState(null) // null | { mode: 'create'|'edit'|'delete', user? }
+  const [modal, setModal] = useState(null) // null | { mode: 'create'|'edit'|'delete'|'stats', user? }
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({})
 
@@ -16,8 +17,12 @@ export default function UsersPage() {
     setLoading(true)
     setError('')
     try {
-      const data = await usersApi.list()
-      setUsers(data ?? [])
+      const [userData, lbData] = await Promise.all([
+        usersApi.list(),
+        statsApi.leaderboard(500).catch(() => []),
+      ])
+      setUsers(userData ?? [])
+      setLeaderboard(lbData ?? [])
     } catch (e) {
       setError(e.message)
     } finally {
@@ -36,6 +41,8 @@ export default function UsersPage() {
     )
   })
 
+  const getUserStats = (uid) => leaderboard.find(l => l.uid === uid || l.userId === uid)
+
   const openCreate = () => {
     setForm({ email: '', password: '', displayName: '', phoneNumber: '', isAdmin: false })
     setModal({ mode: 'create' })
@@ -52,6 +59,7 @@ export default function UsersPage() {
   }
 
   const openDelete = (user) => setModal({ mode: 'delete', user })
+  const openStats = (user) => setModal({ mode: 'stats', user })
 
   const closeModal = () => { setModal(null); setForm({}) }
 
@@ -201,6 +209,7 @@ export default function UsersPage() {
                   </td>
                   <td style={s.td}>
                     <div style={s.actions}>
+                      <button onClick={() => openStats(u)} style={s.btnStats} title="Xem thống kê">📊</button>
                       <button onClick={() => openEdit(u)} style={s.btnEdit} title="Sửa">✏️</button>
                       <button onClick={() => openDelete(u)} style={s.btnDelete} title="Xoá">🗑️</button>
                     </div>
@@ -215,8 +224,67 @@ export default function UsersPage() {
         </div>
       )}
 
+      {/* Modal Stats */}
+      {modal?.mode === 'stats' && (() => {
+        const st = getUserStats(modal.user.uid)
+        const xp = st?.xp ?? st?.totalXp ?? 0
+        const streak = st?.streak ?? st?.currentStreak ?? 0
+        const lessons = st?.lessonsCompleted ?? st?.completedLessons ?? 0
+        const rank = st?.rank ?? '—'
+        return (
+          <div style={s.overlay}>
+            <div style={s.modal}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
+                <div style={{ ...s.avatar, width: 52, height: 52, fontSize: 22 }}>
+                  {modal.user.photoUrl
+                    ? <img src={modal.user.photoUrl} alt="" style={{ width: 52, height: 52, objectFit: 'cover' }} />
+                    : <span>{(modal.user.displayName || modal.user.email || '?')[0].toUpperCase()}</span>}
+                </div>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 16, color: '#1e293b' }}>{modal.user.displayName || '—'}</div>
+                  <div style={{ fontSize: 13, color: '#64748b' }}>{modal.user.email}</div>
+                </div>
+              </div>
+
+              {!st ? (
+                <div style={{ textAlign: 'center', padding: '24px 0', color: '#94a3b8' }}>
+                  Người dùng chưa có dữ liệu học tập
+                </div>
+              ) : (
+                <div style={s.statsGrid}>
+                  <div style={s.statCard}>
+                    <div style={s.statIcon}>⭐</div>
+                    <div style={s.statValue}>{xp.toLocaleString()}</div>
+                    <div style={s.statLabel}>Tổng XP</div>
+                  </div>
+                  <div style={s.statCard}>
+                    <div style={s.statIcon}>🔥</div>
+                    <div style={s.statValue}>{streak}</div>
+                    <div style={s.statLabel}>Streak (ngày)</div>
+                  </div>
+                  <div style={s.statCard}>
+                    <div style={s.statIcon}>📚</div>
+                    <div style={s.statValue}>{lessons}</div>
+                    <div style={s.statLabel}>Bài học hoàn thành</div>
+                  </div>
+                  <div style={s.statCard}>
+                    <div style={s.statIcon}>🏆</div>
+                    <div style={s.statValue}>{rank === '—' ? '—' : `#${rank}`}</div>
+                    <div style={s.statLabel}>Thứ hạng</div>
+                  </div>
+                </div>
+              )}
+
+              <div style={{ ...s.modalActions, marginTop: 20 }}>
+                <button onClick={closeModal} style={s.cancelBtn}>Đóng</button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+
       {/* Modal Create / Edit */}
-      {modal && modal.mode !== 'delete' && (
+      {modal && modal.mode !== 'delete' && modal.mode !== 'stats' && (
         <div style={s.overlay}>
           <div style={s.modal}>
             <h3 style={s.modalTitle}>
@@ -308,6 +376,7 @@ const s = {
   badge: { display: 'inline-block', padding: '2px 10px', borderRadius: 99, background: '#f1f5f9', color: '#475569', fontSize: 12, fontWeight: 500 },
   statusBtn: { padding: '4px 10px', borderRadius: 99, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600 },
   actions: { display: 'flex', gap: 6 },
+  btnStats: { padding: '4px 10px', background: '#ede9fe', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 14 },
   btnEdit: { padding: '4px 10px', background: '#e0f2fe', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 14 },
   btnDelete: { padding: '4px 10px', background: '#fee2e2', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 14 },
   overlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200 },
@@ -318,4 +387,9 @@ const s = {
   checkboxRow: { display: 'flex', alignItems: 'center', marginTop: 16, fontSize: 14, cursor: 'pointer' },
   modalActions: { display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24 },
   cancelBtn: { padding: '9px 20px', border: '1.5px solid #e2e8f0', borderRadius: 8, background: '#fff', cursor: 'pointer', fontWeight: 500 },
+  statsGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 },
+  statCard: { background: '#f8fafc', borderRadius: 10, padding: '16px 12px', textAlign: 'center', border: '1px solid #e2e8f0' },
+  statIcon: { fontSize: 24, marginBottom: 6 },
+  statValue: { fontSize: 22, fontWeight: 700, color: '#1e293b', marginBottom: 2 },
+  statLabel: { fontSize: 12, color: '#64748b' },
 }

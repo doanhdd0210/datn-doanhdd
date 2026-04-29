@@ -79,7 +79,7 @@ class _ReviewItemState extends State<_ReviewItem> {
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isCorrect ? AppColors.correct.withOpacity(0.4) : AppColors.wrong.withOpacity(0.4),
+          color: isCorrect ? AppColors.correct.withValues(alpha: 0.4) : AppColors.wrong.withValues(alpha: 0.4),
         ),
       ),
       child: Column(
@@ -89,7 +89,7 @@ class _ReviewItemState extends State<_ReviewItem> {
           Container(
             padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
             decoration: BoxDecoration(
-              color: isCorrect ? AppColors.correctBg.withOpacity(0.6) : AppColors.wrongBg.withOpacity(0.6),
+              color: isCorrect ? AppColors.correctBg.withValues(alpha: 0.6) : AppColors.wrongBg.withValues(alpha: 0.6),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(14),
                 topRight: Radius.circular(14),
@@ -166,7 +166,7 @@ class _ReviewItemState extends State<_ReviewItem> {
                     height: 24,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: (border ?? AppColors.border).withOpacity(0.15),
+                      color: (border ?? AppColors.border).withValues(alpha: 0.15),
                     ),
                     child: Center(
                       child: Text(
@@ -185,7 +185,7 @@ class _ReviewItemState extends State<_ReviewItem> {
                       option,
                       style: TextStyle(
                         fontSize: 13,
-                        color: border != null ? border : AppColors.textGray,
+                        color: border ?? AppColors.textGray,
                         fontWeight: (isCorrectOption || isUserSelected) ? FontWeight.w600 : FontWeight.w400,
                       ),
                     ),
@@ -232,9 +232,9 @@ class _ReviewItemState extends State<_ReviewItem> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppColors.orange.withOpacity(0.08),
+                        color: AppColors.orange.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: AppColors.orange.withOpacity(0.2)),
+                        border: Border.all(color: AppColors.orange.withValues(alpha: 0.2)),
                       ),
                       child: Text(question.explanation, style: AppTextStyles.bodySmall.copyWith(height: 1.5)),
                     ),

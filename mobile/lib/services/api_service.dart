@@ -337,6 +337,14 @@ class ApiService {
     });
   }
 
+  Future<void> upvotePost(String postId) async {
+    await _post('/qa/$postId/upvote', {});
+  }
+
+  Future<void> upvoteAnswer(String answerId) async {
+    await _post('/qa/answers/$answerId/upvote', {});
+  }
+
   // ── Friends / Leaderboard ─────────────────────────────────────────────────
   // Backend route: /api/friends/... (không phải /social/...)
 
@@ -364,6 +372,26 @@ class ApiService {
     await _delete('/friends/follow/$userId');
   }
 
+  Future<List<LeaderboardEntry>> getWeeklyLeaderboard() async {
+    final data = await _get('/friends/leaderboard/weekly');
+    List<dynamic> list;
+    if (data is List) {
+      list = data;
+    } else if (data is Map) {
+      list = data['leaderboard'] as List<dynamic>? ?? [];
+    } else {
+      list = [];
+    }
+    final currentUserId = _auth.currentUser?.uid ?? '';
+    return list.asMap().entries.map((entry) {
+      final e = entry.value as Map<String, dynamic>;
+      return LeaderboardEntry.fromJson(
+        e,
+        isCurrentUser: (e['userId'] ?? e['id'] ?? e['_id']) == currentUserId,
+      );
+    }).toList();
+  }
+
   Future<List<LeaderboardEntry>> getLeaderboard() async {
     final data = await _get('/friends/leaderboard');
     List<dynamic> list;
@@ -382,6 +410,61 @@ class ApiService {
         isCurrentUser: (e['userId'] ?? e['id'] ?? e['_id']) == currentUserId,
       );
     }).toList();
+  }
+
+  // ── AI (Gemini qua BE) ────────────────────────────────────────────────────
+
+  Future<String> aiExplainCode({
+    required String language,
+    required String referenceCode,
+    required String userCode,
+    required String expectedOutput,
+    required String actualOutput,
+  }) async {
+    try {
+      final data = await _post('/ai/explain', {
+        'language': language,
+        'referenceCode': referenceCode,
+        'userCode': userCode,
+        'expectedOutput': expectedOutput,
+        'actualOutput': actualOutput,
+      });
+      return data?.toString() ?? 'Không có phản hồi từ AI.';
+    } catch (_) {
+      return 'Không thể kết nối AI lúc này. Thử lại sau.';
+    }
+  }
+
+  Future<String> aiQuizHint({
+    required String question,
+    required List<String> options,
+    required int correctIndex,
+  }) async {
+    try {
+      final data = await _post('/ai/hint', {
+        'question': question,
+        'options': options,
+        'correctIndex': correctIndex,
+      });
+      return data?.toString() ?? 'Không có gợi ý từ AI.';
+    } catch (_) {
+      return 'Không thể kết nối AI lúc này. Thử lại sau.';
+    }
+  }
+
+  Future<String> aiQaSuggest({
+    required String title,
+    required String body,
+  }) async {
+    try {
+      final data = await _post('/ai/qa', {
+        'title': title,
+        'body': body,
+      });
+      return data?.toString() ?? 'Không có gợi ý từ AI.';
+    } catch (_) {
+      return 'Không thể kết nối AI lúc này. Thử lại sau.';
+    }
   }
 
   // ── Notifications ─────────────────────────────────────────────────────────

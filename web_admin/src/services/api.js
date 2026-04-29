@@ -105,5 +105,14 @@ export const qaApi = {
 
 // ─── Progress/Stats ──────────────────────────────────────────────────────────
 export const statsApi = {
-  leaderboard: () => request('GET', '/api/friends/leaderboard'),
+  leaderboard: (limit = 100) => request('GET', `/api/friends/leaderboard?limit=${limit}`),
+  weeklyLeaderboard: (limit = 100) => request('GET', `/api/friends/leaderboard/weekly?limit=${limit}`),
+}
+
+// ─── Achievements ────────────────────────────────────────────────────────────
+export const achievementsApi = {
+  list: () => request('GET', '/api/achievements'),
+  create: (data) => request('POST', '/api/achievements', data),
+  update: (id, data) => request('PUT', `/api/achievements/${id}`, data),
+  delete: (id) => request('DELETE', `/api/achievements/${id}`),
 }

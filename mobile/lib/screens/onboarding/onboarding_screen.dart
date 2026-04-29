@@ -110,7 +110,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                           child: Text(
                             'Bỏ qua',
                             style: TextStyle(
-                              color: slide.accentColor.withOpacity(0.8),
+                              color: slide.accentColor.withValues(alpha: 0.8),
                               fontWeight: FontWeight.w700,
                               fontSize: 15,
                             ),
@@ -165,7 +165,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                 decoration: BoxDecoration(
                   color: isActive
                       ? slide.accentColor
-                      : slide.accentColor.withOpacity(0.35),
+                      : slide.accentColor.withValues(alpha: 0.35),
                   borderRadius: BorderRadius.circular(4),
                 ),
               );
@@ -236,7 +236,7 @@ class _SlidePage extends StatelessWidget {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: slide.cardColor.withOpacity(0.6),
+                    color: slide.cardColor.withValues(alpha: 0.6),
                     blurRadius: 30,
                     offset: const Offset(0, 12),
                   ),
@@ -270,7 +270,7 @@ class _SlidePage extends StatelessWidget {
             slide.subtitle,
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: slide.accentColor.withOpacity(0.85),
+              color: slide.accentColor.withValues(alpha: 0.85),
               fontSize: 16,
               height: 1.5,
               fontWeight: FontWeight.w500,

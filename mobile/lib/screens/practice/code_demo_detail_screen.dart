@@ -135,7 +135,7 @@ class _CodeDemoDetailScreenState extends State<CodeDemoDetailScreen>
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    color: AppColors.xpGold.withOpacity(0.12),
+                    color: AppColors.xpGold.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -164,7 +164,7 @@ class _CodeDemoDetailScreenState extends State<CodeDemoDetailScreen>
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
                     decoration: BoxDecoration(
-                      color: _isRunning ? const Color(0xFF23A55A).withOpacity(0.5) : const Color(0xFF23A55A),
+                      color: _isRunning ? const Color(0xFF23A55A).withValues(alpha: 0.5) : const Color(0xFF23A55A),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Row(
@@ -227,7 +227,7 @@ class _CodeDemoDetailScreenState extends State<CodeDemoDetailScreen>
                       minLines: 20,
                       expands: false,
                       background: const Color(0xFF1E1E1E),
-                      lineNumberStyle: const LineNumberStyle(
+                      gutterStyle: const GutterStyle(
                         width: 44,
                         margin: 8,
                         textStyle: TextStyle(
@@ -257,14 +257,14 @@ class _CodeDemoDetailScreenState extends State<CodeDemoDetailScreen>
                           ),
                         )
                       : _result == null
-                          ? Center(
+                          ? const Center(
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Text(r'$',
+                                  Text(r'$',
                                       style: TextStyle(color: Color(0xFF555555), fontSize: 32, fontFamily: 'monospace')),
-                                  const SizedBox(height: 12),
-                                  const Text(
+                                  SizedBox(height: 12),
+                                  Text(
                                     'Nhấn Chạy ▶ để thực thi code',
                                     style: TextStyle(color: Color(0xFF777777), fontFamily: 'monospace', fontSize: 13),
                                   ),
@@ -281,8 +281,8 @@ class _CodeDemoDetailScreenState extends State<CodeDemoDetailScreen>
                                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                     decoration: BoxDecoration(
                                       color: _result!.isSuccess
-                                          ? const Color(0xFF23A55A).withOpacity(0.15)
-                                          : const Color(0xFFF14C4C).withOpacity(0.15),
+                                          ? const Color(0xFF23A55A).withValues(alpha: 0.15)
+                                          : const Color(0xFFF14C4C).withValues(alpha: 0.15),
                                       borderRadius: BorderRadius.circular(6),
                                       border: Border.all(
                                         color: _result!.isSuccess

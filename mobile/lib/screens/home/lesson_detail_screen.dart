@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_text_styles.dart';
+import '../../constants/app_theme.dart';
 import '../../models/lesson.dart';
 import '../../models/topic.dart';
 import '../quiz/quiz_screen.dart';
@@ -67,9 +68,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.bgColor,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
         foregroundColor: AppColors.textDark,
         elevation: 0,
         title: Column(
@@ -92,10 +92,10 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(height: 1, color: AppColors.border),
+              Container(height: 1, color: context.borderColor),
               LinearProgressIndicator(
                 value: _readProgress,
-                backgroundColor: AppColors.border,
+                backgroundColor: context.borderColor,
                 valueColor: AlwaysStoppedAnimation(_topicColor),
                 minHeight: 3,
               ),
@@ -116,7 +116,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(20),
-                    color: AppColors.surface,
+                    color: context.surfaceColor,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -125,7 +125,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                               decoration: BoxDecoration(
-                                color: _topicColor.withOpacity(0.12),
+                                color: _topicColor.withValues(alpha: 0.12),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
@@ -167,7 +167,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                   // Content body
                   Container(
                     width: double.infinity,
-                    color: AppColors.background,
+                    color: context.bgColor,
                     padding: const EdgeInsets.all(20),
                     child: _buildContent(widget.lesson.content),
                   ),
@@ -179,9 +179,9 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
           // Bottom action bar
           Container(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-            decoration: const BoxDecoration(
-              color: AppColors.surface,
-              border: Border(top: BorderSide(color: AppColors.border)),
+            decoration: BoxDecoration(
+              color: context.surfaceColor,
+              border: Border(top: BorderSide(color: context.borderColor)),
             ),
             child: SafeArea(
               child: SizedBox(
@@ -269,41 +269,45 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
     if (!text.contains('**') && !text.contains('`')) {
       return Text(text, style: AppTextStyles.bodyMedium);
     }
-    final spans = <TextSpan>[];
-    final regex = RegExp(r'\*\*(.*?)\*\*|`(.*?)`');
-    int lastEnd = 0;
-    for (final match in regex.allMatches(text)) {
-      if (match.start > lastEnd) {
-        spans.add(TextSpan(
-          text: text.substring(lastEnd, match.start),
-          style: AppTextStyles.bodyMedium,
-        ));
-      }
-      if (match.group(1) != null) {
-        // Bold
-        spans.add(TextSpan(
-          text: match.group(1),
-          style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w700),
-        ));
-      } else if (match.group(2) != null) {
-        // Inline code
-        spans.add(TextSpan(
-          text: match.group(2),
-          style: AppTextStyles.codeStyle.copyWith(
-            backgroundColor: AppColors.surfaceElevated,
-            fontSize: 13,
-          ),
-        ));
-      }
-      lastEnd = match.end;
-    }
-    if (lastEnd < text.length) {
-      spans.add(TextSpan(
-        text: text.substring(lastEnd),
-        style: AppTextStyles.bodyMedium,
-      ));
-    }
-    return RichText(text: TextSpan(children: spans));
+    return Builder(
+      builder: (context) {
+        final spans = <TextSpan>[];
+        final regex = RegExp(r'\*\*(.*?)\*\*|`(.*?)`');
+        int lastEnd = 0;
+        for (final match in regex.allMatches(text)) {
+          if (match.start > lastEnd) {
+            spans.add(TextSpan(
+              text: text.substring(lastEnd, match.start),
+              style: AppTextStyles.bodyMedium,
+            ));
+          }
+          if (match.group(1) != null) {
+            // Bold
+            spans.add(TextSpan(
+              text: match.group(1),
+              style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w700),
+            ));
+          } else if (match.group(2) != null) {
+            // Inline code
+            spans.add(TextSpan(
+              text: match.group(2),
+              style: AppTextStyles.codeStyle.copyWith(
+                backgroundColor: context.surfaceElevatedColor,
+                fontSize: 13,
+              ),
+            ));
+          }
+          lastEnd = match.end;
+        }
+        if (lastEnd < text.length) {
+          spans.add(TextSpan(
+            text: text.substring(lastEnd),
+            style: AppTextStyles.bodyMedium,
+          ));
+        }
+        return RichText(text: TextSpan(children: spans));
+      },
+    );
   }
 }
 
@@ -374,7 +378,7 @@ class _InfoChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(

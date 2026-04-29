@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
@@ -59,7 +60,7 @@ class HomeScreen extends StatelessWidget {
             CircleAvatar(
               radius: 48,
               backgroundImage: user.photoURL != null
-                  ? NetworkImage(user.photoURL!)
+                  ? CachedNetworkImageProvider(user.photoURL!)
                   : null,
               child: user.photoURL == null
                   ? const Icon(Icons.person, size: 48)

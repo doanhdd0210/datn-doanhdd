@@ -4,32 +4,102 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_text_styles.dart';
+import '../../constants/app_theme.dart';
+import '../../models/achievement.dart';
 import '../../providers/user_provider.dart';
 import '../../services/auth_service.dart';
 import '../settings/settings_screen.dart';
 import 'stats_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final provider = context.read<UserProvider>();
+    if (provider.pendingAchievements.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _showPendingAchievements(provider);
+      });
+    }
+  }
+
+  void _showPendingAchievements(UserProvider provider) {
+    final pending = provider.pendingAchievements.toList();
+    provider.consumePendingAchievements();
+    for (final id in pending) {
+      final achievement = kAchievements.firstWhere(
+        (a) => a.id == id,
+        orElse: () => kAchievements.first,
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Text(achievement.emoji, style: const TextStyle(fontSize: 22)),
+              const SizedBox(width: 10),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Mở khoá thành tích!',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
+                  ),
+                  Text(
+                    achievement.title,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.85),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          backgroundColor: achievement.color,
+          duration: const Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.bgColor,
       body: SafeArea(
         child: Consumer<UserProvider>(
           builder: (context, provider, _) {
+            if (provider.pendingAchievements.isNotEmpty) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (!mounted) return;
+                _showPendingAchievements(provider);
+              });
+            }
             return CustomScrollView(
               slivers: [
                 SliverToBoxAdapter(
                     child: _buildHero(context, user, provider)),
                 SliverToBoxAdapter(child: _buildStatCards(provider)),
-                SliverToBoxAdapter(
-                    child: _buildWeeklyStreak(provider)),
-                SliverToBoxAdapter(
-                    child: _buildMenuSection(context)),
+                SliverToBoxAdapter(child: _buildWeeklyStreak(provider)),
+                SliverToBoxAdapter(child: _buildAchievementsSection(provider)),
+                SliverToBoxAdapter(child: _buildMenuSection(context)),
               ],
             );
           },
@@ -43,14 +113,14 @@ class ProfileScreen extends StatelessWidget {
   Widget _buildHero(
       BuildContext context, User? user, UserProvider provider) {
     return Container(
-      color: AppColors.surface,
+      color: context.surfaceColor,
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
       child: Column(
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Hồ sơ', style: AppTextStyles.heading2),
+              const Text('Hồ sơ', style: AppTextStyles.heading2),
               GestureDetector(
                 onTap: () => Navigator.push(
                   context,
@@ -60,9 +130,9 @@ class ProfileScreen extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppColors.surfaceElevated,
+                    color: context.surfaceElevatedColor,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AppColors.border),
+                    border: Border.all(color: context.borderColor),
                   ),
                   child: const Icon(Icons.settings_rounded,
                       size: 20, color: AppColors.textGray),
@@ -77,9 +147,9 @@ class ProfileScreen extends StatelessWidget {
             children: [
               Container(
                 padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: const LinearGradient(
+                  gradient: LinearGradient(
                     colors: [AppColors.primary, AppColors.secondary],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -87,11 +157,11 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 child: CircleAvatar(
                   radius: 46,
-                  backgroundColor: AppColors.surface,
+                  backgroundColor: context.surfaceColor,
                   child: CircleAvatar(
                     radius: 43,
                     backgroundColor:
-                        AppColors.primary.withOpacity(0.2),
+                        AppColors.primary.withValues(alpha: 0.2),
                     child: user?.photoURL != null
                         ? ClipOval(
                             child: CachedNetworkImage(
@@ -158,34 +228,36 @@ class ProfileScreen extends StatelessWidget {
   // ── Stat Cards ────────────────────────────────────────────────────────────
 
   Widget _buildStatCards(UserProvider provider) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      child: Row(
-        children: [
-          _StatCard(
-            icon: '⚡',
-            value: provider.totalXp.toString(),
-            label: 'Tổng XP',
-            color: AppColors.xpGold,
-            bgColor: AppColors.surface,
-          ),
-          const SizedBox(width: 10),
-          _StatCard(
-            icon: '🔥',
-            value: provider.streak.toString(),
-            label: 'Chuỗi ngày',
-            color: AppColors.streakOrange,
-            bgColor: AppColors.surface,
-          ),
-          const SizedBox(width: 10),
-          _StatCard(
-            icon: '📚',
-            value: provider.lessonsCompleted.toString(),
-            label: 'Bài học',
-            color: AppColors.primary,
-            bgColor: AppColors.surface,
-          ),
-        ],
+    return Builder(
+      builder: (context) => Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+        child: Row(
+          children: [
+            _StatCard(
+              icon: '⚡',
+              value: provider.totalXp.toString(),
+              label: 'Tổng XP',
+              color: AppColors.xpGold,
+              bgColor: context.surfaceColor,
+            ),
+            const SizedBox(width: 10),
+            _StatCard(
+              icon: '🔥',
+              value: provider.streak.toString(),
+              label: 'Chuỗi ngày',
+              color: AppColors.streakOrange,
+              bgColor: context.surfaceColor,
+            ),
+            const SizedBox(width: 10),
+            _StatCard(
+              icon: '📚',
+              value: provider.lessonsCompleted.toString(),
+              label: 'Bài học',
+              color: AppColors.primary,
+              bgColor: context.surfaceColor,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -197,27 +269,108 @@ class ProfileScreen extends StatelessWidget {
     final today = DateTime.now().weekday - 1; // 0=Mon
     final streak = provider.streak.clamp(0, 7);
 
-    return Container(
+    return Builder(
+      builder: (context) => Container(
+        margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: context.surfaceColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: context.borderColor),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Text('🔥', style: TextStyle(fontSize: 18)),
+                const SizedBox(width: 8),
+                const Text('Chuỗi hàng tuần', style: AppTextStyles.labelBold),
+                const Spacer(),
+                Text(
+                  '${provider.streak} ngày',
+                  style: const TextStyle(
+                    color: AppColors.streakOrange,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: List.generate(7, (i) {
+                final isToday = i == today;
+                final isActive = i <= today && (today - i) < streak;
+                return Column(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: isActive
+                            ? AppColors.streakOrange
+                            : isToday
+                                ? AppColors.streakOrange.withValues(alpha: 0.15)
+                                : context.surfaceElevatedColor,
+                        border: isToday && !isActive
+                            ? Border.all(
+                                color: AppColors.streakOrange, width: 2)
+                            : null,
+                      ),
+                      child: Center(
+                        child: Text(
+                          isActive ? '🔥' : days[i],
+                          style: TextStyle(
+                            fontSize: isActive ? 16 : 12,
+                            color: isActive
+                                ? Colors.white
+                                : isToday
+                                    ? AppColors.streakOrange
+                                    : AppColors.textLight,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              }),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Achievements ──────────────────────────────────────────────────────────
+
+  Widget _buildAchievementsSection(UserProvider provider) {
+    final unlocked = provider.unlockedAchievements;
+    return Builder(
+      builder: (context) => Container(
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.surfaceColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Text('🔥', style: TextStyle(fontSize: 18)),
+              const Text('🏆', style: TextStyle(fontSize: 18)),
               const SizedBox(width: 8),
-              Text('Chuỗi hàng tuần', style: AppTextStyles.labelBold),
+              const Text('Thành tích', style: AppTextStyles.labelBold),
               const Spacer(),
               Text(
-                '${provider.streak} ngày',
+                '${unlocked.length}/${kAchievements.length}',
                 style: const TextStyle(
-                  color: AppColors.streakOrange,
+                  color: AppColors.primary,
                   fontWeight: FontWeight.w700,
                   fontSize: 13,
                 ),
@@ -225,48 +378,24 @@ class ProfileScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: List.generate(7, (i) {
-              final isToday = i == today;
-              final isActive = i <= today && (today - i) < streak;
-              return Column(
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isActive
-                          ? AppColors.streakOrange
-                          : isToday
-                              ? AppColors.streakOrange.withOpacity(0.15)
-                              : AppColors.surfaceElevated,
-                      border: isToday && !isActive
-                          ? Border.all(
-                              color: AppColors.streakOrange, width: 2)
-                          : null,
-                    ),
-                    child: Center(
-                      child: Text(
-                        isActive ? '🔥' : days[i],
-                        style: TextStyle(
-                          fontSize: isActive ? 16 : 12,
-                          color: isActive
-                              ? Colors.white
-                              : isToday
-                                  ? AppColors.streakOrange
-                                  : AppColors.textLight,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            }),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 5,
+              mainAxisSpacing: 8,
+              crossAxisSpacing: 8,
+              childAspectRatio: 0.72,
+            ),
+            itemCount: kAchievements.length,
+            itemBuilder: (_, i) {
+              final a = kAchievements[i];
+              final isUnlocked = unlocked.contains(a.id);
+              return _AchievementBadge(achievement: a, isUnlocked: isUnlocked);
+            },
           ),
         ],
+      ),
       ),
     );
   }
@@ -281,7 +410,7 @@ class ProfileScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _SectionLabel(label: 'HỌC TẬP'),
+          const _SectionLabel(label: 'HỌC TẬP'),
           _MenuItem(
             icon: Icons.bar_chart_rounded,
             label: 'Thống kê học tập',
@@ -292,7 +421,7 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          _SectionLabel(label: 'TÀI KHOẢN'),
+          const _SectionLabel(label: 'TÀI KHOẢN'),
           _MenuItem(
             icon: Icons.settings_rounded,
             label: 'Cài đặt',
@@ -311,7 +440,7 @@ class ProfileScreen extends StatelessWidget {
             onTap: () => _confirmSignOut(context, authService),
           ),
           const SizedBox(height: 24),
-          Center(
+          const Center(
             child: Text('JavaLearn v1.0.0',
                 style: AppTextStyles.bodySmall),
           ),
@@ -375,7 +504,7 @@ class _StatCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: color.withOpacity(0.4),
+              color: color.withValues(alpha: 0.4),
               offset: const Offset(0, 3),
               blurRadius: 0,
             ),
@@ -451,22 +580,16 @@ class _MenuItem extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.surfaceColor,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withOpacity(0.03),
-              blurRadius: 4,
-              offset: const Offset(0, 2)),
-        ],
+        border: Border.all(color: context.borderColor),
       ),
       child: ListTile(
         leading: Container(
           width: 38,
           height: 38,
           decoration: BoxDecoration(
-            color: color.withOpacity(0.12),
+            color: color.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(icon, color: color, size: 20),
@@ -482,6 +605,62 @@ class _MenuItem extends StatelessWidget {
             const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14)),
+      ),
+    );
+  }
+}
+
+class _AchievementBadge extends StatelessWidget {
+  final Achievement achievement;
+  final bool isUnlocked;
+
+  const _AchievementBadge({
+    required this.achievement,
+    required this.isUnlocked,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: isUnlocked ? achievement.description : 'Chưa mở khoá',
+      child: Column(
+        children: [
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              color: isUnlocked
+                  ? achievement.color.withValues(alpha: 0.15)
+                  : context.surfaceElevatedColor,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: isUnlocked ? achievement.color : context.borderColor,
+                width: 2,
+              ),
+            ),
+            child: Center(
+              child: Opacity(
+                opacity: isUnlocked ? 1.0 : 0.3,
+                child: Text(
+                  isUnlocked ? achievement.emoji : '🔒',
+                  style: const TextStyle(fontSize: 20),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            isUnlocked ? achievement.title : '???',
+            style: TextStyle(
+              fontSize: 9,
+              fontWeight: FontWeight.w600,
+              color: isUnlocked ? AppColors.textLight : AppColors.textGray,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
       ),
     );
   }

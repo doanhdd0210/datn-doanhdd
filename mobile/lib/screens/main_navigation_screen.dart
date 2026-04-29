@@ -1,5 +1,9 @@
+import 'dart:async';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
+import '../constants/app_theme.dart';
+import '../services/notification_service.dart';
 import 'home/topics_screen.dart';
 import 'practice/code_demo_list_screen.dart';
 import 'social/qa_screen.dart';
@@ -15,6 +19,8 @@ class MainNavigationScreen extends StatefulWidget {
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
+  StreamSubscription<RemoteMessage>? _fgSub;
+  StreamSubscription<String>? _navSub;
 
   final List<Widget> _screens = const [
     TopicsScreen(),
@@ -32,9 +38,68 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     _NavItem(icon: Icons.person_rounded, label: 'Hồ sơ'),
   ];
 
+  static const _screenIndex = {
+    'lessons': 0,
+    'practice': 1,
+    'qa': 2,
+    'friends': 3,
+    'profile': 4,
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    final ns = NotificationService();
+
+    _fgSub = ns.foregroundMessages.stream.listen((msg) {
+      if (!mounted) return;
+      final title = msg.notification?.title ?? 'Thông báo';
+      final body = msg.notification?.body ?? '';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
+              if (body.isNotEmpty) Text(body, style: const TextStyle(fontSize: 13)),
+            ],
+          ),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: AppColors.surface,
+          duration: const Duration(seconds: 4),
+          action: SnackBarAction(
+            label: 'Xem',
+            textColor: AppColors.primary,
+            onPressed: () {
+              final screen = msg.data['screen'] as String?;
+              if (screen != null && _screenIndex.containsKey(screen)) {
+                setState(() => _currentIndex = _screenIndex[screen]!);
+              }
+            },
+          ),
+        ),
+      );
+    });
+
+    _navSub = ns.navigationRequests.stream.listen((screen) {
+      if (!mounted) return;
+      final idx = _screenIndex[screen];
+      if (idx != null) setState(() => _currentIndex = idx);
+    });
+  }
+
+  @override
+  void dispose() {
+    _fgSub?.cancel();
+    _navSub?.cancel();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBody: true,
       body: IndexedStack(
         index: _currentIndex,
         children: _screens,
@@ -67,35 +132,37 @@ class _QuizzoBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.navBackground,
-        border: Border(
-          top: BorderSide(color: AppColors.navBorder, width: 1),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Color(0x40000000),
-            blurRadius: 20,
-            offset: Offset(0, -4),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        child: SizedBox(
+    final isDark = context.isDark;
+    final navBg = context.navBgColor;
+    final navBorder = context.navBorderColor;
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+        child: Container(
           height: 64,
+          decoration: BoxDecoration(
+            color: navBg,
+            borderRadius: BorderRadius.circular(32),
+            border: Border.all(color: navBorder),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.5 : 0.12),
+                blurRadius: 24,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
           child: Row(
             children: List.generate(items.length, (i) {
-              final item = items[i];
               final isActive = i == currentIndex;
               return Expanded(
-                child: InkWell(
+                child: GestureDetector(
                   onTap: () => onTap(i),
-                  splashColor: Colors.transparent,
-                  highlightColor: Colors.transparent,
+                  behavior: HitTestBehavior.opaque,
                   child: _NavTabItem(
-                    icon: item.icon,
-                    label: item.label,
+                    icon: items[i].icon,
+                    label: items[i].label,
                     isActive: isActive,
                   ),
                 ),
@@ -125,29 +192,43 @@ class _NavTabItem extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOut,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOutCubic,
+          width: isActive ? 52 : 40,
+          height: isActive ? 36 : 32,
           decoration: isActive
               ? BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(20),
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.4),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
                 )
               : null,
-          child: Icon(
-            icon,
-            size: 24,
-            color: isActive ? AppColors.navActive : AppColors.navInactive,
+          child: Center(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: Icon(
+                icon,
+                key: ValueKey(isActive),
+                size: isActive ? 22 : 22,
+                color: isActive ? Colors.white : AppColors.navInactive,
+              ),
+            ),
           ),
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: 3),
         AnimatedDefaultTextStyle(
-          duration: const Duration(milliseconds: 200),
+          duration: const Duration(milliseconds: 250),
           style: TextStyle(
             fontFamily: 'Nunito',
-            fontSize: 10,
+            fontSize: isActive ? 10 : 9,
             fontWeight: isActive ? FontWeight.w800 : FontWeight.w500,
-            color: isActive ? AppColors.navActive : AppColors.navInactive,
+            color: isActive ? AppColors.primary : AppColors.navInactive,
           ),
           child: Text(label),
         ),

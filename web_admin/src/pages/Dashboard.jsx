@@ -12,9 +12,12 @@ import QuestionsPage from './QuestionsPage'
 import CodeSnippetsPage from './CodeSnippetsPage'
 import QaManagementPage from './QaManagementPage'
 import LeaderboardPage from './LeaderboardPage'
+import AnalyticsPage from './AnalyticsPage'
+import AchievementsPage from './AchievementsPage'
 
 const NAV_ITEMS = [
   { id: 'overview',      label: 'Tổng quan',     icon: '📊' },
+  { id: 'analytics',     label: 'Phân tích',     icon: '📈' },
   { id: 'users',         label: 'Người dùng',    icon: '👥' },
   { id: 'topics',        label: 'Chủ đề',        icon: '📚' },
   { id: 'lessons',       label: 'Bài học',       icon: '📖' },
@@ -22,6 +25,7 @@ const NAV_ITEMS = [
   { id: 'snippets',      label: 'Demo Code',     icon: '💻' },
   { id: 'qa',            label: 'QA Cộng đồng',  icon: '💬' },
   { id: 'leaderboard',   label: 'Bảng xếp hạng', icon: '🏆' },
+  { id: 'achievements',  label: 'Achievements',  icon: '🏅' },
   { id: 'notifications', label: 'Thông báo',     icon: '🔔' },
   { id: 'settings',      label: 'Cài đặt',       icon: '⚙️' },
 ]
@@ -94,6 +98,7 @@ export default function Dashboard() {
 
         <div style={styles.content}>
           {activeNav === 'overview'      && <OverviewCards />}
+          {activeNav === 'analytics'     && <AnalyticsPage />}
           {activeNav === 'users'         && <UsersPage />}
           {activeNav === 'topics'        && <TopicsPage />}
           {activeNav === 'lessons'       && <LessonsPage />}
@@ -101,6 +106,7 @@ export default function Dashboard() {
           {activeNav === 'snippets'      && <CodeSnippetsPage />}
           {activeNav === 'qa'            && <QaManagementPage />}
           {activeNav === 'leaderboard'   && <LeaderboardPage />}
+          {activeNav === 'achievements'  && <AchievementsPage />}
           {activeNav === 'notifications' && <NotificationsPage />}
           {activeNav === 'settings'      && <SettingsPage />}
         </div>

@@ -86,7 +86,7 @@ class _CreateQaScreenState extends State<CreateQaScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        title: Text('Đặt câu hỏi', style: AppTextStyles.heading3),
+        title: const Text('Đặt câu hỏi', style: AppTextStyles.heading3),
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => Navigator.pop(context),
@@ -140,15 +140,15 @@ class _CreateQaScreenState extends State<CreateQaScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.blue.withOpacity(0.08),
+        color: AppColors.blue.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.blue.withOpacity(0.3)),
+        border: Border.all(color: AppColors.blue.withValues(alpha: 0.3)),
       ),
-      child: Row(
+      child: const Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(Icons.lightbulb_outline, color: AppColors.blue, size: 18),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           Expanded(
             child: Text(
               'Câu hỏi rõ ràng, có ví dụ cụ thể sẽ được trả lời nhanh hơn. Hãy mô tả vấn đề bạn gặp phải và những gì bạn đã thử.',
@@ -175,22 +175,22 @@ class _CreateQaScreenState extends State<CreateQaScreen> {
           style: AppTextStyles.bodyLarge,
           decoration: InputDecoration(
             hintText: 'VD: Sự khác nhau giữa ArrayList và LinkedList?',
-            hintStyle: TextStyle(color: AppColors.textGray, fontSize: 14),
+            hintStyle: const TextStyle(color: AppColors.textGray, fontSize: 14),
             filled: true,
             fillColor: Colors.white,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.border),
+              borderSide: const BorderSide(color: AppColors.border),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.border),
+              borderSide: const BorderSide(color: AppColors.border),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.primary, width: 2),
+              borderSide: const BorderSide(color: AppColors.primary, width: 2),
             ),
-            counterStyle: TextStyle(color: AppColors.textGray, fontSize: 11),
+            counterStyle: const TextStyle(color: AppColors.textGray, fontSize: 11),
           ),
           validator: (v) {
             if (v == null || v.trim().isEmpty) return 'Vui lòng nhập tiêu đề';
@@ -218,23 +218,23 @@ class _CreateQaScreenState extends State<CreateQaScreen> {
           style: AppTextStyles.bodyMedium,
           decoration: InputDecoration(
             hintText: 'Mô tả chi tiết vấn đề bạn gặp phải, đính kèm code nếu có...',
-            hintStyle: TextStyle(color: AppColors.textGray, fontSize: 14),
+            hintStyle: const TextStyle(color: AppColors.textGray, fontSize: 14),
             alignLabelWithHint: true,
             filled: true,
             fillColor: Colors.white,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.border),
+              borderSide: const BorderSide(color: AppColors.border),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.border),
+              borderSide: const BorderSide(color: AppColors.border),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.primary, width: 2),
+              borderSide: const BorderSide(color: AppColors.primary, width: 2),
             ),
-            counterStyle: TextStyle(color: AppColors.textGray, fontSize: 11),
+            counterStyle: const TextStyle(color: AppColors.textGray, fontSize: 11),
           ),
           validator: (v) {
             if (v == null || v.trim().isEmpty) return 'Vui lòng nhập nội dung';
@@ -265,10 +265,10 @@ class _CreateQaScreenState extends State<CreateQaScreen> {
                       label: Text(tag, style: const TextStyle(fontSize: 13)),
                       deleteIcon: const Icon(Icons.close, size: 14),
                       onDeleted: () => _removeTag(tag),
-                      backgroundColor: AppColors.primary.withOpacity(0.1),
+                      backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                       deleteIconColor: AppColors.primary,
-                      labelStyle: TextStyle(color: AppColors.primary),
-                      side: BorderSide(color: AppColors.primary.withOpacity(0.3)),
+                      labelStyle: const TextStyle(color: AppColors.primary),
+                      side: BorderSide(color: AppColors.primary.withValues(alpha: 0.3)),
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ))
                 .toList(),
@@ -286,16 +286,16 @@ class _CreateQaScreenState extends State<CreateQaScreen> {
                   onSubmitted: _addTag,
                   decoration: InputDecoration(
                     hintText: 'Thêm tag...',
-                    hintStyle: TextStyle(color: AppColors.textGray, fontSize: 13),
+                    hintStyle: const TextStyle(color: AppColors.textGray, fontSize: 13),
                     filled: true,
                     fillColor: Colors.white,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: AppColors.border),
+                      borderSide: const BorderSide(color: AppColors.border),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: AppColors.border),
+                      borderSide: const BorderSide(color: AppColors.border),
                     ),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   ),
@@ -310,7 +310,7 @@ class _CreateQaScreenState extends State<CreateQaScreen> {
           ),
         const SizedBox(height: 12),
         // Suggested tags
-        Text(
+        const Text(
           'Gợi ý:',
           style: TextStyle(fontSize: 12, color: AppColors.textGray),
         ),

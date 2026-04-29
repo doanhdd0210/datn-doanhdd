@@ -8,7 +8,13 @@ const RANK_STYLES = {
   2: { background: '#fff7ed', color: '#c2410c', badge: '🥉' },
 }
 
+const TABS = [
+  { key: 'alltime', label: '🏆 Tất cả thời gian' },
+  { key: 'weekly', label: '📅 Tuần này' },
+]
+
 export default function LeaderboardPage() {
+  const [tab, setTab] = useState('alltime')
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -18,14 +24,16 @@ export default function LeaderboardPage() {
     setLoading(true)
     setError('')
     try {
-      const data = await statsApi.leaderboard()
+      const data = tab === 'weekly'
+        ? await statsApi.weeklyLeaderboard()
+        : await statsApi.leaderboard()
       setUsers(data ?? [])
     } catch (e) {
       setError(e.message)
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [tab])
 
   useEffect(() => { load() }, [load])
 
@@ -44,7 +52,8 @@ export default function LeaderboardPage() {
       lessonsCompleted: u.lessonsCompleted ?? u.completedLessons ?? 0,
       lastStudied: u.lastStudied ?? u.lastActiveAt ?? '—',
     }))
-    exportCsv(rows, ['rank', 'name', 'email', 'xp', 'streak', 'lessonsCompleted', 'lastStudied'], 'leaderboard.csv')
+    const filename = tab === 'weekly' ? 'leaderboard-week.csv' : 'leaderboard.csv'
+    exportCsv(rows, ['rank', 'name', 'email', 'xp', 'streak', 'lessonsCompleted', 'lastStudied'], filename)
   }
 
   const formatDate = (d) => {
@@ -55,6 +64,19 @@ export default function LeaderboardPage() {
 
   return (
     <div>
+      {/* Tabs */}
+      <div style={s.tabRow}>
+        {TABS.map(t => (
+          <button
+            key={t.key}
+            onClick={() => { setTab(t.key); setSearch('') }}
+            style={{ ...s.tabBtn, ...(tab === t.key ? s.tabBtnActive : {}) }}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
       {/* Toolbar */}
       <div style={s.toolbar}>
         <input placeholder="Tìm theo tên, email..." value={search} onChange={e => setSearch(e.target.value)} style={s.searchInput} />
@@ -67,6 +89,7 @@ export default function LeaderboardPage() {
       <div style={s.statsRow}>
         <span style={s.stat}>Tổng: <strong>{users.length}</strong></span>
         <span style={s.stat}>Hiển thị: <strong>{filtered.length}</strong></span>
+        {tab === 'weekly' && <span style={{ ...s.stat, color: '#4f46e5', fontWeight: 600 }}>📅 Dữ liệu trong tuần này</span>}
       </div>
 
       {loading ? (
@@ -142,12 +165,15 @@ export default function LeaderboardPage() {
 }
 
 const s = {
+  tabRow: { display: 'flex', gap: 8, marginBottom: 20, borderBottom: '2px solid #e2e8f0', paddingBottom: 0 },
+  tabBtn: { padding: '8px 18px', border: 'none', borderRadius: '8px 8px 0 0', cursor: 'pointer', fontSize: 14, fontWeight: 500, background: '#f1f5f9', color: '#64748b', marginBottom: -2, borderBottom: '2px solid transparent' },
+  tabBtnActive: { background: '#fff', color: '#4f46e5', borderBottom: '2px solid #4f46e5', fontWeight: 700 },
   toolbar: { display: 'flex', gap: 10, marginBottom: 16, alignItems: 'center', flexWrap: 'wrap' },
   searchInput: { flex: 1, minWidth: 200, padding: '8px 14px', border: '1.5px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none' },
   btnSecondary: { padding: '8px 14px', background: '#f1f5f9', color: '#334155', border: '1.5px solid #e2e8f0', borderRadius: 8, cursor: 'pointer', fontSize: 14 },
   btnSm: { padding: '6px 12px', background: '#f8fafc', color: '#475569', border: '1.5px solid #e2e8f0', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 500 },
   errorBox: { background: '#fee2e2', color: '#dc2626', padding: '10px 16px', borderRadius: 8, marginBottom: 12 },
-  statsRow: { display: 'flex', gap: 20, marginBottom: 16, flexWrap: 'wrap' },
+  statsRow: { display: 'flex', gap: 20, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' },
   stat: { fontSize: 14, color: '#64748b' },
   loading: { textAlign: 'center', padding: 60, color: '#94a3b8', fontSize: 16 },
   empty: { textAlign: 'center', padding: 60, color: '#94a3b8' },

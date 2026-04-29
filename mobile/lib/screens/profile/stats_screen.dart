@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_text_styles.dart';
+import '../../constants/app_theme.dart';
 import '../../models/daily_progress.dart';
 import '../../services/api_service.dart';
 
@@ -93,15 +94,14 @@ class _StatsScreenState extends State<StatsScreen> with SingleTickerProviderStat
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.bgColor,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
         foregroundColor: AppColors.textDark,
         elevation: 0,
         title: const Text('Tiến độ học tập', style: AppTextStyles.heading4),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: AppColors.border),
+          child: Builder(builder: (ctx) => Container(height: 1, color: ctx.borderColor)),
         ),
       ),
       body: _isLoading
@@ -136,15 +136,15 @@ class _StatsScreenState extends State<StatsScreen> with SingleTickerProviderStat
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFFF9600), Color(0xFFFF6B00)],
+        gradient: LinearGradient(
+          colors: [AppColors.streakOrange, AppColors.orange.withValues(alpha: 0.85)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AppColors.orange.withOpacity(0.3),
+            color: AppColors.orange.withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -161,7 +161,7 @@ class _StatsScreenState extends State<StatsScreen> with SingleTickerProviderStat
                 const Text('Chuỗi ngày hiện tại',
                     style: TextStyle(color: Colors.white70, fontSize: 12)),
                 Text(
-                  '$currentStreak days',
+                  '$currentStreak ngày',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 24,
@@ -176,7 +176,7 @@ class _StatsScreenState extends State<StatsScreen> with SingleTickerProviderStat
             children: [
               const Text('Chuỗi tốt nhất', style: TextStyle(color: Colors.white70, fontSize: 11)),
               Text(
-                '$longestStreak days',
+                '$longestStreak ngày',
                 style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
               ),
             ],
@@ -190,12 +190,13 @@ class _StatsScreenState extends State<StatsScreen> with SingleTickerProviderStat
     final data = _last7Days;
     if (data.isEmpty) return const SizedBox.shrink();
 
-    return Container(
+    return Builder(
+      builder: (context) => Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.surfaceColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -218,7 +219,7 @@ class _StatsScreenState extends State<StatsScreen> with SingleTickerProviderStat
                     barRods: [
                       BarChartRodData(
                         toY: dp.xpEarned.toDouble(),
-                        color: dp.xpEarned > 0 ? AppColors.primary : AppColors.border,
+                        color: dp.xpEarned > 0 ? AppColors.primary : context.borderColor,
                         width: 24,
                         borderRadius: const BorderRadius.only(
                           topLeft: Radius.circular(6),
@@ -264,7 +265,7 @@ class _StatsScreenState extends State<StatsScreen> with SingleTickerProviderStat
                   show: true,
                   drawVerticalLine: false,
                   getDrawingHorizontalLine: (_) => FlLine(
-                    color: AppColors.border,
+                    color: context.borderColor,
                     strokeWidth: 1,
                   ),
                 ),
@@ -273,6 +274,7 @@ class _StatsScreenState extends State<StatsScreen> with SingleTickerProviderStat
             ),
           ),
         ],
+      ),
       ),
     );
   }
@@ -302,12 +304,13 @@ class _StatsScreenState extends State<StatsScreen> with SingleTickerProviderStat
   Widget _buildCalendarHeatmap() {
     if (_dailyProgress.isEmpty) return const SizedBox.shrink();
 
-    return Container(
+    return Builder(
+      builder: (context) => Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.surfaceColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -330,7 +333,7 @@ class _StatsScreenState extends State<StatsScreen> with SingleTickerProviderStat
                   decoration: BoxDecoration(
                     color: hasActivity
                         ? AppColors.primary.withOpacity(intensity)
-                        : AppColors.border,
+                        : context.borderColor,
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
@@ -349,7 +352,7 @@ class _StatsScreenState extends State<StatsScreen> with SingleTickerProviderStat
                   height: 14,
                   margin: const EdgeInsets.only(right: 3),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(opacity),
+                    color: AppColors.primary.withValues(alpha: opacity),
                     borderRadius: BorderRadius.circular(3),
                   ),
                 );
@@ -359,6 +362,7 @@ class _StatsScreenState extends State<StatsScreen> with SingleTickerProviderStat
             ],
           ),
         ],
+      ),
       ),
     );
   }
@@ -377,9 +381,9 @@ class _StatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.surfaceColor,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

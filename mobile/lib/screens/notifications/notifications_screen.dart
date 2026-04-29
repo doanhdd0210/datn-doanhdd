@@ -77,7 +77,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        title: Text('Thông báo', style: AppTextStyles.heading3),
+        title: const Text('Thông báo', style: AppTextStyles.heading3),
         centerTitle: false,
         actions: [
           if (_notifications.isNotEmpty)
@@ -85,7 +85,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               onPressed: () {
                 setState(() => _notifications = []);
               },
-              child: Text(
+              child: const Text(
                 'Xóa tất cả',
                 style: TextStyle(color: AppColors.textGray, fontSize: 13),
               ),
@@ -167,7 +167,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: iconColor.withOpacity(0.1),
+            color: iconColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(24),
           ),
           child: Icon(_getIcon(target), color: iconColor, size: 24),
@@ -195,7 +195,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               _formatTime(sentAt),
               style: TextStyle(
                 fontSize: 11,
-                color: AppColors.textGray.withOpacity(0.7),
+                color: AppColors.textGray.withValues(alpha: 0.7),
               ),
             ),
           ],

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_text_styles.dart';
+import '../../constants/app_theme.dart';
 import '../../models/qa_post.dart';
 import '../../services/api_service.dart';
 import 'qa_detail_screen.dart';
@@ -17,10 +19,12 @@ class QaScreen extends StatefulWidget {
 
 class _QaScreenState extends State<QaScreen> {
   final _api = ApiService();
+  final _searchController = TextEditingController();
   List<QaPost> _posts = [];
   bool _isLoading = true;
   bool _isLoadingMore = false;
   String _filter = 'all';
+  String _searchQuery = '';
   int _page = 1;
   bool _hasMore = true;
   final ScrollController _scrollController = ScrollController();
@@ -30,20 +34,23 @@ class _QaScreenState extends State<QaScreen> {
     super.initState();
     _loadPosts();
     _scrollController.addListener(_onScroll);
+    _searchController.addListener(() {
+      setState(() => _searchQuery = _searchController.text.trim().toLowerCase());
+    });
   }
 
   @override
   void dispose() {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
   void _onScroll() {
+    if (_searchQuery.isNotEmpty) return; // don't paginate while searching
     if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
-      if (!_isLoadingMore && _hasMore) {
-        _loadMore();
-      }
+      if (!_isLoadingMore && _hasMore) _loadMore();
     }
   }
 
@@ -96,12 +103,12 @@ class _QaScreenState extends State<QaScreen> {
     return [
       QaPost(
         id: 'mock1',
-        title: 'What is the difference between == and .equals() in Java?',
-        content: 'I am confused about when to use == vs .equals() for string comparison.',
+        title: 'Sự khác nhau giữa == và .equals() trong Java?',
+        content: 'Tôi bị nhầm lẫn khi nào dùng == vs .equals() để so sánh String.',
         authorId: 'user1',
         authorName: 'Alice',
         authorAvatar: '',
-        tags: ['strings', 'comparison', 'basics'],
+        tags: ['string', 'so sánh', 'cơ bản'],
         answerCount: 3,
         upvotes: 12,
         isSolved: true,
@@ -109,13 +116,13 @@ class _QaScreenState extends State<QaScreen> {
       ),
       QaPost(
         id: 'mock2',
-        title: 'How does garbage collection work in Java?',
-        content: 'Can someone explain the Java garbage collection mechanism?',
+        title: 'Garbage Collection trong Java hoạt động như thế nào?',
+        content: 'Ai giải thích cơ chế GC của Java được không?',
         authorId: 'user2',
         authorName: 'Bob',
         authorAvatar: '',
-        tags: ['memory', 'jvm', 'advanced'],
-        answerCount: 1,
+        tags: ['memory', 'jvm', 'nâng cao'],
+        answerCount: 0,
         upvotes: 5,
         isSolved: false,
         createdAt: DateTime.now().subtract(const Duration(days: 1)),
@@ -124,18 +131,37 @@ class _QaScreenState extends State<QaScreen> {
   }
 
   List<QaPost> get _filteredPosts {
-    // In a real app, filter by endpoint. For now just show all
-    return _posts;
+    var result = _posts;
+
+    // Apply tab filter
+    if (_filter == 'unanswered') {
+      result = result.where((p) => p.answerCount == 0).toList();
+    } else if (_filter == 'solved') {
+      result = result.where((p) => p.isSolved).toList();
+    }
+
+    // Apply search
+    if (_searchQuery.isNotEmpty) {
+      result = result.where((p) {
+        final titleMatch = p.title.toLowerCase().contains(_searchQuery);
+        final tagMatch = p.tags.any((t) => t.toLowerCase().contains(_searchQuery));
+        final authorMatch = p.authorName.toLowerCase().contains(_searchQuery);
+        return titleMatch || tagMatch || authorMatch;
+      }).toList();
+    }
+
+    return result;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.bgColor,
       body: SafeArea(
         child: Column(
           children: [
             _buildHeader(),
+            _buildSearchBar(),
             _buildFilterBar(),
             Expanded(
               child: _isLoading
@@ -143,33 +169,35 @@ class _QaScreenState extends State<QaScreen> {
                   : RefreshIndicator(
                       onRefresh: () => _loadPosts(reset: true),
                       color: AppColors.primary,
-                      child: ListView.builder(
-                        controller: _scrollController,
-                        padding: const EdgeInsets.all(16),
-                        itemCount: _filteredPosts.length + (_isLoadingMore ? 1 : 0),
-                        itemBuilder: (context, index) {
-                          if (index == _filteredPosts.length) {
-                            return const Center(
-                              child: Padding(
-                                padding: EdgeInsets.all(16),
-                                child: CircularProgressIndicator(color: AppColors.primary),
-                              ),
-                            );
-                          }
-                          final post = _filteredPosts[index];
-                          return _QaPostCard(
-                            post: post,
-                            onTap: () async {
-                              await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => QaDetailScreen(post: post),
-                                ),
-                              );
-                            },
-                          );
-                        },
-                      ),
+                      child: _filteredPosts.isEmpty
+                          ? _buildEmpty()
+                          : ListView.builder(
+                              controller: _scrollController,
+                              padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
+                              itemCount: _filteredPosts.length + (_isLoadingMore ? 1 : 0),
+                              itemBuilder: (context, index) {
+                                if (index == _filteredPosts.length) {
+                                  return const Center(
+                                    child: Padding(
+                                      padding: EdgeInsets.all(16),
+                                      child: CircularProgressIndicator(color: AppColors.primary),
+                                    ),
+                                  );
+                                }
+                                final post = _filteredPosts[index];
+                                return _QaPostCard(
+                                  post: post,
+                                  onTap: () async {
+                                    await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => QaDetailScreen(post: post),
+                                      ),
+                                    );
+                                  },
+                                );
+                              },
+                            ),
                     ),
             ),
           ],
@@ -201,9 +229,50 @@ class _QaScreenState extends State<QaScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Q&A Cộng đồng', style: AppTextStyles.heading2),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Text('Đặt câu hỏi, chia sẻ kiến thức', style: AppTextStyles.bodySmall),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Builder(
+      builder: (context) => Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: TextField(
+        controller: _searchController,
+        style: const TextStyle(color: AppColors.textDark, fontSize: 14),
+        decoration: InputDecoration(
+          hintText: 'Tìm kiếm câu hỏi, tag...',
+          hintStyle: const TextStyle(color: AppColors.textGray, fontSize: 14),
+          prefixIcon: const Icon(Icons.search_rounded, color: AppColors.textGray, size: 20),
+          suffixIcon: _searchQuery.isNotEmpty
+              ? GestureDetector(
+                  onTap: () {
+                    _searchController.clear();
+                    setState(() => _searchQuery = '');
+                  },
+                  child: const Icon(Icons.close_rounded, color: AppColors.textGray, size: 18),
+                )
+              : null,
+          filled: true,
+          fillColor: context.surfaceColor,
+          contentPadding: const EdgeInsets.symmetric(vertical: 10),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: context.borderColor),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: context.borderColor),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+          ),
+        ),
+      ),
       ),
     );
   }
@@ -227,9 +296,9 @@ class _QaScreenState extends State<QaScreen> {
               margin: const EdgeInsets.only(right: 8),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
               decoration: BoxDecoration(
-                color: isSelected ? AppColors.primary : AppColors.surface,
+                color: isSelected ? AppColors.primary : context.surfaceColor,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: isSelected ? AppColors.primary : AppColors.border),
+                border: Border.all(color: isSelected ? AppColors.primary : context.borderColor),
               ),
               child: Text(
                 f.$2,
@@ -246,34 +315,99 @@ class _QaScreenState extends State<QaScreen> {
     );
   }
 
+  Widget _buildEmpty() {
+    final isSearch = _searchQuery.isNotEmpty;
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(isSearch ? '🔍' : '💬', style: const TextStyle(fontSize: 48)),
+          const SizedBox(height: 12),
+          Text(
+            isSearch ? 'Không tìm thấy kết quả' : 'Chưa có câu hỏi nào',
+            style: AppTextStyles.heading4,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            isSearch ? 'Thử từ khoá khác' : 'Hãy là người đặt câu hỏi đầu tiên!',
+            style: AppTextStyles.bodySmall,
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildShimmer() {
-    return Padding(
+    return Builder(
+      builder: (context) => Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
         children: List.generate(5, (_) {
           return Shimmer.fromColors(
-            baseColor: AppColors.surface,
-            highlightColor: AppColors.surfaceElevated,
+            baseColor: context.surfaceColor,
+            highlightColor: context.surfaceElevatedColor,
             child: Container(
               margin: const EdgeInsets.only(bottom: 12),
               height: 100,
               decoration: BoxDecoration(
-                color: AppColors.surface,
+                color: context.surfaceColor,
                 borderRadius: BorderRadius.circular(14),
               ),
             ),
           );
         }),
       ),
+      ),
     );
   }
 }
 
-class _QaPostCard extends StatelessWidget {
+// ── QA Post Card ──────────────────────────────────────────────────────────────
+
+class _QaPostCard extends StatefulWidget {
   final QaPost post;
   final VoidCallback onTap;
 
   const _QaPostCard({required this.post, required this.onTap});
+
+  @override
+  State<_QaPostCard> createState() => _QaPostCardState();
+}
+
+class _QaPostCardState extends State<_QaPostCard> {
+  final _api = ApiService();
+  bool _upvoted = false;
+  late int _upvoteCount;
+  bool _isUpvoting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _upvoteCount = widget.post.upvotes;
+    _loadUpvotedState();
+  }
+
+  Future<void> _loadUpvotedState() async {
+    final prefs = await SharedPreferences.getInstance();
+    final upvotedIds = prefs.getStringList('upvoted_posts') ?? [];
+    if (mounted) setState(() => _upvoted = upvotedIds.contains(widget.post.id));
+  }
+
+  Future<void> _toggleUpvote() async {
+    if (_isUpvoting || _upvoted) return;
+    setState(() { _isUpvoting = true; _upvoted = true; _upvoteCount++; });
+    try {
+      await _api.upvotePost(widget.post.id);
+      final prefs = await SharedPreferences.getInstance();
+      final ids = prefs.getStringList('upvoted_posts') ?? [];
+      ids.add(widget.post.id);
+      await prefs.setStringList('upvoted_posts', ids);
+    } catch (_) {
+      if (mounted) setState(() { _upvoted = false; _upvoteCount--; });
+    } finally {
+      if (mounted) setState(() => _isUpvoting = false);
+    }
+  }
 
   String _timeAgo(DateTime date) {
     final diff = DateTime.now().difference(date);
@@ -286,20 +420,22 @@ class _QaPostCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final post = widget.post;
     return GestureDetector(
-      onTap: onTap,
+      onTap: widget.onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: context.surfaceColor,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: context.borderColor),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
                   child: Text(
@@ -314,16 +450,15 @@ class _QaPostCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.1),
+                      color: AppColors.correct.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: const Text('✓ Đã giải quyết',
-                        style: TextStyle(color: AppColors.primary, fontSize: 10, fontWeight: FontWeight.w700)),
+                    child: const Text('✓ Giải quyết',
+                        style: TextStyle(color: AppColors.correct, fontSize: 10, fontWeight: FontWeight.w700)),
                   ),
               ],
             ),
             const SizedBox(height: 8),
-            // Tags
             if (post.tags.isNotEmpty)
               Wrap(
                 spacing: 4,
@@ -332,30 +467,60 @@ class _QaPostCard extends StatelessWidget {
                   return Container(
                     padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                     decoration: BoxDecoration(
-                      color: AppColors.blue.withOpacity(0.1),
+                      color: AppColors.blue.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: Text(
-                      tag,
-                      style: const TextStyle(color: AppColors.blue, fontSize: 10, fontWeight: FontWeight.w600),
-                    ),
+                    child: Text(tag,
+                        style: const TextStyle(color: AppColors.blue, fontSize: 10, fontWeight: FontWeight.w600)),
                   );
                 }).toList(),
               ),
             const SizedBox(height: 10),
             Row(
               children: [
-                Text(post.authorName, style: AppTextStyles.bodySmall.copyWith(fontWeight: FontWeight.w600)),
+                Text(post.authorName,
+                    style: AppTextStyles.bodySmall.copyWith(fontWeight: FontWeight.w600)),
                 const Text(' · ', style: TextStyle(color: AppColors.textGray, fontSize: 12)),
                 Text(_timeAgo(post.createdAt), style: AppTextStyles.bodySmall),
                 const Spacer(),
-                Icon(Icons.chat_bubble_outline, size: 14, color: AppColors.textGray),
-                const SizedBox(width: 4),
+                // Answer count
+                const Icon(Icons.chat_bubble_outline, size: 14, color: AppColors.textGray),
+                const SizedBox(width: 3),
                 Text('${post.answerCount}', style: AppTextStyles.bodySmall),
-                const SizedBox(width: 10),
-                Icon(Icons.thumb_up_outlined, size: 14, color: AppColors.textGray),
-                const SizedBox(width: 4),
-                Text('${post.upvotes}', style: AppTextStyles.bodySmall),
+                const SizedBox(width: 12),
+                // Upvote button
+                GestureDetector(
+                  onTap: _toggleUpvote,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: _upvoted
+                          ? AppColors.primary.withValues(alpha: 0.12)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          _upvoted ? Icons.thumb_up_rounded : Icons.thumb_up_outlined,
+                          size: 14,
+                          color: _upvoted ? AppColors.primary : AppColors.textGray,
+                        ),
+                        const SizedBox(width: 3),
+                        Text(
+                          '$_upvoteCount',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: _upvoted ? AppColors.primary : AppColors.textGray,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
           ],

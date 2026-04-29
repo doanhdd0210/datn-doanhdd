@@ -78,14 +78,15 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(onboardingDoneKey(uid), true);
     }
-    if (mounted) {
-      await context.read<UserProvider>().setLevel(_selectedLevel!);
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
-        (_) => false,
-      );
-    }
+    if (!mounted) return;
+    final provider = context.read<UserProvider>();
+    await provider.setLevel(_selectedLevel!);
+    if (!mounted) return;
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
+      (_) => false,
+    );
   }
 
   @override
@@ -96,13 +97,13 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
         child: Column(
           children: [
             // Header
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 32, 24, 8),
+            const Padding(
+              padding: EdgeInsets.fromLTRB(24, 32, 24, 8),
               child: Column(
                 children: [
-                  const Text('🎯', style: TextStyle(fontSize: 48)),
-                  const SizedBox(height: 16),
-                  const Text(
+                  Text('🎯', style: TextStyle(fontSize: 48)),
+                  SizedBox(height: 16),
+                  Text(
                     'Trình độ Java của bạn?',
                     textAlign: TextAlign.center,
                     style: TextStyle(
@@ -112,7 +113,7 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
                       height: 1.2,
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  SizedBox(height: 10),
                   Text(
                     'Chúng tôi sẽ mở khóa bài học phù hợp với bạn',
                     textAlign: TextAlign.center,
@@ -200,9 +201,9 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: AppColors.border),
                       ),
-                      child: Row(
+                      child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
+                        children: [
                           Text('📝', style: TextStyle(fontSize: 16)),
                           SizedBox(width: 8),
                           Text(
@@ -251,7 +252,7 @@ class _LevelCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: isSelected ? level.color.withOpacity(0.12) : AppColors.surface,
+          color: isSelected ? level.color.withValues(alpha: 0.12) : AppColors.surface,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected ? level.color : AppColors.border,
@@ -296,7 +297,7 @@ class _LevelCard extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
-                          color: level.color.withOpacity(0.12),
+                          color: level.color.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -331,8 +332,8 @@ class _LevelCard extends StatelessWidget {
                       key: const ValueKey('checked'),
                       color: level.color,
                       size: 26)
-                  : Icon(Icons.circle_outlined,
-                      key: const ValueKey('unchecked'),
+                  : const Icon(Icons.circle_outlined,
+                      key: ValueKey('unchecked'),
                       color: AppColors.border,
                       size: 26),
             ),

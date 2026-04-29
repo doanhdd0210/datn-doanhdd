@@ -228,7 +228,7 @@ class _CodeEditorScreenState extends State<CodeEditorScreen>
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
-                color: _showStdin ? _C.accentBlue.withOpacity(0.15) : Colors.transparent,
+                color: _showStdin ? _C.accentBlue.withValues(alpha: 0.15) : Colors.transparent,
                 border: Border.all(
                     color: _showStdin ? _C.accentBlue : _C.border),
                 borderRadius: BorderRadius.circular(5),
@@ -383,7 +383,7 @@ class _CodeEditorScreenState extends State<CodeEditorScreen>
                 expands: false,
                 wrap: false,
                 background: _C.bg,
-                lineNumberStyle: const LineNumberStyle(
+                gutterStyle: const GutterStyle(
                   width: 44,
                   margin: 8,
                   textStyle: TextStyle(
@@ -437,9 +437,9 @@ class _CodeEditorScreenState extends State<CodeEditorScreen>
         children: [
           const Icon(Icons.circle, size: 8, color: _C.runGreen),
           const SizedBox(width: 6),
-          Text(
+          const Text(
             'Piston Engine',
-            style: const TextStyle(
+            style: TextStyle(
                 color: _C.white40, fontSize: 10, fontFamily: 'monospace'),
           ),
           const Spacer(),
@@ -511,7 +511,7 @@ class _CodeEditorScreenState extends State<CodeEditorScreen>
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 itemCount: javaSnippets.length,
                 separatorBuilder: (_, __) =>
-                    Container(height: 1, color: _C.border.withOpacity(0.5)),
+                    Container(height: 1, color: _C.border.withValues(alpha: 0.5)),
                 itemBuilder: (_, i) {
                   final s = javaSnippets[i];
                   return _SnippetTile(
@@ -592,13 +592,13 @@ class _RunButton extends StatelessWidget {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
         decoration: BoxDecoration(
-          color: isRunning ? _C.runGreen.withOpacity(0.5) : _C.runGreen,
+          color: isRunning ? _C.runGreen.withValues(alpha: 0.5) : _C.runGreen,
           borderRadius: BorderRadius.circular(6),
           boxShadow: isRunning
               ? []
               : [
                   BoxShadow(
-                    color: _C.runGreen.withOpacity(0.35),
+                    color: _C.runGreen.withValues(alpha: 0.35),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   )
@@ -730,8 +730,8 @@ class _TerminalTitleBar extends StatelessWidget {
                   const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
                 color: result!.isSuccess
-                    ? _C.runGreen.withOpacity(0.15)
-                    : _C.errorRed.withOpacity(0.15),
+                    ? _C.runGreen.withValues(alpha: 0.15)
+                    : _C.errorRed.withValues(alpha: 0.15),
                 border: Border.all(
                   color: result!.isSuccess ? _C.runGreen : _C.errorRed,
                   width: 0.5,
@@ -778,22 +778,22 @@ class _TerminalOutput extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Command line
-          RichText(
+           RichText(
             text: TextSpan(
-              style: const TextStyle(
+              style: TextStyle(
                   fontFamily: 'monospace', fontSize: 13, height: 1.5),
               children: [
-                const TextSpan(
+                TextSpan(
                     text: '→  ',
                     style: TextStyle(color: _C.accentBlue, fontWeight: FontWeight.w700)),
                 TextSpan(
                     text: 'javac Main.java && java Main',
-                    style: const TextStyle(color: _C.white70)),
+                    style: TextStyle(color: _C.white70)),
               ],
             ),
           ),
           const SizedBox(height: 10),
-          Container(height: 1, color: _C.border.withOpacity(0.6)),
+          Container(height: 1, color: _C.border.withValues(alpha: 0.6)),
           const SizedBox(height: 10),
           // stdout
           if (stdout.isNotEmpty) ...[
@@ -822,8 +822,8 @@ class _TerminalOutput extends StatelessWidget {
               margin: const EdgeInsets.only(top: 4),
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: _C.errorRed.withOpacity(0.08),
-                border: Border(
+                color: _C.errorRed.withValues(alpha: 0.08),
+                border: const Border(
                     left: BorderSide(color: _C.errorRed, width: 3)),
               ),
               child: Column(
@@ -868,7 +868,7 @@ class _TerminalOutput extends StatelessWidget {
             style: TextStyle(
               color: result.isSuccess
                   ? _C.white40
-                  : _C.errorRed.withOpacity(0.7),
+                  : _C.errorRed.withValues(alpha: 0.7),
               fontFamily: 'monospace',
               fontSize: 11,
             ),
@@ -899,9 +899,9 @@ class _RunningState extends StatelessWidget {
                 color: _C.runGreen, strokeWidth: 2.5),
           ),
           const SizedBox(height: 16),
-          Text(
+          const Text(
             'Compiling & running...',
-            style: const TextStyle(
+            style: TextStyle(
                 color: _C.white70, fontFamily: 'monospace', fontSize: 13),
           ),
           const SizedBox(height: 6),
@@ -948,8 +948,8 @@ class _EmptyOutputState extends StatelessWidget {
               padding:
                   const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               decoration: BoxDecoration(
-                color: _C.runGreen.withOpacity(0.15),
-                border: Border.all(color: _C.runGreen.withOpacity(0.5)),
+                color: _C.runGreen.withValues(alpha: 0.15),
+                border: Border.all(color: _C.runGreen.withValues(alpha: 0.5)),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: const Text(

@@ -132,10 +132,10 @@ public class ProgressService
         int scorePercent = total > 0 ? (int)Math.Round((double)correct / total * 100) : 0;
         int potentialXp = (int)Math.Round(scorePercent / 100.0 * lessonXpReward);
 
-        // Chỉ award XP nếu chưa từng nhận XP cho bài này (tránh farm khi làm lại)
-        bool hasEarnedXpBefore = await _db.QuizResults
-            .AnyAsync(r => r.UserId == userId && r.LessonId == request.LessonId && r.XpEarned > 0);
-        int xpEarned = hasEarnedXpBefore ? 0 : potentialXp;
+        // Chỉ award XP khi đúng 100% và chưa từng đạt 100% trước đó
+        bool hasEarnedPerfectBefore = await _db.QuizResults
+            .AnyAsync(r => r.UserId == userId && r.LessonId == request.LessonId && r.Score == 100);
+        int xpEarned = (!hasEarnedPerfectBefore && scorePercent == 100) ? lessonXpReward : 0;
 
         var result = new QuizResult
         {

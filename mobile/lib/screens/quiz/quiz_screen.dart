@@ -207,7 +207,8 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
 
     // Tính kết quả local làm fallback
     final ratio = _questions.isNotEmpty ? _correctCount / _questions.length : 0.0;
-    final localXp = (ratio * widget.xpReward).round();
+    final isPerfectLocal = _questions.isNotEmpty && _correctCount == _questions.length;
+    final localXp = isPerfectLocal ? widget.xpReward : 0;
     QuizResult result = QuizResult(
       id: 'local',
       lessonId: widget.lessonId,

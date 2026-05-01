@@ -530,63 +530,6 @@ class _QaPostCardState extends State<_QaPostCard> {
                 const Icon(Icons.chat_bubble_outline, size: 14, color: AppColors.textGray),
                 const SizedBox(width: 3),
                 Text('${post.answerCount}', style: AppTextStyles.bodySmall),
-                const SizedBox(width: 12),
-                // Upvote button
-                GestureDetector(
-                  onTap: _toggleUpvote,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    curve: Curves.easeOut,
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: _upvoted
-                          ? AppColors.primary.withValues(alpha: 0.12)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 200),
-                          transitionBuilder: (child, anim) => ScaleTransition(
-                            scale: anim,
-                            child: child,
-                          ),
-                          child: Icon(
-                            _upvoted ? Icons.thumb_up_rounded : Icons.thumb_up_outlined,
-                            key: ValueKey(_upvoted),
-                            size: 14,
-                            color: _upvoted ? AppColors.primary : AppColors.textGray,
-                          ),
-                        ),
-                        const SizedBox(width: 3),
-                        AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 150),
-                          transitionBuilder: (child, anim) => FadeTransition(
-                            opacity: anim,
-                            child: SlideTransition(
-                              position: Tween<Offset>(
-                                begin: const Offset(0, 0.3),
-                                end: Offset.zero,
-                              ).animate(anim),
-                              child: child,
-                            ),
-                          ),
-                          child: Text(
-                            '$_upvoteCount',
-                            key: ValueKey(_upvoteCount),
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: _upvoted ? AppColors.primary : AppColors.textGray,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
               ],
             ),
           ],

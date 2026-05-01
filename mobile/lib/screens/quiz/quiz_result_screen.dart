@@ -47,7 +47,12 @@ class _QuizResultScreenState extends State<QuizResultScreen>
       vsync: this,
       duration: const Duration(milliseconds: 1200),
     );
-    _xpAnimation = IntTween(begin: 0, end: widget.result.xpEarned).animate(
+    final total = widget.result.totalQuestions;
+    final correct = widget.result.correctAnswers;
+    final displayXp = widget.result.xpEarned > 0
+        ? widget.result.xpEarned
+        : (total > 0 ? (correct / total * widget.xpReward).round() : 0);
+    _xpAnimation = IntTween(begin: 0, end: displayXp).animate(
       CurvedAnimation(parent: _xpController, curve: Curves.easeOut),
     );
 
@@ -153,30 +158,43 @@ class _QuizResultScreenState extends State<QuizResultScreen>
                     ),
                   ),
                   const SizedBox(height: 24),
-                  // XP earned
+                  // XP earned / preview
                   AnimatedBuilder(
                     animation: _xpAnimation,
                     builder: (context, _) {
-                      return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [AppColors.xpGold.withValues(alpha: 0.15), AppColors.xpGold.withValues(alpha: 0.05)],
+                      final isPreview = widget.result.xpEarned == 0;
+                      final color = isPreview ? Colors.grey : AppColors.xpGold;
+                      return Column(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [color.withValues(alpha: 0.15), color.withValues(alpha: 0.05)],
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: color.withValues(alpha: 0.4)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text('⚡', style: TextStyle(fontSize: 24, color: isPreview ? Colors.grey : null)),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '+${_xpAnimation.value} XP',
+                                  style: AppTextStyles.heading3.copyWith(color: color),
+                                ),
+                              ],
+                            ),
                           ),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppColors.xpGold.withValues(alpha: 0.4)),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Text('⚡', style: TextStyle(fontSize: 24)),
-                            const SizedBox(width: 8),
+                          if (isPreview && _xpAnimation.value > 0) ...[
+                            const SizedBox(height: 6),
                             Text(
-                              '+${_xpAnimation.value} XP',
-                              style: AppTextStyles.heading3.copyWith(color: AppColors.xpGold),
+                              'Đúng hết để nhận XP này!',
+                              style: AppTextStyles.bodySmall.copyWith(color: Colors.grey),
                             ),
                           ],
-                        ),
+                        ],
                       );
                     },
                   ),

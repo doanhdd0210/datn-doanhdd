@@ -233,8 +233,9 @@ class _LessonsScreenState extends State<LessonsScreen> {
                               child: LinearProgressIndicator(
                                 value: pct,
                                 backgroundColor: Colors.white.withValues(alpha: 0.25),
-                                valueColor:
-                                    const AlwaysStoppedAnimation(Colors.white),
+                                valueColor: AlwaysStoppedAnimation(
+                                  done == total ? Colors.greenAccent : Colors.white,
+                                ),
                                 minHeight: 6,
                               ),
                             ),

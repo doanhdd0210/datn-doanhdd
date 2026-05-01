@@ -50,6 +50,18 @@ public class AchievementsController : ControllerBase
         return Ok(ApiResponse<List<UserAchievementDto>>.Ok(newOnes));
     }
 
+    /// <summary>Trigger achievement check for current user (sync historical data)</summary>
+    [HttpPost("me/sync")]
+    public async Task<ActionResult<ApiResponse<object>>> Sync()
+    {
+        var uid = HttpContext.Items["FirebaseUid"] as string;
+        if (string.IsNullOrEmpty(uid))
+            return Unauthorized(ApiResponse<object>.Fail("Unauthorized"));
+
+        await _service.CheckAndGrantAsync(uid);
+        return Ok(ApiResponse<object>.Ok(null, "Synced"));
+    }
+
     /// <summary>Create a new achievement (admin only)</summary>
     [HttpPost]
     public async Task<ActionResult> Create([FromBody] CreateAchievementRequest req)

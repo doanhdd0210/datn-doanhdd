@@ -648,10 +648,57 @@ class _AchievementBadge extends StatelessWidget {
     required this.isUnlocked,
   });
 
+  void _showDetail(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(achievement.emoji, style: const TextStyle(fontSize: 48)),
+            const SizedBox(height: 12),
+            Text(achievement.title,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                textAlign: TextAlign.center),
+            const SizedBox(height: 8),
+            Text(achievement.description,
+                style: TextStyle(fontSize: 13, color: Colors.grey[500]),
+                textAlign: TextAlign.center),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: isUnlocked
+                    ? AppColors.correct.withValues(alpha: 0.15)
+                    : Colors.grey.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                isUnlocked ? '✓ Đã đạt được' : 'Chưa đạt được',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: isUnlocked ? AppColors.correct : Colors.grey,
+                ),
+              ),
+            ),
+            if (achievement.xpReward > 0) ...[
+              const SizedBox(height: 8),
+              Text('Phần thưởng: +${achievement.xpReward} XP',
+                  style: const TextStyle(fontSize: 11, color: AppColors.xpGold)),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
-      message: isUnlocked ? achievement.description : 'Chưa mở khoá',
+    return GestureDetector(
+      onTap: () => _showDetail(context),
       child: Column(
         children: [
           Container(
@@ -669,17 +716,14 @@ class _AchievementBadge extends StatelessWidget {
             ),
             child: Center(
               child: Opacity(
-                opacity: isUnlocked ? 1.0 : 0.3,
-                child: Text(
-                  isUnlocked ? achievement.emoji : '🔒',
-                  style: const TextStyle(fontSize: 20),
-                ),
+                opacity: isUnlocked ? 1.0 : 0.35,
+                child: Text(achievement.emoji, style: const TextStyle(fontSize: 20)),
               ),
             ),
           ),
           const SizedBox(height: 5),
           Text(
-            isUnlocked ? achievement.title : '???',
+            achievement.title,
             style: TextStyle(
               fontSize: 9,
               fontWeight: FontWeight.w600,

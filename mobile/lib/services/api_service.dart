@@ -553,6 +553,10 @@ class ApiService {
 
   // ── Achievements ──────────────────────────────────────────────────────────
 
+  Future<void> syncAchievements() async {
+    try { await _post('/achievements/me/sync', {}); } catch (_) {}
+  }
+
   /// Lấy danh sách tất cả achievements kèm trạng thái unlock của user
   Future<List<Map<String, dynamic>>> getMyAchievements() async {
     try {

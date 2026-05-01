@@ -1219,10 +1219,19 @@ public class Main {
         };
 
         var now = DateTime.UtcNow;
+        var validIds = definitions.Select(d => d.Id).ToHashSet();
+
+        // Xóa các achievement không còn trong danh sách
+        var toDelete = await db.Achievements
+            .Where(a => !validIds.Contains(a.Id))
+            .ToListAsync();
+        if (toDelete.Count > 0)
+            db.Achievements.RemoveRange(toDelete);
+
         foreach (var d in definitions)
         {
-            var exists = await db.Achievements.AnyAsync(a => a.Id == d.Id);
-            if (!exists)
+            var existing = await db.Achievements.FirstOrDefaultAsync(a => a.Id == d.Id);
+            if (existing == null)
             {
                 db.Achievements.Add(new Achievement
                 {
@@ -1236,6 +1245,16 @@ public class Main {
                     IsActive = true,
                     CreatedAt = now,
                 });
+            }
+            else
+            {
+                existing.Title = d.Title;
+                existing.Description = d.Desc;
+                existing.Icon = d.Icon;
+                existing.ConditionType = d.Type;
+                existing.ConditionValue = d.Value;
+                existing.XpReward = d.Xp;
+                existing.IsActive = true;
             }
         }
         await db.SaveChangesAsync();

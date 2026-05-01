@@ -199,6 +199,16 @@ public class CodeSnippetsController : ControllerBase
         return (await stdoutTask, await stderrTask, proc.ExitCode);
     }
 
+    /// <summary>Get list of snippet IDs the user has already passed</summary>
+    [HttpGet("my-passed")]
+    public async Task<ActionResult<ApiResponse<List<string>>>> GetMyPassed()
+    {
+        var uid = UserId;
+        if (uid == null) return Unauthorized(ApiResponse<List<string>>.Fail("Unauthorized"));
+        var ids = await _codeSnippetService.GetPassedSnippetIdsAsync(uid);
+        return Ok(ApiResponse<List<string>>.Ok(ids));
+    }
+
     /// <summary>Submit practice result and award XP</summary>
     [HttpPost("practice-submit")]
     public async Task<ActionResult<ApiResponse<PracticeResult>>> SubmitPractice([FromBody] SubmitPracticeRequest request)

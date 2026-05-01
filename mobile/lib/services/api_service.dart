@@ -290,6 +290,15 @@ class ApiService {
     return {'stdout': '', 'stderr': 'Invalid response', 'exitCode': -1, 'isSuccess': false};
   }
 
+  Future<Set<String>> getPassedSnippetIds() async {
+    try {
+      final data = await _get('/code-snippets/my-passed');
+      return (data as List<dynamic>).map((e) => e.toString()).toSet();
+    } catch (_) {
+      return {};
+    }
+  }
+
   // Backend: POST /api/code-snippets/practice-submit
   // Body: { codeSnippetId, submittedCode, actualOutput, isPassed }
   Future<int> submitPractice(

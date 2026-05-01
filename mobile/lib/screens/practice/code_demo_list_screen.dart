@@ -19,6 +19,7 @@ class _CodeDemoListScreenState extends State<CodeDemoListScreen> {
   final _api = ApiService();
   List<ApiCodeSnippet> _snippets = [];
   List<Topic> _topics = [];
+  Set<String> _passedIds = {};
   bool _isLoading = true;
   String? _selectedTopicId;
 
@@ -34,11 +35,13 @@ class _CodeDemoListScreenState extends State<CodeDemoListScreen> {
       final results = await Future.wait([
         _api.getCodeSnippets(topicId: _selectedTopicId),
         _api.getTopics(),
+        _api.getPassedSnippetIds(),
       ]);
       if (mounted) {
         setState(() {
           _snippets = results[0] as List<ApiCodeSnippet>;
           _topics = results[1] as List<Topic>;
+          _passedIds = results[2] as Set<String>;
           _isLoading = false;
         });
       }
@@ -136,8 +139,9 @@ class _CodeDemoListScreenState extends State<CodeDemoListScreen> {
                     delegate: SliverChildBuilderDelegate(
                       (context, index) => _SnippetCard(
                         snippet: _snippets[index],
-                        onTap: () {
-                          Navigator.push(
+                        isPassed: _passedIds.contains(_snippets[index].id),
+                        onTap: () async {
+                          await Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (_) => CodeDemoDetailScreen(
@@ -145,6 +149,9 @@ class _CodeDemoListScreenState extends State<CodeDemoListScreen> {
                               ),
                             ),
                           );
+                          // Reload passed status after returning
+                          final passed = await _api.getPassedSnippetIds();
+                          if (mounted) setState(() => _passedIds = passed);
                         },
                       ),
                       childCount: _snippets.length,
@@ -273,9 +280,10 @@ class _FilterChip extends StatelessWidget {
 
 class _SnippetCard extends StatelessWidget {
   final ApiCodeSnippet snippet;
+  final bool isPassed;
   final VoidCallback onTap;
 
-  const _SnippetCard({required this.snippet, required this.onTap});
+  const _SnippetCard({required this.snippet, required this.isPassed, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -346,6 +354,20 @@ class _SnippetCard extends StatelessWidget {
                           style: const TextStyle(color: AppColors.xpGold, fontSize: 10, fontWeight: FontWeight.w700),
                         ),
                       ),
+                      if (isPassed) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: AppColors.correct.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Text(
+                            '✓ Đã hoàn thành',
+                            style: TextStyle(color: AppColors.correct, fontSize: 10, fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ],

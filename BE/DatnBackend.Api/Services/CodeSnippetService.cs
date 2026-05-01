@@ -93,6 +93,15 @@ public class CodeSnippetService
         await InvalidateSnippetCacheAsync(topicId);
     }
 
+    public async Task<List<string>> GetPassedSnippetIdsAsync(string userId)
+    {
+        return await _db.PracticeResults
+            .Where(r => r.UserId == userId && r.IsPassed)
+            .Select(r => r.CodeSnippetId)
+            .Distinct()
+            .ToListAsync();
+    }
+
     public async Task<PracticeResult> SubmitPracticeAsync(string userId, SubmitPracticeRequest request)
     {
         var snippet = await GetSnippetAsync(request.CodeSnippetId)

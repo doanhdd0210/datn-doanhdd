@@ -29,6 +29,7 @@ class _CodeDemoDetailScreenState extends State<CodeDemoDetailScreen>
 
   bool _isRunning = false;
   CompileResult? _result;
+  bool _isPassed = false;
 
   @override
   void initState() {
@@ -38,6 +39,12 @@ class _CodeDemoDetailScreenState extends State<CodeDemoDetailScreen>
       text: widget.snippet.code,
       language: java,
     );
+    _checkPassed();
+  }
+
+  Future<void> _checkPassed() async {
+    final ids = await _api.getPassedSnippetIds();
+    if (mounted) setState(() => _isPassed = ids.contains(widget.snippet.id));
   }
 
   @override
@@ -127,20 +134,42 @@ class _CodeDemoDetailScreenState extends State<CodeDemoDetailScreen>
                   child: Text(widget.snippet.description, style: AppTextStyles.bodyMedium),
                 ),
                 const SizedBox(width: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: AppColors.xpGold.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    '⚡ ${widget.snippet.xpReward} XP',
-                    style: const TextStyle(
-                      color: AppColors.xpGold,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12,
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: AppColors.xpGold.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '⚡ ${widget.snippet.xpReward} XP',
+                        style: const TextStyle(
+                          color: AppColors.xpGold,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                        ),
+                      ),
                     ),
-                  ),
+                    if (_isPassed) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: AppColors.correct.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text(
+                          '✓ Đã hoàn thành',
+                          style: TextStyle(
+                            color: AppColors.correct,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ],
             ),

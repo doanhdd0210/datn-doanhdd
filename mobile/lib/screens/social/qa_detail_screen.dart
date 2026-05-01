@@ -9,6 +9,8 @@ import '../../models/qa_post.dart';
 import '../../models/qa_answer.dart';
 import '../../services/api_service.dart';
 import '../../services/ai_service.dart';
+import '../../widgets/app_loading.dart';
+import '../../widgets/app_snackbar.dart';
 
 class QaDetailScreen extends StatefulWidget {
   final QaPost post;
@@ -53,6 +55,34 @@ class _QaDetailScreenState extends State<QaDetailScreen> {
     }
   }
 
+  Future<void> _acceptAnswer(String answerId) async {
+    // Confirm trước khi accept
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Chấp nhận câu trả lời?'),
+        content: const Text('Câu trả lời này sẽ được đánh dấu là giải quyết vấn đề của bạn.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Huỷ')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+            child: const Text('Chấp nhận', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    try {
+      await _api.acceptAnswer(answerId);
+      await _loadAnswers();
+      if (mounted) AppSnackBar.success(context, 'Đã đánh dấu câu hỏi là đã giải quyết!');
+    } catch (e) {
+      if (mounted) AppSnackBar.error(context, 'Lỗi: $e');
+    }
+  }
+
   Future<void> _askAi() async {
     setState(() { _aiLoading = true; _aiAnswer = null; });
     final result = await _aiService.suggestQaAnswer(
@@ -71,21 +101,9 @@ class _QaDetailScreenState extends State<QaDetailScreen> {
       await _api.createQaAnswer(widget.post.id, content);
       _answerController.clear();
       await _loadAnswers();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Đã đăng câu trả lời!'),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: AppColors.primary,
-          ),
-        );
-      }
+      if (mounted) AppSnackBar.success(context, 'Đã đăng câu trả lời!');
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), behavior: SnackBarBehavior.floating),
-        );
-      }
+      if (mounted) AppSnackBar.error(context, 'Không thể đăng: $e');
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -130,18 +148,16 @@ class _QaDetailScreenState extends State<QaDetailScreen> {
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
                       child: Text(
-                        '${widget.post.answerCount} Câu trả lời',
+                        '${_isLoadingAnswers ? widget.post.answerCount : _answers.length} Câu trả lời',
                         style: AppTextStyles.heading4,
                       ),
                     ),
                   ),
                   if (_isLoadingAnswers)
                     const SliverToBoxAdapter(
-                      child: Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(24),
-                          child: CircularProgressIndicator(color: AppColors.primary),
-                        ),
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 32),
+                        child: AppLoadingCenter(),
                       ),
                     )
                   else if (_answers.isEmpty)
@@ -165,7 +181,7 @@ class _QaDetailScreenState extends State<QaDetailScreen> {
                         (context, index) => _AnswerCard(
                           answer: _answers[index],
                           isPostAuthor: currentUser?.uid == widget.post.authorId,
-                          onAccept: () {},
+                          onAccept: () => _acceptAnswer(_answers[index].id),
                         ),
                         childCount: _answers.length,
                       ),
@@ -234,7 +250,7 @@ class _QaDetailScreenState extends State<QaDetailScreen> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF3949AB))),
+                  AppLoading.small(color: Color(0xFF3949AB)),
                   SizedBox(width: 10),
                   Text('AI đang soạn câu trả lời...', style: TextStyle(fontSize: 12, color: Color(0xFF3949AB))),
                 ],

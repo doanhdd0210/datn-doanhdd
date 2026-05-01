@@ -206,9 +206,8 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
             .round();
 
     // Tính kết quả local làm fallback
-    final totalPoints = _questions.fold(0, (sum, q) => sum + q.points);
     final ratio = _questions.isNotEmpty ? _correctCount / _questions.length : 0.0;
-    final localXp = (ratio * totalPoints).round();
+    final localXp = (ratio * widget.xpReward).round();
     QuizResult result = QuizResult(
       id: 'local',
       lessonId: widget.lessonId,
@@ -244,10 +243,14 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
     } catch (_) {
       if (mounted) {
         if (isPerfect) {
-          context.read<UserProvider>().markLessonCompleted(widget.lessonId, widget.topicId);
+          final provider = context.read<UserProvider>();
+          final alreadyDone = provider.isLessonCompleted(widget.lessonId);
+          provider.markLessonCompleted(widget.lessonId, widget.topicId);
           _api.completeLesson(widget.lessonId, widget.topicId, timeSpentSeconds: timeSpent).catchError((_) {});
-          // Fallback: chỉ cộng XP nếu chưa làm lần nào (dùng localXp)
-          context.read<UserProvider>().addXp(localXp);
+          // Fallback XP chỉ khi lần đầu hoàn thành (offline)
+          if (!alreadyDone) {
+            provider.addXp(localXp);
+          }
         }
       }
     }

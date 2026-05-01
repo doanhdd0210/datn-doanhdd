@@ -9,6 +9,7 @@ import '../../models/api_code_snippet.dart';
 import '../../services/compiler_service.dart';
 import '../../services/api_service.dart';
 import 'code_practice_screen.dart';
+import '../../widgets/app_snackbar.dart';
 
 class CodeDemoDetailScreen extends StatefulWidget {
   final ApiCodeSnippet snippet;
@@ -109,13 +110,7 @@ class _CodeDemoDetailScreenState extends State<CodeDemoDetailScreen>
             icon: const Icon(Icons.content_copy_outlined),
             onPressed: () {
               Clipboard.setData(ClipboardData(text: widget.snippet.code));
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Đã sao chép code!'),
-                  behavior: SnackBarBehavior.floating,
-                  duration: Duration(seconds: 1),
-                ),
-              );
+              AppSnackBar.success(context, 'Đã sao chép code!');
             },
           ),
         ],

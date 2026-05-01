@@ -32,7 +32,7 @@ class Question {
       options: optionsList,
       correctAnswerIndex: json['correctAnswerIndex'] as int? ?? json['correctIndex'] as int? ?? 0,
       order: json['order'] as int? ?? 0,
-      points: json['points'] as int? ?? 10,
+      points: json['points'] as int? ?? 1,
     );
   }
 

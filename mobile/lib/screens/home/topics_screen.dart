@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:confetti/confetti.dart';
@@ -14,6 +15,8 @@ import '../../services/api_service.dart';
 import 'lesson_detail_screen.dart';
 import 'lessons_screen.dart';
 import '../notifications/notifications_screen.dart';
+import '../../services/notification_service.dart';
+import '../../widgets/app_snackbar.dart';
 
 class TopicsScreen extends StatefulWidget {
   const TopicsScreen({super.key});
@@ -93,6 +96,10 @@ class _TopicsScreenState extends State<TopicsScreen> {
         });
       }
     }
+  }
+
+  void _goToProfile(BuildContext context) {
+    NotificationService().navigationRequests.add('profile');
   }
 
   Future<void> _loadAllLessons(List<Topic> topics) async {
@@ -199,25 +206,31 @@ class _TopicsScreenState extends State<TopicsScreen> {
         color: context.bgColor,
         child: Row(
           children: [
-            CircleAvatar(
-              radius: 22,
-              backgroundImage: user?.photoURL != null ? CachedNetworkImageProvider(user!.photoURL!) : null,
-              backgroundColor: AppColors.primary.withValues(alpha: 0.25),
-              child: user?.photoURL == null
-                  ? Text(
-                      (user?.displayName ?? 'J').substring(0, 1).toUpperCase(),
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18),
-                    )
-                  : null,
+            GestureDetector(
+              onTap: () => _goToProfile(context),
+              child: CircleAvatar(
+                radius: 22,
+                backgroundImage: user?.photoURL != null ? CachedNetworkImageProvider(user!.photoURL!) : null,
+                backgroundColor: AppColors.primary.withValues(alpha: 0.25),
+                child: user?.photoURL == null
+                    ? Text(
+                        (user?.displayName ?? 'J').substring(0, 1).toUpperCase(),
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18),
+                      )
+                    : null,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(user?.displayName ?? '', style: AppTextStyles.heading4, overflow: TextOverflow.ellipsis),
-                  _LevelSubtitle(level: provider.level),
-                ],
+              child: GestureDetector(
+                onTap: () => _goToProfile(context),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(user?.displayName ?? '', style: AppTextStyles.heading4, overflow: TextOverflow.ellipsis),
+                    _LevelSubtitle(level: provider.level),
+                  ],
+                ),
               ),
             ),
             const SizedBox(width: 8),
@@ -407,9 +420,19 @@ class _SkillPath extends StatelessWidget {
             for (int ti = 0; ti < topics.length; ti++) {
               final topic = topics[ti];
               final color = _topicColor(topic, ti);
-              final isUnlocked = ti < provider.unlockedTopicCount;
               final completed = provider.topicCompletedCount(topic.id);
               final total = topic.totalLessons.clamp(1, 999);
+
+              // Progressive unlock: topic 0 luôn mở, topic N mở khi N-1 hoàn thành
+              bool isUnlocked;
+              if (ti == 0) {
+                isUnlocked = true;
+              } else {
+                final prevTopic = topics[ti - 1];
+                final prevCompleted = provider.topicCompletedCount(prevTopic.id);
+                final prevTotal = prevTopic.totalLessons.clamp(1, 999);
+                isUnlocked = prevCompleted >= prevTotal;
+              }
 
               // Topic banner
               rows.add(_TopicBanner(
@@ -417,7 +440,12 @@ class _SkillPath extends StatelessWidget {
                 topicIndex: ti,
                 color: color,
                 isUnlocked: isUnlocked,
-                onTap: isUnlocked ? () => onTopicTap(topic) : null,
+                onTap: isUnlocked
+                    ? () => onTopicTap(topic)
+                    : () {
+                        final prevTitle = topics[ti - 1].title;
+                        AppSnackBar.warning(context, '🔒 Hoàn thành "$prevTitle" trước để mở khoá chủ đề này!');
+                      },
               ));
 
               // Lesson nodes
@@ -482,72 +510,88 @@ class _TopicBanner extends StatelessWidget {
 
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(16, 20, 16, 4),
-        padding: const EdgeInsets.fromLTRB(16, 14, 14, 14),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: isUnlocked
-              ? [BoxShadow(
-                  color: Color.lerp(color, Colors.black, 0.35)!,
-                  blurRadius: 0,
-                  offset: const Offset(0, 5),
-                )]
-              : null,
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'CHỦ ĐỀ ${topicIndex + 1}',
-                    style: TextStyle(
-                      color: isUnlocked ? Colors.white70 : context.textTertiary,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.4,
+      child: Opacity(
+        opacity: isUnlocked ? 1.0 : 0.55,
+        child: Container(
+          margin: const EdgeInsets.fromLTRB(16, 20, 16, 4),
+          padding: const EdgeInsets.fromLTRB(16, 14, 14, 14),
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: isUnlocked
+                ? [BoxShadow(
+                    color: Color.lerp(color, Colors.black, 0.35)!,
+                    blurRadius: 0,
+                    offset: const Offset(0, 5),
+                  )]
+                : null,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'CHỦ ĐỀ ${topicIndex + 1}',
+                      style: TextStyle(
+                        color: isUnlocked ? Colors.white70 : context.textTertiary,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.4,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Text(topic.icon, style: const TextStyle(fontSize: 20)),
-                      const SizedBox(width: 8),
-                      Flexible(
-                        child: Text(
-                          topic.title,
-                          style: TextStyle(
-                            color: isUnlocked ? Colors.white : context.textSecondary,
-                            fontSize: 17,
-                            fontWeight: FontWeight.w800,
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Text(
+                          isUnlocked ? topic.icon : '🔒',
+                          style: const TextStyle(fontSize: 20),
+                        ),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            topic.title,
+                            style: TextStyle(
+                              color: isUnlocked ? Colors.white : context.textSecondary,
+                              fontSize: 17,
+                              fontWeight: FontWeight.w800,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                    if (!isUnlocked) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        'Hoàn thành chủ đề trước để mở khoá',
+                        style: TextStyle(
+                          color: context.textTertiary,
+                          fontSize: 11,
                         ),
                       ),
                     ],
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: isUnlocked ? Colors.white.withValues(alpha: 0.2) : context.borderColor,
-                borderRadius: BorderRadius.circular(10),
+              const SizedBox(width: 12),
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: isUnlocked ? Colors.white.withValues(alpha: 0.2) : context.borderColor,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  isUnlocked ? Icons.format_list_bulleted_rounded : Icons.lock_rounded,
+                  color: isUnlocked ? Colors.white : context.textTertiary,
+                  size: 20,
+                ),
               ),
-              child: Icon(
-                isUnlocked ? Icons.format_list_bulleted_rounded : Icons.lock_rounded,
-                color: isUnlocked ? Colors.white : context.textTertiary,
-                size: 20,
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -962,11 +1006,20 @@ class _NotifBell extends StatefulWidget {
 class _NotifBellState extends State<_NotifBell> {
   final _api = ApiService();
   int _unread = 0;
+  Timer? _timer;
 
   @override
   void initState() {
     super.initState();
     _fetchCount();
+    // Tự refresh mỗi 30 giây để badge luôn cập nhật
+    _timer = Timer.periodic(const Duration(seconds: 30), (_) => _fetchCount());
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
   }
 
   Future<void> _fetchCount() async {

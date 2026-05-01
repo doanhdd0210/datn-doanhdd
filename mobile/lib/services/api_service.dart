@@ -366,8 +366,20 @@ class ApiService {
     await _post('/qa/$postId/upvote', {});
   }
 
+  Future<void> unupvotePost(String postId) async {
+    await _delete('/qa/$postId/upvote');
+  }
+
   Future<void> upvoteAnswer(String answerId) async {
     await _post('/qa/answers/$answerId/upvote', {});
+  }
+
+  Future<void> unupvoteAnswer(String answerId) async {
+    await _delete('/qa/answers/$answerId/upvote');
+  }
+
+  Future<void> acceptAnswer(String answerId) async {
+    await _post('/qa/answers/$answerId/accept', {});
   }
 
   // ── Friends / Leaderboard ─────────────────────────────────────────────────
@@ -527,6 +539,26 @@ class ApiService {
 
   Future<void> markAllNotificationsRead() async {
     try { await _post('/notifications/me/read-all', {}); } catch (_) {}
+  }
+
+  // ── Achievements ──────────────────────────────────────────────────────────
+
+  /// Lấy danh sách tất cả achievements kèm trạng thái unlock của user
+  Future<List<Map<String, dynamic>>> getMyAchievements() async {
+    try {
+      final data = await _get('/achievements/me');
+      if (data is List) return data.cast<Map<String, dynamic>>();
+      return [];
+    } catch (_) { return []; }
+  }
+
+  /// Lấy và đánh dấu đã đọc các achievement mới vừa unlock (chưa thông báo)
+  Future<List<Map<String, dynamic>>> consumeNewAchievements() async {
+    try {
+      final data = await _post('/achievements/me/consume-new', {});
+      if (data is List) return data.cast<Map<String, dynamic>>();
+      return [];
+    } catch (_) { return []; }
   }
 }
 

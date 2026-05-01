@@ -8,6 +8,7 @@ import 'package:highlight/languages/python.dart';
 import 'package:highlight/languages/javascript.dart';
 import '../models/code_snippet.dart';
 import '../services/compiler_service.dart';
+import '../widgets/app_snackbar.dart';
 
 // ─── Palette ──────────────────────────────────────────────────────────────────
 class _C {
@@ -560,11 +561,7 @@ class _CodeEditorScreenState extends State<CodeEditorScreen>
   }
 
   void _toast(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg),
-      duration: const Duration(seconds: 1),
-      behavior: SnackBarBehavior.floating,
-    ));
+    AppSnackBar.info(context, msg);
   }
 
   Widget _iconBtn(IconData icon, String tooltip, VoidCallback onPressed) {

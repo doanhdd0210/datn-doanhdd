@@ -85,7 +85,10 @@ public class ProgressController : ControllerBase
             if (questions.Count == 0)
                 return BadRequest(ApiResponse<QuizResult>.Fail("No questions found for this lesson"));
 
-            var result = await _progressService.SubmitQuizAsync(uid, request, questions);
+            var lesson = await _lessonService.GetLessonAsync(request.LessonId);
+            int lessonXpReward = lesson?.XpReward ?? 10;
+
+            var result = await _progressService.SubmitQuizAsync(uid, request, questions, lessonXpReward);
             return Ok(ApiResponse<QuizResult>.Ok(result, $"Quiz completed! Score: {result.Score}%"));
         }
         catch (Exception ex)

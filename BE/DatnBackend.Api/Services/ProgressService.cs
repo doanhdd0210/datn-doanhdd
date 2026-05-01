@@ -11,13 +11,15 @@ public class ProgressService
     private readonly ICacheService _cache;
     private readonly ILogger<ProgressService> _logger;
     private readonly SettingsService _settingsService;
+    private readonly AchievementsService _achievements;
 
-    public ProgressService(AppDbContext db, ICacheService cache, ILogger<ProgressService> logger, SettingsService settingsService)
+    public ProgressService(AppDbContext db, ICacheService cache, ILogger<ProgressService> logger, SettingsService settingsService, AchievementsService achievements)
     {
         _db = db;
         _cache = cache;
         _logger = logger;
         _settingsService = settingsService;
+        _achievements = achievements;
     }
 
     /// <summary>Tạo UserProfile từ Firebase nếu chưa tồn tại trong DB.</summary>
@@ -101,10 +103,13 @@ public class ProgressService
         await UpdateDailyProgressAsync(userId, 1, xpReward, request.TimeSpentSeconds);
         await UpdateUserStatsAsync(userId, xpReward, 1);
 
+        // Check achievements (fire-and-forget)
+        _ = _achievements.CheckAndGrantAsync(userId);
+
         return existing;
     }
 
-    public async Task<QuizResult> SubmitQuizAsync(string userId, SubmitQuizRequest request, List<Question> questions)
+    public async Task<QuizResult> SubmitQuizAsync(string userId, SubmitQuizRequest request, List<Question> questions, int lessonXpReward = 10)
     {
         var now = DateTime.UtcNow;
         int correct = 0;
@@ -125,7 +130,7 @@ public class ProgressService
 
         int total = questions.Count;
         int scorePercent = total > 0 ? (int)Math.Round((double)correct / total * 100) : 0;
-        int potentialXp = (int)(scorePercent / 100.0 * questions.Sum(q => q.Points));
+        int potentialXp = (int)Math.Round(scorePercent / 100.0 * lessonXpReward);
 
         // Chỉ award XP lần đầu tiên làm quiz này (không cộng dồn khi làm lại)
         bool hasAttemptedBefore = await _db.QuizResults
@@ -163,6 +168,9 @@ public class ProgressService
             await UpdateUserStatsAsync(userId, xpEarned, 0);
             await UpdateDailyProgressAsync(userId, 0, xpEarned, request.TimeSpentSeconds);
         }
+
+        // Check achievements (fire-and-forget, không block response)
+        _ = _achievements.CheckAndGrantAsync(userId);
 
         return result;
     }

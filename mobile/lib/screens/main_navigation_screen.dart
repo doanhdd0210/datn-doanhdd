@@ -1,9 +1,12 @@
 import 'dart:async';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_theme.dart';
+import '../providers/user_provider.dart';
 import '../services/notification_service.dart';
+import '../widgets/app_snackbar.dart';
 import 'home/topics_screen.dart';
 import 'practice/code_demo_list_screen.dart';
 import 'social/qa_screen.dart';
@@ -21,6 +24,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
   StreamSubscription<RemoteMessage>? _fgSub;
   StreamSubscription<String>? _navSub;
+  UserProvider? _userProvider; // stored ref — safe to use in dispose()
 
   final List<Widget> _screens = const [
     TopicsScreen(),
@@ -47,38 +51,51 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   };
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _checkPendingAchievements();
+  }
+
+  void _checkPendingAchievements() {
+    final provider = context.read<UserProvider>();
+    if (provider.pendingAchievements.isEmpty) return;
+    final pending = provider.pendingAchievements.toList();
+    provider.consumePendingAchievements();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      for (final achievement in pending) {
+        AppSnackBar.success(
+          context,
+          '🏆 ${achievement.emoji} ${achievement.title} · +${achievement.xpReward} XP',
+        );
+      }
+    });
+  }
+
+  @override
   void initState() {
     super.initState();
+    // Listen for new achievements from provider — store ref so dispose() is safe
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _userProvider = context.read<UserProvider>();
+      _userProvider!.addListener(_onProviderChanged);
+    });
     final ns = NotificationService();
 
     _fgSub = ns.foregroundMessages.stream.listen((msg) {
       if (!mounted) return;
       final title = msg.notification?.title ?? 'Thông báo';
       final body = msg.notification?.body ?? '';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
-              if (body.isNotEmpty) Text(body, style: const TextStyle(fontSize: 13)),
-            ],
-          ),
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: AppColors.surface,
-          duration: const Duration(seconds: 4),
-          action: SnackBarAction(
-            label: 'Xem',
-            textColor: AppColors.primary,
-            onPressed: () {
-              final screen = msg.data['screen'] as String?;
-              if (screen != null && _screenIndex.containsKey(screen)) {
-                setState(() => _currentIndex = _screenIndex[screen]!);
-              }
-            },
-          ),
-        ),
+      final displayMsg = body.isNotEmpty ? '$title\n$body' : title;
+      final screen = msg.data['screen'] as String?;
+      AppSnackBar.info(
+        context,
+        displayMsg,
+        actionLabel: screen != null && _screenIndex.containsKey(screen) ? 'Xem' : null,
+        onAction: screen != null && _screenIndex.containsKey(screen)
+            ? () => setState(() => _currentIndex = _screenIndex[screen]!)
+            : null,
       );
     });
 
@@ -89,8 +106,16 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     });
   }
 
+  void _onProviderChanged() {
+    if (!mounted) return;
+    final provider = _userProvider;
+    if (provider == null || provider.pendingAchievements.isEmpty) return;
+    _checkPendingAchievements();
+  }
+
   @override
   void dispose() {
+    _userProvider?.removeListener(_onProviderChanged); // safe: no context.read
     _fgSub?.cancel();
     _navSub?.cancel();
     super.dispose();

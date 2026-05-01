@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_text_styles.dart';
 import '../../constants/app_theme.dart';
@@ -151,12 +152,6 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                               icon: Icons.bolt,
                               label: '${widget.lesson.xpReward} XP',
                               color: AppColors.xpGold,
-                            ),
-                            const SizedBox(width: 8),
-                            _InfoChip(
-                              icon: Icons.timer_outlined,
-                              label: '${widget.lesson.estimatedMinutes} min',
-                              color: AppColors.blue,
                             ),
                           ],
                         ),
@@ -342,7 +337,14 @@ class _CodeBlock extends StatelessWidget {
                 const Text('Java', style: TextStyle(color: Color(0xFF4FC3F7), fontSize: 11, fontWeight: FontWeight.w600)),
                 const Spacer(),
                 GestureDetector(
-                  onTap: () {},
+                  onTap: () async {
+                    await Clipboard.setData(ClipboardData(text: code));
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Đã sao chép'), duration: Duration(seconds: 1)),
+                      );
+                    }
+                  },
                   child: const Icon(Icons.content_copy_outlined, size: 14, color: Color(0xFF666666)),
                 ),
               ],

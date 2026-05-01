@@ -18,12 +18,36 @@ public class AchievementsController : ControllerBase
 
     private bool IsAdmin => HttpContext.Items.TryGetValue("FirebaseIsAdmin", out var v) && v is true;
 
-    /// <summary>List all achievements</summary>
+    /// <summary>List all achievements (definitions)</summary>
     [HttpGet]
     public async Task<ActionResult<ApiResponse<List<Achievement>>>> GetAll()
     {
         var items = await _service.GetAllAsync();
         return Ok(ApiResponse<List<Achievement>>.Ok(items));
+    }
+
+    /// <summary>Lấy achievements của user hiện tại kèm trạng thái unlock</summary>
+    [HttpGet("me")]
+    public async Task<ActionResult<ApiResponse<List<UserAchievementDto>>>> GetMine()
+    {
+        var uid = HttpContext.Items["FirebaseUid"] as string;
+        if (string.IsNullOrEmpty(uid))
+            return Unauthorized(ApiResponse<object>.Fail("Unauthorized"));
+
+        var items = await _service.GetMyAchievementsAsync(uid);
+        return Ok(ApiResponse<List<UserAchievementDto>>.Ok(items));
+    }
+
+    /// <summary>Lấy và đánh dấu đã đọc các achievement mới (chưa được thông báo)</summary>
+    [HttpPost("me/consume-new")]
+    public async Task<ActionResult<ApiResponse<List<UserAchievementDto>>>> ConsumeNew()
+    {
+        var uid = HttpContext.Items["FirebaseUid"] as string;
+        if (string.IsNullOrEmpty(uid))
+            return Unauthorized(ApiResponse<object>.Fail("Unauthorized"));
+
+        var newOnes = await _service.ConsumeNewAchievementsAsync(uid);
+        return Ok(ApiResponse<List<UserAchievementDto>>.Ok(newOnes));
     }
 
     /// <summary>Create a new achievement (admin only)</summary>

@@ -189,6 +189,50 @@ public class QaController : ControllerBase
             return BadRequest(ApiResponse<object>.Fail(ex.Message));
         }
     }
+
+    /// <summary>Un-upvote a post</summary>
+    [HttpDelete("{id}/upvote")]
+    public async Task<ActionResult<ApiResponse<object>>> UnupvotePost(string id)
+    {
+        var uid = UserId;
+        if (uid == null) return Unauthorized(ApiResponse<object>.Fail("Unauthorized"));
+
+        try
+        {
+            await _qaService.UnupvotePostAsync(id);
+            return Ok(ApiResponse<object>.Ok(null, "Unvoted"));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ApiResponse<object>.Fail(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ApiResponse<object>.Fail(ex.Message));
+        }
+    }
+
+    /// <summary>Un-upvote an answer</summary>
+    [HttpDelete("answers/{id}/upvote")]
+    public async Task<ActionResult<ApiResponse<object>>> UnupvoteAnswer(string id)
+    {
+        var uid = UserId;
+        if (uid == null) return Unauthorized(ApiResponse<object>.Fail("Unauthorized"));
+
+        try
+        {
+            await _qaService.UnupvoteAnswerAsync(id);
+            return Ok(ApiResponse<object>.Ok(null, "Unvoted"));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ApiResponse<object>.Fail(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ApiResponse<object>.Fail(ex.Message));
+        }
+    }
 }
 
 public class QaPostDetail

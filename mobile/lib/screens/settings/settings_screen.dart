@@ -8,6 +8,7 @@ import '../../constants/app_theme.dart';
 import '../../providers/theme_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../services/auth_service.dart';
+import '../../widgets/app_snackbar.dart';
 import '../login_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -53,14 +54,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('api_base_url', _urlController.text.trim());
     setState(() => _baseUrl = _urlController.text.trim());
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Đã cập nhật địa chỉ server'),
-          backgroundColor: AppColors.primary,
-        ),
-      );
-    }
+    if (mounted) AppSnackBar.success(context, 'Đã cập nhật địa chỉ server');
   }
 
   Future<void> _logout() async {
@@ -113,7 +107,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       backgroundColor: context.bgColor,
       appBar: AppBar(
         elevation: 0,
-        title: const Text('Cài đặt', style: AppTextStyles.heading3),
+        backgroundColor: context.bgColor,
+        foregroundColor: context.textPrimary,
+        title: Text('Cài đặt',
+            style: AppTextStyles.heading3.copyWith(color: context.textPrimary)),
         centerTitle: false,
       ),
       body: ListView(
@@ -121,12 +118,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           _buildSection(context, 'Tài khoản', [
             _buildInfoTile(
+              context: context,
               icon: Icons.person_outline,
               label: 'Tên hiển thị',
               value: user?.displayName ?? 'Chưa đặt tên',
               onTap: () => _showEditNameDialog(),
             ),
             _buildInfoTile(
+              context: context,
               icon: Icons.email_outlined,
               label: 'Email',
               value: user?.email ?? '',
@@ -139,6 +138,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 16),
           _buildSection(context, 'Thông báo', [
             _buildSwitchTile(
+              context: context,
               icon: Icons.notifications_outlined,
               label: 'Nhận thông báo',
               value: _notificationsEnabled,
@@ -148,6 +148,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               },
             ),
             _buildSwitchTile(
+              context: context,
               icon: Icons.volume_up_outlined,
               label: 'Âm thanh',
               value: _soundEnabled,
@@ -164,11 +165,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 16),
           _buildSection(context, 'Ứng dụng', [
             _buildInfoTile(
+              context: context,
               icon: Icons.info_outline,
               label: 'Phiên bản',
               value: '1.0.0',
             ),
             _buildInfoTile(
+              context: context,
               icon: Icons.description_outlined,
               label: 'Điều khoản sử dụng',
               onTap: () => _showTextDialog(
@@ -183,6 +186,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
             _buildInfoTile(
+              context: context,
               icon: Icons.privacy_tip_outlined,
               label: 'Chính sách bảo mật',
               onTap: () => _showTextDialog(
@@ -239,7 +243,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           decoration: BoxDecoration(
             color: context.surfaceColor,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: context.borderColor),
+            border: Border.all(
+              color: context.isDark ? AppColors.borderDark : context.borderColor,
+            ),
           ),
           child: Column(
             children: List.generate(children.length, (i) {
@@ -247,7 +253,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   children[i],
                   if (i < children.length - 1)
-                    Divider(height: 1, color: context.borderColor, indent: 56),
+                    Divider(
+                      height: 1,
+                      color: context.isDark ? AppColors.borderDark : context.borderColor,
+                      indent: 56,
+                    ),
                 ],
               );
             }),
@@ -258,6 +268,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildInfoTile({
+    required BuildContext context,
     required IconData icon,
     required String label,
     String? value,
@@ -273,9 +284,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         child: Icon(icon, color: AppColors.primary, size: 20),
       ),
-      title: Text(label, style: AppTextStyles.bodyLarge),
+      title: Text(label, style: AppTextStyles.bodyLarge.copyWith(color: context.textPrimary)),
       subtitle: value != null
-          ? Text(value, style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textGray))
+          ? Text(value, style: AppTextStyles.bodyMedium.copyWith(color: context.textSecondary))
           : null,
       trailing: onTap != null
           ? const Icon(Icons.chevron_right, color: AppColors.textGray)
@@ -287,71 +298,120 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _buildThemeTile() {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, _) {
-        final isDark = themeProvider.isDark;
-        return ListTile(
-          leading: Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: AppColors.secondary.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
-              color: isDark ? AppColors.secondaryLight : AppColors.streakOrange,
-              size: 20,
-            ),
-          ),
-          title: Text(
-            isDark ? 'Giao diện tối' : 'Giao diện sáng',
-            style: AppTextStyles.bodyLarge,
-          ),
-          subtitle: Text(
-            isDark ? 'Nhấn để chuyển sang sáng' : 'Nhấn để chuyển sang tối',
-            style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textGray),
-          ),
-          trailing: GestureDetector(
-            onTap: () => themeProvider.toggle(),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              width: 52,
-              height: 28,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(14),
-                color: isDark ? AppColors.primary : AppColors.border,
-              ),
-              child: AnimatedAlign(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeOutCubic,
-                alignment: isDark ? Alignment.centerRight : Alignment.centerLeft,
-                child: Padding(
-                  padding: const EdgeInsets.all(3),
-                  child: Container(
-                    width: 22,
-                    height: 22,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: AppColors.secondary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Center(
-                      child: Icon(
-                        isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
-                        size: 12,
-                        color: isDark ? AppColors.primary : AppColors.streakOrange,
-                      ),
+                    child: Icon(
+                      themeProvider.mode == ThemeMode.dark
+                          ? Icons.dark_mode_rounded
+                          : themeProvider.mode == ThemeMode.light
+                              ? Icons.light_mode_rounded
+                              : Icons.brightness_auto_rounded,
+                      color: AppColors.secondaryLight,
+                      size: 20,
                     ),
                   ),
-                ),
+                  const SizedBox(width: 12),
+                  Text('Giao diện', style: AppTextStyles.bodyLarge.copyWith(color: context.textPrimary)),
+                ],
               ),
-            ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  _buildThemeOption(
+                    context: context,
+                    provider: themeProvider,
+                    mode: ThemeMode.system,
+                    icon: Icons.brightness_auto_rounded,
+                    label: 'Hệ thống',
+                  ),
+                  const SizedBox(width: 8),
+                  _buildThemeOption(
+                    context: context,
+                    provider: themeProvider,
+                    mode: ThemeMode.light,
+                    icon: Icons.light_mode_rounded,
+                    label: 'Sáng',
+                  ),
+                  const SizedBox(width: 8),
+                  _buildThemeOption(
+                    context: context,
+                    provider: themeProvider,
+                    mode: ThemeMode.dark,
+                    icon: Icons.dark_mode_rounded,
+                    label: 'Tối',
+                  ),
+                ],
+              ),
+            ],
           ),
-          onTap: () => themeProvider.toggle(),
         );
       },
     );
   }
 
+  Widget _buildThemeOption({
+    required BuildContext context,
+    required ThemeProvider provider,
+    required ThemeMode mode,
+    required IconData icon,
+    required String label,
+  }) {
+    final isSelected = provider.mode == mode;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => provider.setMode(mode),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? AppColors.primary.withValues(alpha: 0.15)
+                : context.bgColor,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: isSelected ? AppColors.primary : context.borderColor,
+              width: isSelected ? 1.5 : 1,
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 22,
+                color: isSelected ? AppColors.primary : AppColors.textGray,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+                  color: isSelected ? AppColors.primary : AppColors.textGray,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildSwitchTile({
+    required BuildContext context,
     required IconData icon,
     required String label,
     required bool value,
@@ -367,7 +427,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         child: Icon(icon, color: AppColors.primary, size: 20),
       ),
-      title: Text(label, style: AppTextStyles.bodyLarge),
+      title: Text(label, style: AppTextStyles.bodyLarge.copyWith(color: context.textPrimary)),
       trailing: Switch(
         value: value,
         onChanged: onChanged,
@@ -395,7 +455,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: const Icon(Icons.dns_outlined, color: AppColors.blue, size: 20),
               ),
               const SizedBox(width: 12),
-              const Text('Địa chỉ server API', style: AppTextStyles.bodyLarge),
+              Text('Địa chỉ server API', style: AppTextStyles.bodyLarge.copyWith(color: context.textPrimary)),
             ],
           ),
           const SizedBox(height: 12),
@@ -428,6 +488,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
+                  minimumSize: Size.zero,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
@@ -469,48 +530,73 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void _showEditNameDialog() {
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Cập nhật tên'),
-        content: TextField(
-          controller: _nameController,
-          decoration: InputDecoration(
-            labelText: 'Tên hiển thị',
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Cập nhật tên',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _nameController,
+                autofocus: true,
+                decoration: InputDecoration(
+                  labelText: 'Tên hiển thị',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  prefixIcon: const Icon(Icons.person_outline, size: 20),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.textGray,
+                        side: const BorderSide(color: AppColors.textGray),
+                        minimumSize: Size.zero,
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: const Text('Hủy', style: TextStyle(fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        final name = _nameController.text.trim();
+                        if (name.isNotEmpty) {
+                          await FirebaseAuth.instance.currentUser?.updateDisplayName(name);
+                          if (!mounted) return;
+                          context.read<UserProvider>().refreshStats();
+                          if (!ctx.mounted) return;
+                          Navigator.pop(ctx);
+                          if (context.mounted) AppSnackBar.success(context, 'Đã cập nhật tên!');
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        minimumSize: Size.zero,
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: const Text('Lưu', style: TextStyle(fontWeight: FontWeight.w700)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Hủy', style: TextStyle(color: AppColors.textGray)),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final name = _nameController.text.trim();
-              if (name.isNotEmpty) {
-                await FirebaseAuth.instance.currentUser?.updateDisplayName(name);
-                if (!mounted) return;
-                final provider = context.read<UserProvider>();
-                final messenger = ScaffoldMessenger.of(context);
-                provider.refreshStats();
-                if (!ctx.mounted) return;
-                Navigator.pop(ctx);
-                messenger.showSnackBar(
-                  const SnackBar(
-                    content: Text('Đã cập nhật tên'),
-                    backgroundColor: AppColors.primary,
-                  ),
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            child: const Text('Lưu'),
-          ),
-        ],
       ),
     );
   }

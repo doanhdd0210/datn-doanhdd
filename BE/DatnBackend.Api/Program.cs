@@ -162,7 +162,22 @@ using (var scope = app.Services.CreateScope())
             ON ""UserNotifications"" (""UserId"", ""CreatedAt"" DESC);
     ");
 
+    // Tạo bảng UserAchievements nếu chưa có
+    await db.Database.ExecuteSqlRawAsync(@"
+        CREATE TABLE IF NOT EXISTS ""UserAchievements"" (
+            ""Id"" text NOT NULL PRIMARY KEY,
+            ""UserId"" text NOT NULL,
+            ""AchievementId"" text NOT NULL,
+            ""UnlockedAt"" timestamp with time zone NOT NULL DEFAULT now(),
+            ""IsNotified"" boolean NOT NULL DEFAULT false,
+            CONSTRAINT ""UQ_UserAchievements_UserId_AchievementId"" UNIQUE (""UserId"", ""AchievementId"")
+        );
+        CREATE INDEX IF NOT EXISTS ""IX_UserAchievements_UserId""
+            ON ""UserAchievements"" (""UserId"");
+    ");
+
     await DbSeeder.SeedAsync(db);
+    await DbSeeder.SeedAchievementsAsync(db);
 }
 
 // ─── Pipeline ─────────────────────────────────────────────────────────────────

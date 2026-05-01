@@ -8,6 +8,7 @@ import '../../constants/app_text_styles.dart';
 import '../../models/api_code_snippet.dart';
 import '../../services/api_service.dart';
 import '../../services/ai_service.dart';
+import '../../widgets/app_snackbar.dart';
 import 'practice_result_screen.dart';
 
 class CodePracticeScreen extends StatefulWidget {
@@ -121,9 +122,7 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
   Future<void> _askAi() async {
     final userCode = _controller.text.trim();
     if (userCode.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Hãy nhập code trước khi hỏi AI'), behavior: SnackBarBehavior.floating),
-      );
+      AppSnackBar.warning(context, 'Hãy nhập code trước khi hỏi AI');
       return;
     }
     setState(() { _aiExplaining = true; _aiExplanation = null; });

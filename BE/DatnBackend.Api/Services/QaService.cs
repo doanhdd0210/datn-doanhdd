@@ -131,6 +131,28 @@ public class QaService
             throw new KeyNotFoundException($"Answer '{answerId}' not found");
     }
 
+    public async Task UnupvotePostAsync(string postId)
+    {
+        var rows = await _db.QaPosts
+            .Where(p => p.Id == postId)
+            .ExecuteUpdateAsync(s => s.SetProperty(p => p.UpvoteCount,
+                p => p.UpvoteCount > 0 ? p.UpvoteCount - 1 : 0));
+
+        if (rows == 0)
+            throw new KeyNotFoundException($"Post '{postId}' not found");
+    }
+
+    public async Task UnupvoteAnswerAsync(string answerId)
+    {
+        var rows = await _db.QaAnswers
+            .Where(a => a.Id == answerId)
+            .ExecuteUpdateAsync(s => s.SetProperty(a => a.UpvoteCount,
+                a => a.UpvoteCount > 0 ? a.UpvoteCount - 1 : 0));
+
+        if (rows == 0)
+            throw new KeyNotFoundException($"Answer '{answerId}' not found");
+    }
+
     public async Task DeletePostAsync(string postId)
     {
         var post = await _db.QaPosts.FindAsync(postId);

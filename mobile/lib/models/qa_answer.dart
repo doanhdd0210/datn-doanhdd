@@ -28,10 +28,16 @@ class QaAnswer {
       id: json['_id'] as String? ?? json['id'] as String? ?? '',
       postId: json['postId'] as String? ?? '',
       content: json['content'] as String? ?? '',
-      authorId: author?['_id'] as String? ?? json['authorId'] as String? ?? '',
-      authorName: author?['name'] as String? ?? json['authorName'] as String? ?? 'Unknown',
-      authorAvatar: author?['avatar'] as String? ?? json['authorAvatar'] as String? ?? '',
-      upvotes: json['upvotes'] as int? ?? 0,
+      authorId: author?['_id'] as String? ?? json['authorId'] as String? ?? json['userId'] as String? ?? '',
+      authorName: author?['name'] as String?
+          ?? json['authorName'] as String?
+          ?? json['userName'] as String?
+          ?? '',
+      authorAvatar: author?['avatar'] as String?
+          ?? json['authorAvatar'] as String?
+          ?? json['userAvatar'] as String?
+          ?? '',
+      upvotes: json['upvoteCount'] as int? ?? json['upvotes'] as int? ?? 0,
       isAccepted: json['isAccepted'] as bool? ?? false,
       createdAt: json['createdAt'] != null
           ? DateTime.tryParse(json['createdAt'].toString()) ?? DateTime.now()

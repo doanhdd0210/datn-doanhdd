@@ -6,6 +6,7 @@ import '../../constants/app_text_styles.dart';
 import '../../constants/app_theme.dart';
 import '../../models/daily_progress.dart';
 import '../../services/api_service.dart';
+import '../../widgets/app_loading.dart';
 
 class StatsScreen extends StatefulWidget {
   const StatsScreen({super.key});
@@ -105,7 +106,7 @@ class _StatsScreenState extends State<StatsScreen> with SingleTickerProviderStat
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+          ? const AppLoadingCenter()
           : RefreshIndicator(
               onRefresh: _loadData,
               color: AppColors.primary,

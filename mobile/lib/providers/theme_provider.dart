@@ -18,25 +18,29 @@ class ThemeProvider extends ChangeNotifier {
     final saved = prefs.getString(_key);
     if (saved == 'light') {
       _mode = ThemeMode.light;
+    } else if (saved == 'dark') {
+      _mode = ThemeMode.dark;
     } else {
-      _mode = ThemeMode.dark; // mặc định dark
+      _mode = ThemeMode.dark;
     }
     notifyListeners();
   }
 
-  Future<void> setDark() async {
-    _mode = ThemeMode.dark;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_key, 'dark');
+  Future<void> setMode(ThemeMode mode) async {
+    _mode = mode;
     notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    final value = mode == ThemeMode.light
+        ? 'light'
+        : mode == ThemeMode.dark
+            ? 'dark'
+            : 'system';
+    await prefs.setString(_key, value);
   }
 
-  Future<void> setLight() async {
-    _mode = ThemeMode.light;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_key, 'light');
-    notifyListeners();
-  }
+  Future<void> setDark() => setMode(ThemeMode.dark);
+  Future<void> setLight() => setMode(ThemeMode.light);
+  Future<void> setSystem() => setMode(ThemeMode.system);
 
   Future<void> toggle() async {
     if (_mode == ThemeMode.dark) {

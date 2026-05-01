@@ -5,6 +5,7 @@ import '../../constants/app_colors.dart';
 import '../../constants/app_text_styles.dart';
 import '../../constants/app_theme.dart';
 import '../../services/api_service.dart';
+import '../../widgets/app_loading.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -110,7 +111,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+          ? const AppLoadingCenter()
           : _notifications.isEmpty
               ? _buildEmpty(context)
               : RefreshIndicator(

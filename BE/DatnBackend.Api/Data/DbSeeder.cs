@@ -1200,4 +1200,55 @@ public class Main {
         db.CodeSnippets.AddRange(snippets);
         await db.SaveChangesAsync();
     }
+
+    /// Seed achievement definitions — idempotent (chỉ tạo nếu chưa tồn tại)
+    public static async Task SeedAchievementsAsync(AppDbContext db)
+    {
+        var definitions = new[]
+        {
+            new { Id = "first_lesson", Title = "Bước đầu tiên",   Desc = "Hoàn thành bài học đầu tiên",          Icon = "🎓", Type = "lessonCount",  Value = 1,    Xp = 20  },
+            new { Id = "lessons_10",   Title = "Chăm học",         Desc = "Hoàn thành 10 bài học",                Icon = "📚", Type = "lessonCount",  Value = 10,   Xp = 50  },
+            new { Id = "lessons_25",   Title = "Tiến sĩ",          Desc = "Hoàn thành 25 bài học",                Icon = "🏅", Type = "lessonCount",  Value = 25,   Xp = 100 },
+            new { Id = "xp_100",       Title = "Tập sự",           Desc = "Kiếm được 100 XP",                     Icon = "⚡", Type = "xpRequired",   Value = 100,  Xp = 10  },
+            new { Id = "xp_500",       Title = "Thành thạo",       Desc = "Kiếm được 500 XP",                     Icon = "🔥", Type = "xpRequired",   Value = 500,  Xp = 30  },
+            new { Id = "xp_1000",      Title = "Chuyên gia",       Desc = "Kiếm được 1000 XP",                    Icon = "💎", Type = "xpRequired",   Value = 1000, Xp = 50  },
+            new { Id = "streak_3",     Title = "Kiên trì",         Desc = "Học 3 ngày liên tiếp",                 Icon = "🔥", Type = "streakDays",   Value = 3,    Xp = 20  },
+            new { Id = "streak_7",     Title = "Tuần lễ vàng",     Desc = "Học 7 ngày liên tiếp",                 Icon = "🏆", Type = "streakDays",   Value = 7,    Xp = 70  },
+            new { Id = "quiz_perfect", Title = "Hoàn hảo",         Desc = "Đạt 100% trong một bài quiz",          Icon = "🎯", Type = "perfectQuiz",  Value = 1,    Xp = 30  },
+            new { Id = "social_1",     Title = "Kết nối",          Desc = "Theo dõi người đầu tiên",              Icon = "👥", Type = "followAny",    Value = 1,    Xp = 10  },
+            // — Bổ sung 10 thành tích mới —
+            new { Id = "lessons_5",    Title = "Khởi đầu tốt",     Desc = "Hoàn thành 5 bài học",                 Icon = "✨", Type = "lessonCount",  Value = 5,    Xp = 30  },
+            new { Id = "lessons_50",   Title = "Học không ngừng",  Desc = "Hoàn thành 50 bài học",                Icon = "🎖️", Type = "lessonCount",  Value = 50,   Xp = 200 },
+            new { Id = "xp_50",        Title = "Khởi động",        Desc = "Kiếm được 50 XP",                      Icon = "⭐", Type = "xpRequired",   Value = 50,   Xp = 5   },
+            new { Id = "xp_2000",      Title = "Huyền thoại",      Desc = "Kiếm được 2000 XP",                    Icon = "👑", Type = "xpRequired",   Value = 2000, Xp = 100 },
+            new { Id = "xp_5000",      Title = "Java Master",      Desc = "Kiếm được 5000 XP",                    Icon = "🚀", Type = "xpRequired",   Value = 5000, Xp = 300 },
+            new { Id = "streak_14",    Title = "Hai tuần lửa",     Desc = "Học 14 ngày liên tiếp",                Icon = "💪", Type = "streakDays",   Value = 14,   Xp = 150 },
+            new { Id = "streak_30",    Title = "Tháng kiên trì",   Desc = "Học 30 ngày liên tiếp",                Icon = "🏅", Type = "streakDays",   Value = 30,   Xp = 300 },
+            new { Id = "quiz_perfect3",Title = "Thiên tài",        Desc = "Đạt 100% trong 3 bài quiz",            Icon = "🌟", Type = "perfectQuiz",  Value = 3,    Xp = 80  },
+            new { Id = "social_5",     Title = "Mở rộng mạng lưới",Desc = "Theo dõi 5 người",                    Icon = "🤝", Type = "followAny",    Value = 5,    Xp = 30  },
+            new { Id = "social_10",    Title = "Người ảnh hưởng",  Desc = "Theo dõi 10 người",                    Icon = "🌐", Type = "followAny",    Value = 10,   Xp = 60  },
+        };
+
+        var now = DateTime.UtcNow;
+        foreach (var d in definitions)
+        {
+            var exists = await db.Achievements.AnyAsync(a => a.Id == d.Id);
+            if (!exists)
+            {
+                db.Achievements.Add(new Achievement
+                {
+                    Id = d.Id,
+                    Title = d.Title,
+                    Description = d.Desc,
+                    Icon = d.Icon,
+                    ConditionType = d.Type,
+                    ConditionValue = d.Value,
+                    XpReward = d.Xp,
+                    IsActive = true,
+                    CreatedAt = now,
+                });
+            }
+        }
+        await db.SaveChangesAsync();
+    }
 }

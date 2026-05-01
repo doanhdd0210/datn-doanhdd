@@ -3,6 +3,7 @@ import '../../constants/app_colors.dart';
 import '../../constants/app_text_styles.dart';
 import '../../constants/app_theme.dart';
 import '../../services/api_service.dart';
+import '../../widgets/app_snackbar.dart';
 
 class CreateQaScreen extends StatefulWidget {
   const CreateQaScreen({super.key});
@@ -58,22 +59,12 @@ class _CreateQaScreenState extends State<CreateQaScreen> {
         tags: _tags,
       );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Đã đăng câu hỏi thành công!'),
-            backgroundColor: AppColors.primary,
-          ),
-        );
-        Navigator.of(context, rootNavigator: true).pop(true);
+        AppSnackBar.success(context, 'Đã đăng câu hỏi thành công!');
+        Navigator.of(context).pop(true);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Lỗi: ${e.toString()}'),
-            backgroundColor: AppColors.red,
-          ),
-        );
+        AppSnackBar.error(context, 'Lỗi: ${e.toString()}');
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -124,38 +115,14 @@ class _CreateQaScreenState extends State<CreateQaScreen> {
             style: AppTextStyles.heading3.copyWith(color: context.textPrimary)),
         foregroundColor: context.textPrimary,
         automaticallyImplyLeading: false,
-        leading: Builder(
-          builder: (ctx) => IconButton(
-            icon: Icon(Icons.close_rounded, color: context.textPrimary),
-            onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(),
-          ),
+        leading: IconButton(
+          icon: Icon(Icons.close_rounded, color: context.textPrimary),
+          onPressed: () => Navigator.of(context).pop(),
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Container(height: 1, color: context.borderColor),
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: ElevatedButton(
-              onPressed: _isSubmitting ? null : _submit,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                elevation: 0,
-              ),
-              child: _isSubmitting
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                    )
-                  : const Text('Đăng', style: TextStyle(fontWeight: FontWeight.w700)),
-            ),
-          ),
-        ],
       ),
       body: Form(
         key: _formKey,
@@ -200,9 +167,45 @@ class _CreateQaScreenState extends State<CreateQaScreen> {
             ),
             const SizedBox(height: 16),
             _buildTagsSection(context),
+            const SizedBox(height: 28),
+            _buildSubmitButton(context),
             const SizedBox(height: 32),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildSubmitButton(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: ElevatedButton(
+        onPressed: _isSubmitting ? null : _submit,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.5),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          elevation: 0,
+        ),
+        child: _isSubmitting
+            ? const SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+              )
+            : const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.send_rounded, size: 18),
+                  SizedBox(width: 8),
+                  Text(
+                    'Đăng câu hỏi',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+                  ),
+                ],
+              ),
       ),
     );
   }

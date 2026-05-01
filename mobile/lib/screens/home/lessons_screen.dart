@@ -477,12 +477,6 @@ class _LessonItem extends StatelessWidget {
                                             label: '${lesson.xpReward} XP',
                                             color: AppColors.xpGold,
                                           ),
-                                          const SizedBox(width: 8),
-                                          _MetaBadge(
-                                            icon: Icons.schedule_rounded,
-                                            label: '${lesson.estimatedMinutes} phút',
-                                            color: AppColors.blue,
-                                          ),
                                           if (isCompleted) ...[
                                             const SizedBox(width: 8),
                                             _MetaBadge(

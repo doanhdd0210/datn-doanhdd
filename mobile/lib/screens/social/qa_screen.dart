@@ -9,6 +9,7 @@ import '../../models/qa_post.dart';
 import '../../services/api_service.dart';
 import 'qa_detail_screen.dart';
 import 'create_qa_screen.dart';
+import '../../widgets/app_loading.dart';
 
 class QaScreen extends StatefulWidget {
   const QaScreen({super.key});
@@ -28,10 +29,12 @@ class _QaScreenState extends State<QaScreen> {
   int _page = 1;
   bool _hasMore = true;
   final ScrollController _scrollController = ScrollController();
+  Set<String> _upvotedPostIds = {};
 
   @override
   void initState() {
     super.initState();
+    _loadUpvotedIds();
     _loadPosts();
     _scrollController.addListener(_onScroll);
     _searchController.addListener(() {
@@ -45,6 +48,19 @@ class _QaScreenState extends State<QaScreen> {
     _scrollController.dispose();
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadUpvotedIds() async {
+    final prefs = await SharedPreferences.getInstance();
+    final ids = prefs.getStringList('upvoted_posts') ?? [];
+    if (mounted) setState(() => _upvotedPostIds = ids.toSet());
+  }
+
+  void _onUpvoteChanged(String postId, bool upvoted) {
+    setState(() {
+      if (upvoted) _upvotedPostIds.add(postId);
+      else _upvotedPostIds.remove(postId);
+    });
   }
 
   void _onScroll() {
@@ -177,16 +193,16 @@ class _QaScreenState extends State<QaScreen> {
                               itemCount: _filteredPosts.length + (_isLoadingMore ? 1 : 0),
                               itemBuilder: (context, index) {
                                 if (index == _filteredPosts.length) {
-                                  return const Center(
-                                    child: Padding(
-                                      padding: EdgeInsets.all(16),
-                                      child: CircularProgressIndicator(color: AppColors.primary),
-                                    ),
+                                  return const Padding(
+                                    padding: EdgeInsets.all(20),
+                                    child: AppLoadingCenter(),
                                   );
                                 }
                                 final post = _filteredPosts[index];
                                 return _QaPostCard(
                                   post: post,
+                                  initialUpvoted: _upvotedPostIds.contains(post.id),
+                                  onUpvoteChanged: (v) => _onUpvoteChanged(post.id, v),
                                   onTap: () async {
                                     await Navigator.push(
                                       context,
@@ -194,6 +210,7 @@ class _QaScreenState extends State<QaScreen> {
                                         builder: (_) => QaDetailScreen(post: post),
                                       ),
                                     );
+                                    _loadPosts(reset: true);
                                   },
                                 );
                               },
@@ -346,24 +363,23 @@ class _QaScreenState extends State<QaScreen> {
 
   Widget _buildShimmer() {
     return Builder(
-      builder: (context) => Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: List.generate(5, (_) {
-          return Shimmer.fromColors(
-            baseColor: context.surfaceColor,
-            highlightColor: context.surfaceElevatedColor,
-            child: Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              height: 100,
-              decoration: BoxDecoration(
-                color: context.surfaceColor,
-                borderRadius: BorderRadius.circular(14),
-              ),
+      builder: (context) => ListView.builder(
+        padding: const EdgeInsets.all(16),
+        physics: const NeverScrollableScrollPhysics(),
+        shrinkWrap: true,
+        itemCount: 5,
+        itemBuilder: (_, __) => Shimmer.fromColors(
+          baseColor: context.surfaceColor,
+          highlightColor: context.surfaceElevatedColor,
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            height: 100,
+            decoration: BoxDecoration(
+              color: context.surfaceColor,
+              borderRadius: BorderRadius.circular(14),
             ),
-          );
-        }),
-      ),
+          ),
+        ),
       ),
     );
   }
@@ -374,8 +390,15 @@ class _QaScreenState extends State<QaScreen> {
 class _QaPostCard extends StatefulWidget {
   final QaPost post;
   final VoidCallback onTap;
+  final bool initialUpvoted;
+  final ValueChanged<bool> onUpvoteChanged;
 
-  const _QaPostCard({required this.post, required this.onTap});
+  const _QaPostCard({
+    required this.post,
+    required this.onTap,
+    required this.initialUpvoted,
+    required this.onUpvoteChanged,
+  });
 
   @override
   State<_QaPostCard> createState() => _QaPostCardState();
@@ -383,36 +406,49 @@ class _QaPostCard extends StatefulWidget {
 
 class _QaPostCardState extends State<_QaPostCard> {
   final _api = ApiService();
-  bool _upvoted = false;
+  late bool _upvoted;
   late int _upvoteCount;
   bool _isUpvoting = false;
 
   @override
   void initState() {
     super.initState();
+    _upvoted = widget.initialUpvoted;
     _upvoteCount = widget.post.upvotes;
-    _loadUpvotedState();
   }
 
-  Future<void> _loadUpvotedState() async {
-    final prefs = await SharedPreferences.getInstance();
-    final upvotedIds = prefs.getStringList('upvoted_posts') ?? [];
-    if (mounted) setState(() => _upvoted = upvotedIds.contains(widget.post.id));
+  @override
+  void didUpdateWidget(_QaPostCard old) {
+    super.didUpdateWidget(old);
+    if (old.initialUpvoted != widget.initialUpvoted && !_isUpvoting) {
+      _upvoted = widget.initialUpvoted;
+    }
   }
 
   Future<void> _toggleUpvote() async {
-    if (_isUpvoting || _upvoted) return;
-    setState(() { _isUpvoting = true; _upvoted = true; _upvoteCount++; });
+    if (_isUpvoting) return;
+    final wasUpvoted = _upvoted;
+    _isUpvoting = true;
+    setState(() {
+      _upvoted = !wasUpvoted;
+      _upvoteCount += wasUpvoted ? -1 : 1;
+    });
     try {
-      await _api.upvotePost(widget.post.id);
       final prefs = await SharedPreferences.getInstance();
       final ids = prefs.getStringList('upvoted_posts') ?? [];
-      ids.add(widget.post.id);
+      if (wasUpvoted) {
+        await _api.unupvotePost(widget.post.id);
+        ids.remove(widget.post.id);
+      } else {
+        await _api.upvotePost(widget.post.id);
+        ids.add(widget.post.id);
+      }
       await prefs.setStringList('upvoted_posts', ids);
+      widget.onUpvoteChanged(!wasUpvoted);
     } catch (_) {
-      if (mounted) setState(() { _upvoted = false; _upvoteCount--; });
+      if (mounted) setState(() { _upvoted = wasUpvoted; _upvoteCount += wasUpvoted ? 1 : -1; });
     } finally {
-      if (mounted) setState(() => _isUpvoting = false);
+      _isUpvoting = false;
     }
   }
 
@@ -499,7 +535,8 @@ class _QaPostCardState extends State<_QaPostCard> {
                 GestureDetector(
                   onTap: _toggleUpvote,
                   child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 150),
+                    duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeOut,
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: _upvoted
@@ -510,18 +547,40 @@ class _QaPostCardState extends State<_QaPostCard> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
-                          _upvoted ? Icons.thumb_up_rounded : Icons.thumb_up_outlined,
-                          size: 14,
-                          color: _upvoted ? AppColors.primary : AppColors.textGray,
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 200),
+                          transitionBuilder: (child, anim) => ScaleTransition(
+                            scale: anim,
+                            child: child,
+                          ),
+                          child: Icon(
+                            _upvoted ? Icons.thumb_up_rounded : Icons.thumb_up_outlined,
+                            key: ValueKey(_upvoted),
+                            size: 14,
+                            color: _upvoted ? AppColors.primary : AppColors.textGray,
+                          ),
                         ),
                         const SizedBox(width: 3),
-                        Text(
-                          '$_upvoteCount',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: _upvoted ? AppColors.primary : AppColors.textGray,
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 150),
+                          transitionBuilder: (child, anim) => FadeTransition(
+                            opacity: anim,
+                            child: SlideTransition(
+                              position: Tween<Offset>(
+                                begin: const Offset(0, 0.3),
+                                end: Offset.zero,
+                              ).animate(anim),
+                              child: child,
+                            ),
+                          ),
+                          child: Text(
+                            '$_upvoteCount',
+                            key: ValueKey(_upvoteCount),
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: _upvoted ? AppColors.primary : AppColors.textGray,
+                            ),
                           ),
                         ),
                       ],

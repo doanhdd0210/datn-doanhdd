@@ -10,13 +10,15 @@ public class FriendsService
     private readonly ICacheService _cache;
     private readonly ILogger<FriendsService> _logger;
     private readonly INotificationService _notifService;
+    private readonly AchievementsService _achievements;
 
-    public FriendsService(AppDbContext db, ICacheService cache, ILogger<FriendsService> logger, INotificationService notifService)
+    public FriendsService(AppDbContext db, ICacheService cache, ILogger<FriendsService> logger, INotificationService notifService, AchievementsService achievements)
     {
         _db = db;
         _cache = cache;
         _logger = logger;
         _notifService = notifService;
+        _achievements = achievements;
     }
 
     public async Task<List<UserFollowDto>> GetFollowingAsync(string userId)
@@ -113,6 +115,9 @@ public class FriendsService
         });
 
         await _db.SaveChangesAsync();
+
+        // Check achievements cho người follow (social_1)
+        _ = _achievements.CheckAndGrantAsync(followerId);
 
         // Push notification qua FCM nếu có token
         try

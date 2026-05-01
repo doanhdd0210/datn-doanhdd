@@ -10,6 +10,7 @@ import '../../providers/user_provider.dart';
 import '../../services/auth_service.dart';
 import '../settings/settings_screen.dart';
 import 'stats_screen.dart';
+import '../../widgets/app_snackbar.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -34,45 +35,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _showPendingAchievements(UserProvider provider) {
     final pending = provider.pendingAchievements.toList();
     provider.consumePendingAchievements();
-    for (final id in pending) {
-      final achievement = kAchievements.firstWhere(
-        (a) => a.id == id,
-        orElse: () => kAchievements.first,
-      );
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              Text(achievement.emoji, style: const TextStyle(fontSize: 22)),
-              const SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    'Mở khoá thành tích!',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
-                    ),
-                  ),
-                  Text(
-                    achievement.title,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.85),
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          backgroundColor: achievement.color,
-          duration: const Duration(seconds: 3),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
+    for (final achievement in pending) {
+      AppSnackBar.success(
+        context,
+        '${achievement.emoji} ${achievement.title} · +${achievement.xpReward} XP',
       );
     }
   }
@@ -192,9 +158,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
           ),
           const SizedBox(height: 14),
-          Text(
-            user?.displayName ?? 'Người học Java',
-            style: AppTextStyles.heading3,
+          GestureDetector(
+            onTap: () => _showEditNameDialog(context),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  user?.displayName ?? 'Người học Java',
+                  style: AppTextStyles.heading3,
+                ),
+                const SizedBox(width: 6),
+                const Icon(Icons.edit_rounded, size: 14, color: AppColors.textGray),
+              ],
+            ),
           ),
           const SizedBox(height: 4),
           Text(user?.email ?? '', style: AppTextStyles.bodySmall),
@@ -259,7 +235,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // ── Weekly Streak Calendar ────────────────────────────────────────────────
 
   Widget _buildWeeklyStreak(UserProvider provider) {
-    final days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    final days = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
     final today = DateTime.now().weekday - 1; // 0=Mon
     final streak = provider.streak.clamp(0, 7);
 
@@ -342,7 +318,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // ── Achievements ──────────────────────────────────────────────────────────
 
   Widget _buildAchievementsSection(UserProvider provider) {
-    final unlocked = provider.unlockedAchievements;
+    final all = provider.achievements;
+    final unlockedCount = all.where((a) => a.isUnlocked).length;
+
     return Builder(
       builder: (context) => Container(
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
@@ -361,33 +339,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(width: 8),
               const Text('Thành tích', style: AppTextStyles.labelBold),
               const Spacer(),
-              Text(
-                '${unlocked.length}/${kAchievements.length}',
-                style: const TextStyle(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
+              if (all.isNotEmpty)
+                Text(
+                  '$unlockedCount/${all.length}',
+                  style: const TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
                 ),
-              ),
             ],
           ),
           const SizedBox(height: 14),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 5,
-              mainAxisSpacing: 8,
-              crossAxisSpacing: 8,
-              childAspectRatio: 0.72,
+          if (!provider.achievementsLoaded)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                child: Text(
+                  'Đang tải...',
+                  style: TextStyle(color: context.textSecondary, fontSize: 13),
+                ),
+              ),
+            )
+          else
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 5,
+                mainAxisSpacing: 8,
+                crossAxisSpacing: 8,
+                childAspectRatio: 0.72,
+              ),
+              itemCount: all.length,
+              itemBuilder: (_, i) => _AchievementBadge(
+                achievement: all[i],
+                isUnlocked: all[i].isUnlocked,
+              ),
             ),
-            itemCount: kAchievements.length,
-            itemBuilder: (_, i) {
-              final a = kAchievements[i];
-              final isUnlocked = unlocked.contains(a.id);
-              return _AchievementBadge(achievement: a, isUnlocked: isUnlocked);
-            },
-          ),
         ],
       ),
       ),
@@ -437,6 +426,52 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const Center(
             child: Text('JavaLearn v1.0.0',
                 style: AppTextStyles.bodySmall),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditNameDialog(BuildContext context) {
+    final controller = TextEditingController(
+      text: FirebaseAuth.instance.currentUser?.displayName ?? '',
+    );
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Cập nhật tên', style: AppTextStyles.heading4),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: InputDecoration(
+            labelText: 'Tên hiển thị',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Huỷ', style: TextStyle(color: AppColors.textGray)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final name = controller.text.trim();
+              if (name.isEmpty) return;
+              await FirebaseAuth.instance.currentUser?.updateDisplayName(name);
+              if (!mounted) return;
+              context.read<UserProvider>().refreshStats();
+              setState(() {}); // rebuild hero section
+              if (!ctx.mounted) return;
+              Navigator.pop(ctx);
+              AppSnackBar.success(context, 'Đã cập nhật tên!');
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text('Lưu'),
           ),
         ],
       ),

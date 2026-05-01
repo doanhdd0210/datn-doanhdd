@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart' show Color;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/achievement.dart';
 import '../services/api_service.dart';
@@ -25,11 +26,34 @@ class UserProvider extends ChangeNotifier {
   bool _dailyGoalJustReached = false;
   int _pendingBonusXp = 0;
 
-  // Achievement tracking
-  bool _hasPerfectQuiz = false;
-  bool _hasFollowed = false;
-  Set<String> _seenAchievements = {};
-  final List<String> _pendingAchievements = [];
+  // Achievement tracking — server-driven
+  List<Achievement> _achievements = [];           // full list từ server
+  bool _achievementsLoaded = false;               // đã fetch xong (dù thành hay thất bại)
+  final List<Achievement> _pendingAchievements = []; // mới unlock, chờ hiện popup
+
+  /// Danh sách định nghĩa thành tích local — hiển thị khi API không phản hồi
+  static final List<Achievement> _localAchievementDefs = [
+    Achievement(id: 'first_lesson',  title: 'Bước đầu tiên',    description: 'Hoàn thành bài học đầu tiên',    emoji: '🎓', color: Color(0xFF6949FF), conditionType: 'lessonCount',  conditionValue: 1,    xpReward: 20),
+    Achievement(id: 'lessons_5',     title: 'Khởi đầu tốt',     description: 'Hoàn thành 5 bài học',           emoji: '✨', color: Color(0xFF6949FF), conditionType: 'lessonCount',  conditionValue: 5,    xpReward: 30),
+    Achievement(id: 'lessons_10',    title: 'Chăm học',          description: 'Hoàn thành 10 bài học',          emoji: '📚', color: Color(0xFF6949FF), conditionType: 'lessonCount',  conditionValue: 10,   xpReward: 50),
+    Achievement(id: 'lessons_25',    title: 'Tiến sĩ',           description: 'Hoàn thành 25 bài học',          emoji: '🏅', color: Color(0xFF6949FF), conditionType: 'lessonCount',  conditionValue: 25,   xpReward: 100),
+    Achievement(id: 'lessons_50',    title: 'Học không ngừng',   description: 'Hoàn thành 50 bài học',          emoji: '🎖️', color: Color(0xFF6949FF), conditionType: 'lessonCount',  conditionValue: 50,   xpReward: 200),
+    Achievement(id: 'xp_50',         title: 'Khởi động',         description: 'Kiếm được 50 XP',                emoji: '⭐', color: Color(0xFFFFC107), conditionType: 'xpRequired',   conditionValue: 50,   xpReward: 5),
+    Achievement(id: 'xp_100',        title: 'Tập sự',            description: 'Kiếm được 100 XP',               emoji: '⚡', color: Color(0xFFFFC107), conditionType: 'xpRequired',   conditionValue: 100,  xpReward: 10),
+    Achievement(id: 'xp_500',        title: 'Thành thạo',        description: 'Kiếm được 500 XP',               emoji: '🔥', color: Color(0xFFFFC107), conditionType: 'xpRequired',   conditionValue: 500,  xpReward: 30),
+    Achievement(id: 'xp_1000',       title: 'Chuyên gia',        description: 'Kiếm được 1000 XP',              emoji: '💎', color: Color(0xFFFFC107), conditionType: 'xpRequired',   conditionValue: 1000, xpReward: 50),
+    Achievement(id: 'xp_2000',       title: 'Huyền thoại',       description: 'Kiếm được 2000 XP',              emoji: '👑', color: Color(0xFFFFC107), conditionType: 'xpRequired',   conditionValue: 2000, xpReward: 100),
+    Achievement(id: 'xp_5000',       title: 'Java Master',       description: 'Kiếm được 5000 XP',              emoji: '🚀', color: Color(0xFFFFC107), conditionType: 'xpRequired',   conditionValue: 5000, xpReward: 300),
+    Achievement(id: 'streak_3',      title: 'Kiên trì',          description: 'Học 3 ngày liên tiếp',           emoji: '🔥', color: Color(0xFFFF5722), conditionType: 'streakDays',   conditionValue: 3,    xpReward: 20),
+    Achievement(id: 'streak_7',      title: 'Tuần lễ vàng',      description: 'Học 7 ngày liên tiếp',           emoji: '🏆', color: Color(0xFFFF5722), conditionType: 'streakDays',   conditionValue: 7,    xpReward: 70),
+    Achievement(id: 'streak_14',     title: 'Hai tuần lửa',      description: 'Học 14 ngày liên tiếp',          emoji: '💪', color: Color(0xFFFF5722), conditionType: 'streakDays',   conditionValue: 14,   xpReward: 150),
+    Achievement(id: 'streak_30',     title: 'Tháng kiên trì',    description: 'Học 30 ngày liên tiếp',          emoji: '🏅', color: Color(0xFFFF5722), conditionType: 'streakDays',   conditionValue: 30,   xpReward: 300),
+    Achievement(id: 'quiz_perfect',  title: 'Hoàn hảo',          description: 'Đạt 100% trong một bài quiz',    emoji: '🎯', color: Color(0xFF4CAF50), conditionType: 'perfectQuiz',  conditionValue: 1,    xpReward: 30),
+    Achievement(id: 'quiz_perfect3', title: 'Thiên tài',         description: 'Đạt 100% trong 3 bài quiz',      emoji: '🌟', color: Color(0xFF4CAF50), conditionType: 'perfectQuiz',  conditionValue: 3,    xpReward: 80),
+    Achievement(id: 'social_1',      title: 'Kết nối',           description: 'Theo dõi người đầu tiên',        emoji: '👥', color: Color(0xFF50B0FF), conditionType: 'followAny',    conditionValue: 1,    xpReward: 10),
+    Achievement(id: 'social_5',      title: 'Mở rộng mạng lưới', description: 'Theo dõi 5 người',              emoji: '🤝', color: Color(0xFF50B0FF), conditionType: 'followAny',    conditionValue: 5,    xpReward: 30),
+    Achievement(id: 'social_10',     title: 'Người ảnh hưởng',   description: 'Theo dõi 10 người',              emoji: '🌐', color: Color(0xFF50B0FF), conditionType: 'followAny',    conditionValue: 10,   xpReward: 60),
+  ];
 
   // Hearts restore: 1 heart per 30 min after losing one
   static const _heartRestoreMinutes = 30;
@@ -65,16 +89,13 @@ class UserProvider extends ChangeNotifier {
   bool get dailyGoalJustReached => _dailyGoalJustReached;
   int get pendingBonusXp => _pendingBonusXp;
 
-  bool get hasPerfectQuiz => _hasPerfectQuiz;
-  bool get hasFollowed => _hasFollowed;
-  Set<String> get unlockedAchievements => computeUnlocked(
-        lessonsCompleted: _lessonsCompleted,
-        totalXp: _totalXp,
-        streak: _streak,
-        hasPerfectQuiz: _hasPerfectQuiz,
-        hasFollowed: _hasFollowed,
-      );
-  List<String> get pendingAchievements => List.unmodifiable(_pendingAchievements);
+  bool get achievementsLoaded => _achievementsLoaded;
+  List<Achievement> get achievements => List.unmodifiable(
+    _achievements.isNotEmpty ? _achievements : _localAchievementDefs,
+  );
+  Set<String> get unlockedAchievements =>
+      _achievements.where((a) => a.isUnlocked).map((a) => a.id).toSet();
+  List<Achievement> get pendingAchievements => List.unmodifiable(_pendingAchievements);
 
   void consumePendingAchievements() {
     _pendingAchievements.clear();
@@ -128,7 +149,7 @@ class UserProvider extends ChangeNotifier {
 
   Future<void> refreshStats() async {
     await loadLevel();
-    await loadStats();
+    await Future.wait([loadStats(), loadAchievements()]);
   }
 
   Future<void> loadStats() async {
@@ -186,7 +207,7 @@ class UserProvider extends ChangeNotifier {
       _claimDailyGoalBonus();
     }
 
-    _checkNewAchievements();
+    _pollNewAchievements();
     _saveToCache();
     notifyListeners();
   }
@@ -213,45 +234,63 @@ class UserProvider extends ChangeNotifier {
   }
 
   void markLessonCompleted(String lessonId, String topicId) {
+    // Idempotent: không tăng counter nếu đã completed rồi
+    if (_completedLessons.contains(lessonId)) return;
     _completedLessons.add(lessonId);
     _topicProgressMap[topicId] = (_topicProgressMap[topicId] ?? 0) + 1;
     _lessonsCompleted++;
-    _checkNewAchievements();
+    _pollNewAchievements();
     notifyListeners();
   }
 
   void markPerfectQuiz() {
-    if (_hasPerfectQuiz) return;
-    _hasPerfectQuiz = true;
-    _checkNewAchievements();
-    _saveToCache();
-    notifyListeners();
+    // Backend sẽ check, mobile chỉ trigger poll
+    _pollNewAchievements();
   }
 
   void markFollowed() {
-    if (_hasFollowed) return;
-    _hasFollowed = true;
-    _checkNewAchievements();
-    _saveToCache();
-    notifyListeners();
+    // Backend sẽ check, mobile chỉ trigger poll
+    _pollNewAchievements();
   }
 
-  void _checkNewAchievements() {
-    final unlocked = unlockedAchievements;
-    for (final id in unlocked) {
-      if (!_seenAchievements.contains(id)) {
-        _pendingAchievements.add(id);
-        _seenAchievements.add(id);
-      }
-    }
-    _saveSeenAchievements();
-  }
-
-  Future<void> _saveSeenAchievements() async {
+  /// Gọi sau mỗi event có thể unlock achievement — poll server xem có gì mới không
+  Future<void> _pollNewAchievements() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setStringList('${_uidPrefix()}seen_achievements', _seenAchievements.toList());
+      final newOnes = await _api.consumeNewAchievements();
+      if (newOnes.isEmpty) return;
+      bool changed = false;
+      for (final json in newOnes) {
+        final achievement = Achievement.fromJson(json);
+        // Cập nhật trong _achievements list
+        final idx = _achievements.indexWhere((a) => a.id == achievement.id);
+        if (idx >= 0) {
+          _achievements[idx] = _achievements[idx].copyWith(
+            isUnlocked: true,
+            unlockedAt: achievement.unlockedAt,
+          );
+        } else {
+          _achievements.add(achievement);
+        }
+        _pendingAchievements.add(achievement);
+        changed = true;
+      }
+      if (changed) notifyListeners();
     } catch (_) {}
+  }
+
+  /// Load toàn bộ achievements từ server (định nghĩa + trạng thái unlock)
+  Future<void> loadAchievements() async {
+    try {
+      final list = await _api.getMyAchievements();
+      if (list.isNotEmpty) {
+        _achievements = list.map((json) => Achievement.fromJson(json)).toList();
+      }
+    } catch (_) {
+      // Silently fall back to local definitions (all locked)
+    } finally {
+      _achievementsLoaded = true;
+      notifyListeners();
+    }
   }
 
   void loseHeart() {
@@ -314,11 +353,7 @@ class UserProvider extends ChangeNotifier {
       final storedDate = prefs.getString('${p}today_xp_date') ?? '';
       _todayXp = storedDate == today ? (prefs.getInt('${p}today_xp') ?? 0) : 0;
 
-      // Achievement flags
-      _hasPerfectQuiz = prefs.getBool('${p}has_perfect_quiz') ?? false;
-      _hasFollowed = prefs.getBool('${p}has_followed') ?? false;
-      final seen = prefs.getStringList('${p}seen_achievements') ?? [];
-      _seenAchievements = seen.toSet();
+      // achievements được load từ server qua loadAchievements()
     } catch (_) {}
   }
 
@@ -333,8 +368,6 @@ class UserProvider extends ChangeNotifier {
       await prefs.setInt('${p}user_hearts', _hearts);
       await prefs.setInt('${p}today_xp', _todayXp);
       await prefs.setString('${p}today_xp_date', _todayKey());
-      await prefs.setBool('${p}has_perfect_quiz', _hasPerfectQuiz);
-      await prefs.setBool('${p}has_followed', _hasFollowed);
     } catch (_) {}
   }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../services/auth_service.dart';
+import '../widgets/app_snackbar.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -21,22 +22,14 @@ class _LoginScreenState extends State<LoginScreen> {
           ? await _authService.signInWithDifferentAccount()
           : await _authService.signInWithGoogle();
       if (result == null && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Đã huỷ đăng nhập')),
-        );
+        AppSnackBar.info(context, 'Đã huỷ đăng nhập');
       }
     } catch (e) {
       if (mounted) {
         final msg = e.toString().replaceFirst('Exception: ', '');
         final isDisabled = msg.contains('vô hiệu hóa') || msg.contains('disabled');
         setState(() => _accountDisabled = isDisabled);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(msg),
-            backgroundColor: AppColors.wrong,
-            duration: const Duration(seconds: 4),
-          ),
-        );
+        AppSnackBar.error(context, msg);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);

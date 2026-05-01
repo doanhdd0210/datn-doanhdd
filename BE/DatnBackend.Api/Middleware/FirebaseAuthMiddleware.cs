@@ -23,7 +23,15 @@ public class FirebaseAuthMiddleware
     [
         "/api/users",
         "/api/admins",
-        "/api/notifications",
+    ];
+
+    // Notification sub-paths chỉ admin mới được dùng
+    private static readonly HashSet<string> AdminOnlyNotificationPaths =
+    [
+        "/api/notifications/send",
+        "/api/notifications/history",
+        "/api/notifications/topic/subscribe",
+        "/api/notifications/topic/unsubscribe",
     ];
 
     public FirebaseAuthMiddleware(RequestDelegate next, ILogger<FirebaseAuthMiddleware> logger)
@@ -69,9 +77,11 @@ public class FirebaseAuthMiddleware
             context.Items["FirebaseEmail"] = decoded.Claims.GetValueOrDefault("email")?.ToString();
             context.Items["FirebaseIsAdmin"] = isAdmin;
 
-            // For legacy admin-only API paths, enforce admin at middleware level
+            // Enforce admin for restricted paths
             bool isAdminOnlyPath = AdminOnlyPrefixes.Any(prefix =>
-                path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
+                path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                || AdminOnlyNotificationPaths.Any(p =>
+                path.Equals(p, StringComparison.OrdinalIgnoreCase));
 
             if (isAdminOnlyPath && !isAdmin)
             {

@@ -25,6 +25,7 @@ public class AppDbContext : DbContext
     public DbSet<AppSetting> AppSettings => Set<AppSetting>();
     public DbSet<DailyGoalBonusClaim> DailyGoalBonusClaims => Set<DailyGoalBonusClaim>();
     public DbSet<UserNotification> UserNotifications => Set<UserNotification>();
+    public DbSet<UserAchievement> UserAchievements => Set<UserAchievement>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -134,6 +135,12 @@ public class AppDbContext : DbContext
         {
             e.HasKey(n => n.Id);
             e.HasIndex(n => new { n.UserId, n.CreatedAt });
+        });
+
+        modelBuilder.Entity<UserAchievement>(e =>
+        {
+            e.HasKey(ua => ua.Id);
+            e.HasIndex(ua => new { ua.UserId, ua.AchievementId }).IsUnique();
         });
     }
 }

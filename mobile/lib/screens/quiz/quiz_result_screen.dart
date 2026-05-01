@@ -162,8 +162,12 @@ class _QuizResultScreenState extends State<QuizResultScreen>
                   AnimatedBuilder(
                     animation: _xpAnimation,
                     builder: (context, _) {
-                      final isPreview = widget.result.xpEarned == 0;
-                      final color = isPreview ? Colors.grey : AppColors.xpGold;
+                      // earned: lần đầu 100% → vàng
+                      // alreadyEarned: 100% nhưng đã nhận trước đó → xám + "Đã nhận rồi"
+                      // preview: chưa đủ 100% → xám + "Đúng hết để nhận"
+                      final earned = widget.result.xpEarned > 0;
+                      final alreadyEarned = widget.result.xpEarned == 0 && widget.isPerfect;
+                      final color = earned ? AppColors.xpGold : Colors.grey;
                       return Column(
                         children: [
                           Container(
@@ -178,7 +182,7 @@ class _QuizResultScreenState extends State<QuizResultScreen>
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text('⚡', style: TextStyle(fontSize: 24, color: isPreview ? Colors.grey : null)),
+                                Text('⚡', style: TextStyle(fontSize: 24, color: earned ? null : Colors.grey)),
                                 const SizedBox(width: 8),
                                 Text(
                                   '+${_xpAnimation.value} XP',
@@ -187,12 +191,14 @@ class _QuizResultScreenState extends State<QuizResultScreen>
                               ],
                             ),
                           ),
-                          if (isPreview && _xpAnimation.value > 0) ...[
+                          if (alreadyEarned) ...[
                             const SizedBox(height: 6),
-                            Text(
-                              'Đúng hết để nhận XP này!',
-                              style: AppTextStyles.bodySmall.copyWith(color: Colors.grey),
-                            ),
+                            Text('Đã nhận XP ở lần trước',
+                                style: AppTextStyles.bodySmall.copyWith(color: Colors.grey)),
+                          ] else if (!earned && _xpAnimation.value > 0) ...[
+                            const SizedBox(height: 6),
+                            Text('Đúng hết để nhận XP này!',
+                                style: AppTextStyles.bodySmall.copyWith(color: Colors.grey)),
                           ],
                         ],
                       );

@@ -463,13 +463,6 @@ class _AnswerCard extends StatelessWidget {
               const Text(' · ', style: TextStyle(color: AppColors.textGray, fontSize: 12)),
               Text(_timeAgo(answer.createdAt), style: AppTextStyles.bodySmall),
               const Spacer(),
-              Row(
-                children: [
-                  const Icon(Icons.thumb_up_outlined, size: 14, color: AppColors.textGray),
-                  const SizedBox(width: 4),
-                  Text('${answer.upvotes}', style: AppTextStyles.bodySmall),
-                ],
-              ),
               if (isPostAuthor && !answer.isAccepted) ...[
                 const SizedBox(width: 10),
                 GestureDetector(

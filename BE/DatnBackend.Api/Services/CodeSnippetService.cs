@@ -98,7 +98,10 @@ public class CodeSnippetService
         var snippet = await GetSnippetAsync(request.CodeSnippetId)
             ?? throw new KeyNotFoundException($"CodeSnippet '{request.CodeSnippetId}' not found");
 
-        int xpEarned = request.IsPassed ? snippet.XpReward : 0;
+        // Chỉ award XP lần đầu pass (tránh farm khi làm lại)
+        bool hasPassedBefore = await _db.PracticeResults
+            .AnyAsync(r => r.UserId == userId && r.CodeSnippetId == request.CodeSnippetId && r.IsPassed);
+        int xpEarned = (request.IsPassed && !hasPassedBefore) ? snippet.XpReward : 0;
 
         var result = new PracticeResult
         {

@@ -292,18 +292,19 @@ class ApiService {
 
   // Backend: POST /api/code-snippets/practice-submit
   // Body: { codeSnippetId, submittedCode, actualOutput, isPassed }
-  Future<void> submitPractice(
+  Future<int> submitPractice(
     String snippetId,
     String code,
     String output,
     bool passed,
   ) async {
-    await _post('/code-snippets/practice-submit', {
+    final res = await _post('/code-snippets/practice-submit', {
       'codeSnippetId': snippetId,
       'submittedCode': code,
       'actualOutput': output,
       'isPassed': passed,
     });
+    return (res?['data']?['xpEarned'] as int?) ?? 0;
   }
 
   // ── QA ────────────────────────────────────────────────────────────────────

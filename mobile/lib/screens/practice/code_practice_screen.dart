@@ -78,8 +78,9 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
     final passed = actualOutput == expectedOutput;
     final matchPercent = _calculateMatch(code, widget.snippet.code);
 
+    int xpEarned = 0;
     try {
-      await _api.submitPractice(widget.snippet.id, code, stdout, passed);
+      xpEarned = await _api.submitPractice(widget.snippet.id, code, stdout, passed);
     } catch (_) {}
 
     if (mounted) {
@@ -94,6 +95,7 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
             passed: passed,
             matchPercent: matchPercent,
             timeSpent: _elapsedSeconds,
+            xpEarned: xpEarned,
           ),
         ),
       );

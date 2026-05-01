@@ -11,6 +11,7 @@ class PracticeResultScreen extends StatelessWidget {
   final bool passed;
   final double matchPercent;
   final int timeSpent;
+  final int xpEarned;
 
   const PracticeResultScreen({
     super.key,
@@ -20,6 +21,7 @@ class PracticeResultScreen extends StatelessWidget {
     required this.passed,
     required this.matchPercent,
     required this.timeSpent,
+    this.xpEarned = 0,
   });
 
   String _formatTime(int seconds) {
@@ -41,9 +43,6 @@ class PracticeResultScreen extends StatelessWidget {
     return AppColors.orange;
   }
 
-  int get _xpEarned {
-    return (snippet.xpReward * matchPercent).round();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -91,22 +90,33 @@ class PracticeResultScreen extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             // XP earned
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              decoration: BoxDecoration(
-                color: AppColors.xpGold.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.xpGold.withValues(alpha: 0.3)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text('⚡', style: TextStyle(fontSize: 22)),
-                  const SizedBox(width: 8),
-                  Text('+$_xpEarned XP kiếm được',
-                      style: AppTextStyles.heading4.copyWith(color: AppColors.xpGold)),
+            Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: (xpEarned > 0 ? AppColors.xpGold : Colors.grey).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: (xpEarned > 0 ? AppColors.xpGold : Colors.grey).withValues(alpha: 0.3)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text('⚡', style: TextStyle(fontSize: 22)),
+                      const SizedBox(width: 8),
+                      Text('+$xpEarned XP',
+                          style: AppTextStyles.heading4.copyWith(
+                            color: xpEarned > 0 ? AppColors.xpGold : Colors.grey,
+                          )),
+                    ],
+                  ),
+                ),
+                if (xpEarned == 0 && passed) ...[
+                  const SizedBox(height: 6),
+                  Text('Đã nhận XP ở lần trước',
+                      style: AppTextStyles.bodySmall.copyWith(color: Colors.grey)),
                 ],
-              ),
+              ],
             ),
             const SizedBox(height: 20),
             // Stats

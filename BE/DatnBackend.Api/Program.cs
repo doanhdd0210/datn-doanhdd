@@ -162,6 +162,21 @@ using (var scope = app.Services.CreateScope())
             ON ""UserNotifications"" (""UserId"", ""CreatedAt"" DESC);
     ");
 
+    // Tạo bảng Achievements nếu chưa có
+    await db.Database.ExecuteSqlRawAsync(@"
+        CREATE TABLE IF NOT EXISTS ""Achievements"" (
+            ""Id"" text NOT NULL PRIMARY KEY,
+            ""Title"" text NOT NULL DEFAULT '',
+            ""Description"" text NOT NULL DEFAULT '',
+            ""Icon"" text NOT NULL DEFAULT '🏅',
+            ""ConditionType"" text NOT NULL DEFAULT '',
+            ""ConditionValue"" integer NOT NULL DEFAULT 0,
+            ""XpReward"" integer NOT NULL DEFAULT 0,
+            ""IsActive"" boolean NOT NULL DEFAULT true,
+            ""CreatedAt"" timestamp with time zone NOT NULL DEFAULT now()
+        );
+    ");
+
     // Tạo bảng UserAchievements nếu chưa có
     await db.Database.ExecuteSqlRawAsync(@"
         CREATE TABLE IF NOT EXISTS ""UserAchievements"" (

@@ -84,6 +84,7 @@ class _QaDetailScreenState extends State<QaDetailScreen> {
   }
 
   Future<void> _askAi() async {
+    if (_aiLoading) return;
     setState(() { _aiLoading = true; _aiAnswer = null; });
     final result = await _aiService.suggestQaAnswer(
       title: widget.post.title,

@@ -348,8 +348,17 @@ public class ProgressService
         }
         todayProgress.XpEarned += bonusXp;
 
-        await _db.SaveChangesAsync();
-        await _cache.RemoveAsync($"stats:{userId}", "leaderboard");
+        try
+        {
+            await _db.SaveChangesAsync();
+        }
+        catch (Exception ex) when (ex.InnerException?.Message.Contains("duplicate") == true
+                                || ex.InnerException?.Message.Contains("unique") == true)
+        {
+            // Race condition: another request already claimed — return gracefully
+            return new ClaimBonusResult { Success = false, BonusXp = 0, Message = "Bạn đã nhận thưởng hôm nay rồi" };
+        }
+        await _cache.RemoveAsync($"stats:{userId}", "leaderboard:20", "leaderboard:50", "leaderboard_weekly:20", "leaderboard_weekly:50");
 
         return new ClaimBonusResult { Success = true, BonusXp = bonusXp, Message = "Nhận thưởng thành công!" };
     }

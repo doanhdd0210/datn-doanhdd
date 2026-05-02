@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import '../../providers/user_provider.dart';
 import 'package:flutter_code_editor/flutter_code_editor.dart';
 import 'package:flutter_highlight/themes/vs2015.dart';
 import 'package:highlight/languages/java.dart';
@@ -82,13 +84,25 @@ class _CodeDemoDetailScreenState extends State<CodeDemoDetailScreen>
       });
       // Submit practice
       try {
-        await _api.submitPractice(
+        final xpEarned = await _api.submitPractice(
           widget.snippet.id,
           _codeController.text,
           result.stdout,
           result.isSuccess,
         );
-      } catch (_) {}
+        if (mounted && result.isSuccess) {
+          setState(() => _isPassed = true);
+          if (xpEarned > 0) {
+            context.read<UserProvider>().addXp(xpEarned);
+          }
+        }
+      } catch (_) {
+        if (mounted && result.isSuccess) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Không thể lưu kết quả. Kiểm tra kết nối mạng.')),
+          );
+        }
+      }
     }
   }
 

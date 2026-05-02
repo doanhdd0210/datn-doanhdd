@@ -228,13 +228,13 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
     try {
       final serverResult = await _api.submitQuiz(widget.lessonId, _userAnswers, timeSpent);
       result = serverResult;
+      if (mounted && isPerfect) {
+        await _api.completeLesson(widget.lessonId, widget.topicId, timeSpentSeconds: timeSpent);
+      }
       if (mounted) {
-        // Chỉ unlock bài tiếp theo khi đạt 100%
         if (isPerfect) {
-          await _api.completeLesson(widget.lessonId, widget.topicId, timeSpentSeconds: timeSpent);
           context.read<UserProvider>().markLessonCompleted(widget.lessonId, widget.topicId);
         }
-        // Server chỉ trả xpEarned > 0 ở lần đầu → tránh cộng dồn khi làm lại
         if (result.xpEarned > 0) {
           context.read<UserProvider>().addXp(result.xpEarned);
         }

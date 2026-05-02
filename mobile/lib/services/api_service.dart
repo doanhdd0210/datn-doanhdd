@@ -555,14 +555,6 @@ class ApiService {
     try { await _post('/notifications/me/read-all', {}); } catch (_) {}
   }
 
-  Future<Map<String, dynamic>?> getQaPost(String postId) async {
-    try {
-      final data = await _get('/qa/$postId');
-      if (data is Map) return (data['data'] ?? data) as Map<String, dynamic>?;
-      return null;
-    } catch (_) { return null; }
-  }
-
   // ── Achievements ──────────────────────────────────────────────────────────
 
   Future<void> syncAchievements() async {

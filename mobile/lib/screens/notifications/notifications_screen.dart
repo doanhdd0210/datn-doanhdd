@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_text_styles.dart';
 import '../../constants/app_theme.dart';
-import '../../models/qa_post.dart';
 import '../../services/api_service.dart';
 import '../../services/notification_service.dart';
 import '../../widgets/app_loading.dart';
@@ -150,19 +149,22 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     switch (type) {
       case 'qa_answer':
         if (refId != null) {
-          final postData = await _api.getQaPost(refId);
-          if (postData != null && mounted) {
-            final post = QaPost.fromJson(postData);
-            Navigator.of(context).pop();
-            await Future.delayed(const Duration(milliseconds: 100));
+          try {
+            final post = await _api.getQaPost(refId);
             if (mounted) {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => QaDetailScreen(post: post)),
-              );
+              Navigator.of(context).pop();
+              await Future.delayed(const Duration(milliseconds: 100));
+              if (mounted) {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => QaDetailScreen(post: post)),
+                );
+              }
             }
-          } else if (mounted) {
-            ns.navigationRequests.add('qa');
-            Navigator.of(context).pop();
+          } catch (_) {
+            if (mounted) {
+              ns.navigationRequests.add('qa');
+              Navigator.of(context).pop();
+            }
           }
         } else {
           ns.navigationRequests.add('qa');

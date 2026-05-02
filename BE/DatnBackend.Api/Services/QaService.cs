@@ -62,7 +62,7 @@ public class QaService
         return await _db.QaAnswers
             .Where(a => a.PostId == postId)
             .OrderByDescending(a => a.IsAccepted)
-            .ThenBy(a => a.CreatedAt)
+            .ThenByDescending(a => a.CreatedAt)
             .ToListAsync();
     }
 

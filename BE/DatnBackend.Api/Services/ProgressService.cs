@@ -212,6 +212,7 @@ public class ProgressService
             CurrentStreak = profile?.CurrentStreak ?? 0,
             LongestStreak = profile?.LongestStreak ?? 0,
             Rank = profile?.Rank ?? "Beginner",
+            Level = profile?.Level ?? "beginner",
         };
 
         await _cache.SetAsync(cacheKey, stats, TimeSpan.FromMinutes(2));
@@ -371,6 +372,7 @@ public class UserStatsResponse
     public int CurrentStreak { get; set; }
     public int LongestStreak { get; set; }
     public string Rank { get; set; } = "";
+    public string Level { get; set; } = "beginner";
 }
 
 public class ClaimBonusResult

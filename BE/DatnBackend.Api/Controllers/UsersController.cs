@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using DatnBackend.Api.Data;
 using DatnBackend.Api.Models;
 using DatnBackend.Api.Services;
 
@@ -10,10 +12,35 @@ namespace DatnBackend.Api.Controllers;
 public class UsersController : ControllerBase
 {
     private readonly IUserService _userService;
+    private readonly AppDbContext _db;
 
-    public UsersController(IUserService userService) => _userService = userService;
+    public UsersController(IUserService userService, AppDbContext db)
+    {
+        _userService = userService;
+        _db = db;
+    }
 
     private string? UserId => HttpContext.Items["FirebaseUid"]?.ToString();
+
+    /// <summary>Cập nhật level học của user hiện tại</summary>
+    [HttpPut("me/level")]
+    public async Task<ActionResult<ApiResponse<object>>> SetMyLevel([FromBody] SetLevelRequest request)
+    {
+        var uid = UserId;
+        if (uid == null) return Unauthorized(ApiResponse<object>.Fail("Unauthorized"));
+
+        var validLevels = new[] { "beginner", "intermediate", "advanced" };
+        if (!validLevels.Contains(request.Level))
+            return BadRequest(ApiResponse<object>.Fail("Level không hợp lệ"));
+
+        var profile = await _db.UserProfiles.FirstOrDefaultAsync(p => p.Uid == uid);
+        if (profile == null)
+            return NotFound(ApiResponse<object>.Fail("Profile chưa tồn tại"));
+
+        profile.Level = request.Level;
+        await _db.SaveChangesAsync();
+        return Ok(ApiResponse<object>.Ok(new { level = request.Level }, "Level updated"));
+    }
 
     /// <summary>Đăng ký FCM token cho thiết bị hiện tại</summary>
     [HttpPost("me/fcm-token")]

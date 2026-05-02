@@ -10,5 +10,6 @@ public class UserProfile
     public int LongestStreak { get; set; }
     public int LessonsCompleted { get; set; }
     public string Rank { get; set; } = "Beginner";
+    public string Level { get; set; } = "beginner";  // beginner | intermediate | advanced
     public List<string> FcmTokens { get; set; } = new();
 }

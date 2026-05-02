@@ -98,9 +98,9 @@ class UserProvider extends ChangeNotifier {
       case 'advanced':
         return 999;
       case 'intermediate':
-        return 4;
+        return 3;
       default:
-        return 2;
+        return 1;
     }
   }
 
@@ -126,6 +126,8 @@ class UserProvider extends ChangeNotifier {
     } else {
       await prefs.setString('user_level', level);
     }
+    // Sync lên BE (fire-and-forget, không block UI)
+    _api.setMyLevel(level).catchError((_) {});
     notifyListeners();
   }
 
@@ -157,6 +159,14 @@ class UserProvider extends ChangeNotifier {
       _longestStreak = stats['longestStreak'] as int? ?? 0;
       _lessonsCompleted = stats['lessonsCompleted'] as int? ?? 0;
       _rank = stats['rank']?.toString() ?? '-';
+      // Đồng bộ level từ BE (BE là nguồn gốc sự thật)
+      final beLevel = stats['level'] as String?;
+      if (beLevel != null && beLevel.isNotEmpty) {
+        _level = beLevel;
+        final uid = FirebaseAuth.instance.currentUser?.uid;
+        final prefs = await SharedPreferences.getInstance();
+        if (uid != null) await prefs.setString('user_level_$uid', beLevel);
+      }
     } catch (e) {
       _error = e.toString();
       await _loadFromCache();

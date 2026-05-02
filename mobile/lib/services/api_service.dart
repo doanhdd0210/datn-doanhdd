@@ -128,6 +128,25 @@ class ApiService {
     }
   }
 
+  Future<dynamic> _put(String path, Map<String, dynamic> body) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http
+          .put(Uri.parse('$_baseUrl$path'), headers: headers, body: jsonEncode(body))
+          .timeout(const Duration(seconds: 20));
+      _log('PUT', path, response);
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        if (response.body.isEmpty) return {};
+        return _unwrap(jsonDecode(response.body));
+      }
+      throw ApiException('HTTP ${response.statusCode}: ${response.body}', response.statusCode);
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      throw ApiException('Network error: $e', 0);
+    }
+  }
+
   Future<dynamic> _delete(String path) async {
     try {
       final headers = await _getHeaders();
@@ -407,6 +426,10 @@ class ApiService {
     final data = await _get('/friends/followers');
     final list = (data as List<dynamic>?) ?? [];
     return list.map((e) => UserFollow.fromJson(e as Map<String, dynamic>)).toList();
+  }
+
+  Future<void> setMyLevel(String level) async {
+    await _put('/users/me/level', {'level': level});
   }
 
   Future<void> followUser(String userId, String name, String avatar) async {

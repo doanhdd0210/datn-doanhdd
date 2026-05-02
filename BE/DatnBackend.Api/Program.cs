@@ -193,6 +193,11 @@ using (var scope = app.Services.CreateScope())
             ON ""UserAchievements"" (""UserId"");
     ");
 
+    // Add Level column to UserProfiles if not exists
+    await db.Database.ExecuteSqlRawAsync(@"
+        ALTER TABLE ""UserProfiles"" ADD COLUMN IF NOT EXISTS ""Level"" text NOT NULL DEFAULT 'beginner';
+    ");
+
     await DbSeeder.SeedAsync(db);
     await DbSeeder.SeedAchievementsAsync(db);
 }

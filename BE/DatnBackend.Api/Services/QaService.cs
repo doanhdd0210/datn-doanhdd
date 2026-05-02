@@ -8,11 +8,13 @@ public class QaService
 {
     private readonly AppDbContext _db;
     private readonly ILogger<QaService> _logger;
+    private readonly INotificationService _notifService;
 
-    public QaService(AppDbContext db, ILogger<QaService> logger)
+    public QaService(AppDbContext db, ILogger<QaService> logger, INotificationService notifService)
     {
         _db = db;
         _logger = logger;
+        _notifService = notifService;
     }
 
     public async Task<List<QaPost>> ListPostsAsync(string? lessonId = null, int page = 1, int pageSize = 20)
@@ -86,7 +88,51 @@ public class QaService
             .Where(p => p.Id == request.PostId)
             .ExecuteUpdateAsync(s => s.SetProperty(p => p.AnswerCount, p => p.AnswerCount + 1));
 
-        await _db.SaveChangesAsync();
+        // Gửi thông báo cho tác giả bài đăng (nếu không phải chính họ trả lời)
+        var post = await _db.QaPosts.FirstOrDefaultAsync(p => p.Id == request.PostId);
+        if (post != null && post.UserId != userId)
+        {
+            _db.UserNotifications.Add(new UserNotification
+            {
+                Id = Guid.NewGuid().ToString(),
+                UserId = post.UserId,
+                Type = "qa_answer",
+                Title = "Câu hỏi của bạn có câu trả lời mới",
+                Body = $"{userName} đã trả lời: \"{post.Title}\"",
+                ActorId = userId,
+                ActorName = userName,
+                ActorAvatar = userAvatar,
+                RefId = post.Id,
+                IsRead = false,
+                CreatedAt = DateTime.UtcNow,
+            });
+
+            await _db.SaveChangesAsync();
+
+            // Push notification
+            try
+            {
+                var authorProfile = await _db.UserProfiles.FirstOrDefaultAsync(p => p.Uid == post.UserId);
+                if (authorProfile?.FcmTokens.Count > 0)
+                {
+                    await _notifService.SendToTokensAsync(new SendNotificationRequest
+                    {
+                        Title = "Câu trả lời mới 💬",
+                        Body = $"{userName} đã trả lời câu hỏi của bạn",
+                        Data = new Dictionary<string, string> { ["screen"] = "qa", ["postId"] = post.Id },
+                    }, authorProfile.FcmTokens);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to send push notification for QA answer");
+            }
+        }
+        else
+        {
+            await _db.SaveChangesAsync();
+        }
+
         return answer;
     }
 

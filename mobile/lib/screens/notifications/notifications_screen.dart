@@ -5,6 +5,7 @@ import '../../constants/app_colors.dart';
 import '../../constants/app_text_styles.dart';
 import '../../constants/app_theme.dart';
 import '../../services/api_service.dart';
+import '../../services/notification_service.dart';
 import '../../widgets/app_loading.dart';
 
 class NotificationsScreen extends StatefulWidget {
@@ -128,6 +129,30 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
   }
 
+  void _handleTap(Map<String, dynamic> notif) {
+    final type = notif['type'] as String? ?? 'system';
+    final refId = notif['refId'] as String?;
+    final ns = NotificationService();
+    switch (type) {
+      case 'follow':
+        // refId = followerId → sang profile tab (đơn giản nhất)
+        ns.navigationRequests.add('friends');
+        Navigator.of(context).pop();
+        break;
+      case 'qa_answer':
+        // refId = postId → sang tab cộng đồng
+        ns.navigationRequests.add('qa');
+        Navigator.of(context).pop();
+        break;
+      case 'achievement':
+        ns.navigationRequests.add('profile');
+        Navigator.of(context).pop();
+        break;
+      default:
+        break;
+    }
+  }
+
   Widget _buildItem(Map<String, dynamic> notif, BuildContext context) {
     final type = notif['type'] as String? ?? 'system';
     final title = notif['title'] as String? ?? 'Thông báo';
@@ -139,7 +164,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
     final config = _typeConfig(type);
 
-    return Container(
+    return GestureDetector(
+      onTap: () => _handleTap(notif),
+      child: Container(
       decoration: BoxDecoration(
         color: isRead ? context.surfaceColor : AppColors.primary.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(14),

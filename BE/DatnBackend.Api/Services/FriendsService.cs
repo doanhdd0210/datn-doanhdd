@@ -110,6 +110,7 @@ public class FriendsService
             ActorId = followerId,
             ActorName = followerName,
             ActorAvatar = followerAvatar,
+            RefId = followerId,
             IsRead = false,
             CreatedAt = DateTime.UtcNow,
         });

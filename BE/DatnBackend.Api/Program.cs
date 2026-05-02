@@ -155,9 +155,11 @@ using (var scope = app.Services.CreateScope())
             ""ActorId"" text,
             ""ActorName"" text,
             ""ActorAvatar"" text,
+            ""RefId"" text,
             ""IsRead"" boolean NOT NULL DEFAULT false,
             ""CreatedAt"" timestamp with time zone NOT NULL DEFAULT now()
         );
+        ALTER TABLE ""UserNotifications"" ADD COLUMN IF NOT EXISTS ""RefId"" text;
         CREATE INDEX IF NOT EXISTS ""IX_UserNotifications_UserId_CreatedAt""
             ON ""UserNotifications"" (""UserId"", ""CreatedAt"" DESC);
     ");

@@ -8,11 +8,13 @@ public class AchievementsService
 {
     private readonly AppDbContext _db;
     private readonly ILogger<AchievementsService> _logger;
+    private readonly INotificationService _notifService;
 
-    public AchievementsService(AppDbContext db, ILogger<AchievementsService> logger)
+    public AchievementsService(AppDbContext db, ILogger<AchievementsService> logger, INotificationService notifService)
     {
         _db = db;
         _logger = logger;
+        _notifService = notifService;
     }
 
     // ── Admin CRUD ────────────────────────────────────────────────────────────
@@ -206,7 +208,46 @@ public class AchievementsService
             if (newlyUnlocked.Count > 0)
             {
                 _db.UserAchievements.AddRange(newlyUnlocked);
+
+                // In-app notifications cho từng thành tích mới
+                foreach (var ua in newlyUnlocked)
+                {
+                    var ach = allAchievements.First(a => a.Id == ua.AchievementId);
+                    _db.UserNotifications.Add(new UserNotification
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        UserId = userId,
+                        Type = "achievement",
+                        Title = $"{ach.Icon} Thành tích mới!",
+                        Body = $"Bạn đã mở khóa \"{ach.Title}\"",
+                        IsRead = false,
+                        CreatedAt = DateTime.UtcNow,
+                    });
+                }
+
                 await _db.SaveChangesAsync();
+
+                // Push notification
+                try
+                {
+                    var userProfile = await _db.UserProfiles.FirstOrDefaultAsync(p => p.Uid == userId);
+                    if (userProfile?.FcmTokens.Count > 0)
+                    {
+                        var achNames = string.Join(", ", newlyUnlocked.Select(ua =>
+                            allAchievements.First(a => a.Id == ua.AchievementId).Title));
+                        await _notifService.SendToTokensAsync(new SendNotificationRequest
+                        {
+                            Title = "🏆 Thành tích mới!",
+                            Body = $"Bạn vừa mở khóa: {achNames}",
+                            Data = new Dictionary<string, string> { ["screen"] = "profile", ["type"] = "achievement" },
+                        }, userProfile.FcmTokens);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to send push notification for achievement");
+                }
+
                 _logger.LogInformation(
                     "Granted {Count} achievement(s) to user {UserId}: {Ids}",
                     newlyUnlocked.Count, userId,

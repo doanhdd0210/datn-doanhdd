@@ -234,7 +234,7 @@ class _LessonsScreenState extends State<LessonsScreen> {
                                 value: pct,
                                 backgroundColor: Colors.white.withValues(alpha: 0.25),
                                 valueColor: AlwaysStoppedAnimation(
-                                  done == total ? Colors.greenAccent : Colors.white,
+                                  done == total ? Colors.greenAccent : AppColors.xpGold,
                                 ),
                                 minHeight: 6,
                               ),

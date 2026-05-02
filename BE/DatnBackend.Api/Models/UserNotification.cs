@@ -10,6 +10,7 @@ public class UserNotification
     public string? ActorId { get; set; }              // người thực hiện hành động
     public string? ActorName { get; set; }
     public string? ActorAvatar { get; set; }
+    public string? RefId { get; set; }              // postId / userId / achievementId
     public bool IsRead { get; set; } = false;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

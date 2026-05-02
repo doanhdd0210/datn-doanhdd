@@ -684,11 +684,6 @@ class _AchievementBadge extends StatelessWidget {
                 ),
               ),
             ),
-            if (achievement.xpReward > 0) ...[
-              const SizedBox(height: 8),
-              Text('Phần thưởng: +${achievement.xpReward} XP',
-                  style: const TextStyle(fontSize: 11, color: AppColors.xpGold)),
-            ],
           ],
         ),
       ),

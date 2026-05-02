@@ -417,15 +417,22 @@ class _SkillPath extends StatelessWidget {
             final List<Widget> rows = [];
             int globalIdx = 0;
 
+            // Số topic được mở sẵn theo level
+            final preUnlocked = switch (provider.level) {
+              'advanced'     => 3,
+              'intermediate' => 2,
+              _              => 1,
+            };
+
             for (int ti = 0; ti < topics.length; ti++) {
               final topic = topics[ti];
               final color = _topicColor(topic, ti);
               final completed = provider.topicCompletedCount(topic.id);
               final total = topic.totalLessons.clamp(1, 999);
 
-              // Progressive unlock: topic 0 luôn mở, topic N mở khi N-1 hoàn thành
+              // Unlock: pre-unlock theo level, sau đó progressive (hoàn thành topic trước)
               bool isUnlocked;
-              if (ti == 0) {
+              if (ti < preUnlocked) {
                 isUnlocked = true;
               } else {
                 final prevTopic = topics[ti - 1];

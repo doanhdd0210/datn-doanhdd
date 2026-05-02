@@ -9,12 +9,14 @@ public class AchievementsService
     private readonly AppDbContext _db;
     private readonly ILogger<AchievementsService> _logger;
     private readonly INotificationService _notifService;
+    private readonly ICacheService _cache;
 
-    public AchievementsService(AppDbContext db, ILogger<AchievementsService> logger, INotificationService notifService)
+    public AchievementsService(AppDbContext db, ILogger<AchievementsService> logger, INotificationService notifService, ICacheService cache)
     {
         _db = db;
         _logger = logger;
         _notifService = notifService;
+        _cache = cache;
     }
 
     // ── Admin CRUD ────────────────────────────────────────────────────────────
@@ -228,6 +230,9 @@ public class AchievementsService
                 }
 
                 await _db.SaveChangesAsync();
+
+                // Invalidate leaderboard cache vì TotalXp đã thay đổi
+                await _cache.RemoveAsync($"stats:{userId}", "leaderboard:20", "leaderboard:50", "leaderboard_weekly:20", "leaderboard_weekly:50");
 
                 // Push notification
                 try

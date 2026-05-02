@@ -289,7 +289,7 @@ public class ProgressService
             }
             profile.Rank = CalculateRank(profile.TotalXp);
             await _db.SaveChangesAsync();
-            await _cache.RemoveAsync($"stats:{userId}", "leaderboard");
+            await _cache.RemoveAsync($"stats:{userId}", "leaderboard:20", "leaderboard:50", "leaderboard_weekly:20", "leaderboard_weekly:50");
         }
         catch (Exception ex)
         {

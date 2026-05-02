@@ -85,10 +85,15 @@ public class NotificationsController : ControllerBase
         return Ok(ApiResponse<object>.Ok(new { count }));
     }
 
+    private bool IsAdmin => HttpContext.Items.TryGetValue("FirebaseIsAdmin", out var v) && v is true;
+
     /// <summary>Gửi thông báo — chọn một trong: token, topic, uid, broadcastAll</summary>
     [HttpPost("send")]
     public async Task<ActionResult<ApiResponse<object>>> Send([FromBody] SendNotificationRequest request)
     {
+        if (!IsAdmin)
+            return StatusCode(403, ApiResponse<object>.Fail("Forbidden: Admin access required"));
+
         try
         {
             string result;

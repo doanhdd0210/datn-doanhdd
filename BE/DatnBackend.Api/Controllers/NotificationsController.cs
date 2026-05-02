@@ -92,14 +92,11 @@ public class NotificationsController : ControllerBase
         try
         {
             string result;
+            List<string> recipientIds = [];
 
             if (!string.IsNullOrEmpty(request.Token))
             {
                 result = await _notificationService.SendToTokenAsync(request);
-            }
-            else if (!string.IsNullOrEmpty(request.Topic))
-            {
-                result = await _notificationService.SendToTopicAsync(request);
             }
             else if (!string.IsNullOrEmpty(request.Uid))
             {
@@ -110,10 +107,18 @@ public class NotificationsController : ControllerBase
                     return BadRequest(ApiResponse<object>.Fail("User has no registered FCM tokens"));
 
                 result = await _notificationService.SendToTokensAsync(request, user.FcmTokens);
+                recipientIds = [request.Uid];
             }
-            else if (request.BroadcastAll)
+            else if (!string.IsNullOrEmpty(request.Topic) || request.BroadcastAll)
             {
-                result = await _notificationService.BroadcastAsync(request);
+                result = request.BroadcastAll
+                    ? await _notificationService.BroadcastAsync(request)
+                    : await _notificationService.SendToTopicAsync(request);
+
+                // Lưu in-app notification cho tất cả user
+                recipientIds = await _db.UserProfiles
+                    .Select(p => p.Uid)
+                    .ToListAsync();
             }
             else
             {
@@ -121,7 +126,25 @@ public class NotificationsController : ControllerBase
                     "Phải chỉ định một trong: token, topic, uid, hoặc broadcastAll = true"));
             }
 
-            return Ok(ApiResponse<object>.Ok(new { result }, "Notification sent"));
+            // Lưu in-app notification vào DB
+            if (recipientIds.Count > 0)
+            {
+                var now = DateTime.UtcNow;
+                var notifications = recipientIds.Select(uid => new UserNotification
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    UserId = uid,
+                    Type = "system",
+                    Title = request.Title,
+                    Body = request.Body,
+                    IsRead = false,
+                    CreatedAt = now,
+                }).ToList();
+                _db.UserNotifications.AddRange(notifications);
+                await _db.SaveChangesAsync();
+            }
+
+            return Ok(ApiResponse<object>.Ok(new { result, savedCount = recipientIds.Count }, "Notification sent"));
         }
         catch (Exception ex)
         {

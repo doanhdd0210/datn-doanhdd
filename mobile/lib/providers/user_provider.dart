@@ -32,27 +32,18 @@ class UserProvider extends ChangeNotifier {
   final List<Achievement> _pendingAchievements = []; // mới unlock, chờ hiện popup
 
   /// Danh sách định nghĩa thành tích local — hiển thị khi API không phản hồi
+  // Fallback khi server không trả về — phải khớp đúng 10 achievements trong DbSeeder
   static final List<Achievement> _localAchievementDefs = [
-    Achievement(id: 'first_lesson',  title: 'Bước đầu tiên',    description: 'Hoàn thành bài học đầu tiên',    emoji: '🎓', color: Color(0xFF6949FF), conditionType: 'lessonCount',  conditionValue: 1,    xpReward: 20),
-    Achievement(id: 'lessons_5',     title: 'Khởi đầu tốt',     description: 'Hoàn thành 5 bài học',           emoji: '✨', color: Color(0xFF6949FF), conditionType: 'lessonCount',  conditionValue: 5,    xpReward: 30),
-    Achievement(id: 'lessons_10',    title: 'Chăm học',          description: 'Hoàn thành 10 bài học',          emoji: '📚', color: Color(0xFF6949FF), conditionType: 'lessonCount',  conditionValue: 10,   xpReward: 50),
-    Achievement(id: 'lessons_25',    title: 'Tiến sĩ',           description: 'Hoàn thành 25 bài học',          emoji: '🏅', color: Color(0xFF6949FF), conditionType: 'lessonCount',  conditionValue: 25,   xpReward: 100),
-    Achievement(id: 'lessons_50',    title: 'Học không ngừng',   description: 'Hoàn thành 50 bài học',          emoji: '🎖️', color: Color(0xFF6949FF), conditionType: 'lessonCount',  conditionValue: 50,   xpReward: 200),
-    Achievement(id: 'xp_50',         title: 'Khởi động',         description: 'Kiếm được 50 XP',                emoji: '⭐', color: Color(0xFFFFC107), conditionType: 'xpRequired',   conditionValue: 50,   xpReward: 5),
-    Achievement(id: 'xp_100',        title: 'Tập sự',            description: 'Kiếm được 100 XP',               emoji: '⚡', color: Color(0xFFFFC107), conditionType: 'xpRequired',   conditionValue: 100,  xpReward: 10),
-    Achievement(id: 'xp_500',        title: 'Thành thạo',        description: 'Kiếm được 500 XP',               emoji: '🔥', color: Color(0xFFFFC107), conditionType: 'xpRequired',   conditionValue: 500,  xpReward: 30),
-    Achievement(id: 'xp_1000',       title: 'Chuyên gia',        description: 'Kiếm được 1000 XP',              emoji: '💎', color: Color(0xFFFFC107), conditionType: 'xpRequired',   conditionValue: 1000, xpReward: 50),
-    Achievement(id: 'xp_2000',       title: 'Huyền thoại',       description: 'Kiếm được 2000 XP',              emoji: '👑', color: Color(0xFFFFC107), conditionType: 'xpRequired',   conditionValue: 2000, xpReward: 100),
-    Achievement(id: 'xp_5000',       title: 'Java Master',       description: 'Kiếm được 5000 XP',              emoji: '🚀', color: Color(0xFFFFC107), conditionType: 'xpRequired',   conditionValue: 5000, xpReward: 300),
-    Achievement(id: 'streak_3',      title: 'Kiên trì',          description: 'Học 3 ngày liên tiếp',           emoji: '🔥', color: Color(0xFFFF5722), conditionType: 'streakDays',   conditionValue: 3,    xpReward: 20),
-    Achievement(id: 'streak_7',      title: 'Tuần lễ vàng',      description: 'Học 7 ngày liên tiếp',           emoji: '🏆', color: Color(0xFFFF5722), conditionType: 'streakDays',   conditionValue: 7,    xpReward: 70),
-    Achievement(id: 'streak_14',     title: 'Hai tuần lửa',      description: 'Học 14 ngày liên tiếp',          emoji: '💪', color: Color(0xFFFF5722), conditionType: 'streakDays',   conditionValue: 14,   xpReward: 150),
-    Achievement(id: 'streak_30',     title: 'Tháng kiên trì',    description: 'Học 30 ngày liên tiếp',          emoji: '🏅', color: Color(0xFFFF5722), conditionType: 'streakDays',   conditionValue: 30,   xpReward: 300),
-    Achievement(id: 'quiz_perfect',  title: 'Hoàn hảo',          description: 'Đạt 100% trong một bài quiz',    emoji: '🎯', color: Color(0xFF4CAF50), conditionType: 'perfectQuiz',  conditionValue: 1,    xpReward: 30),
-    Achievement(id: 'quiz_perfect3', title: 'Thiên tài',         description: 'Đạt 100% trong 3 bài quiz',      emoji: '🌟', color: Color(0xFF4CAF50), conditionType: 'perfectQuiz',  conditionValue: 3,    xpReward: 80),
-    Achievement(id: 'social_1',      title: 'Kết nối',           description: 'Theo dõi người đầu tiên',        emoji: '👥', color: Color(0xFF50B0FF), conditionType: 'followAny',    conditionValue: 1,    xpReward: 10),
-    Achievement(id: 'social_5',      title: 'Mở rộng mạng lưới', description: 'Theo dõi 5 người',              emoji: '🤝', color: Color(0xFF50B0FF), conditionType: 'followAny',    conditionValue: 5,    xpReward: 30),
-    Achievement(id: 'social_10',     title: 'Người ảnh hưởng',   description: 'Theo dõi 10 người',              emoji: '🌐', color: Color(0xFF50B0FF), conditionType: 'followAny',    conditionValue: 10,   xpReward: 60),
+    Achievement(id: 'first_lesson', title: 'Bước đầu tiên', description: 'Hoàn thành bài học đầu tiên',  emoji: '🎓', color: Color(0xFF6949FF), conditionType: 'lessonCount', conditionValue: 1,   xpReward: 20),
+    Achievement(id: 'lessons_5',    title: 'Khởi đầu tốt',  description: 'Hoàn thành 5 bài học',         emoji: '✨', color: Color(0xFF6949FF), conditionType: 'lessonCount', conditionValue: 5,   xpReward: 30),
+    Achievement(id: 'lessons_10',   title: 'Chăm học',       description: 'Hoàn thành 10 bài học',        emoji: '📚', color: Color(0xFF6949FF), conditionType: 'lessonCount', conditionValue: 10,  xpReward: 50),
+    Achievement(id: 'xp_50',        title: 'Khởi động',      description: 'Kiếm được 50 XP',              emoji: '⭐', color: Color(0xFFFFC107), conditionType: 'xpRequired',  conditionValue: 50,  xpReward: 5),
+    Achievement(id: 'xp_100',       title: 'Tập sự',         description: 'Kiếm được 100 XP',             emoji: '⚡', color: Color(0xFFFFC107), conditionType: 'xpRequired',  conditionValue: 100, xpReward: 10),
+    Achievement(id: 'xp_500',       title: 'Thành thạo',     description: 'Kiếm được 500 XP',             emoji: '🔥', color: Color(0xFFFFC107), conditionType: 'xpRequired',  conditionValue: 500, xpReward: 30),
+    Achievement(id: 'streak_3',     title: 'Kiên trì',       description: 'Học 3 ngày liên tiếp',         emoji: '🗓️', color: Color(0xFFFF5722), conditionType: 'streakDays',  conditionValue: 3,   xpReward: 20),
+    Achievement(id: 'streak_7',     title: 'Tuần lễ vàng',   description: 'Học 7 ngày liên tiếp',         emoji: '🏆', color: Color(0xFFFF5722), conditionType: 'streakDays',  conditionValue: 7,   xpReward: 70),
+    Achievement(id: 'quiz_perfect', title: 'Hoàn hảo',       description: 'Đạt 100% trong một bài quiz',  emoji: '🎯', color: Color(0xFF4CAF50), conditionType: 'perfectQuiz', conditionValue: 1,   xpReward: 30),
+    Achievement(id: 'social_1',     title: 'Kết nối',        description: 'Theo dõi một người dùng',      emoji: '👥', color: Color(0xFF50B0FF), conditionType: 'followAny',   conditionValue: 1,   xpReward: 10),
   ];
 
   // Hearts restore: 1 heart per 30 min after losing one

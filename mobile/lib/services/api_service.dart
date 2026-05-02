@@ -332,8 +332,10 @@ class ApiService {
   }
 
   Future<QaPost> getQaPost(String id) async {
-    final data = await _get('/qa/$id');
-    return QaPost.fromJson(data as Map<String, dynamic>);
+    final data = await _get('/qa/$id') as Map<String, dynamic>;
+    // Response is QaPostDetail: { post: {...}, answers: [...] }
+    final postJson = (data['post'] ?? data['Post']) as Map<String, dynamic>? ?? data;
+    return QaPost.fromJson(postJson);
   }
 
   Future<void> createQaPost(

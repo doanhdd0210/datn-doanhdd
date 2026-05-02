@@ -162,10 +162,15 @@ public class ProgressService
 
         await _db.SaveChangesAsync();
 
-        // Chỉ cập nhật stats nếu có XP mới (lần đầu làm)
+        // Cập nhật XP stats chỉ khi có XP mới (lần đầu làm đúng 100%)
         if (xpEarned > 0)
         {
             await UpdateUserStatsAsync(userId, xpEarned, 0);
+        }
+
+        // Streak tính khi đúng ít nhất 1 câu
+        if (correct > 0)
+        {
             await UpdateDailyProgressAsync(userId, 0, xpEarned, request.TimeSpentSeconds);
         }
 

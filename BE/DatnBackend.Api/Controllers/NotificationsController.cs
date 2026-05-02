@@ -41,6 +41,21 @@ public class NotificationsController : ControllerBase
         return Ok(ApiResponse<object>.Ok(new { notifications = notifs, unreadCount }));
     }
 
+    /// <summary>Đánh dấu một thông báo là đã đọc</summary>
+    [HttpPost("me/{id}/read")]
+    public async Task<ActionResult<ApiResponse<object>>> MarkOneRead(string id)
+    {
+        var uid = HttpContext.Items["FirebaseUid"] as string;
+        if (string.IsNullOrEmpty(uid))
+            return Unauthorized(ApiResponse<object>.Fail("Unauthorized"));
+
+        await _db.UserNotifications
+            .Where(n => n.Id == id && n.UserId == uid)
+            .ExecuteUpdateAsync(s => s.SetProperty(n => n.IsRead, true));
+
+        return Ok(ApiResponse<object>.Ok(null, "Marked as read"));
+    }
+
     /// <summary>Đánh dấu tất cả là đã đọc</summary>
     [HttpPost("me/read-all")]
     public async Task<ActionResult<ApiResponse<object>>> MarkAllRead()

@@ -4,9 +4,11 @@ import 'package:intl/intl.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_text_styles.dart';
 import '../../constants/app_theme.dart';
+import '../../models/qa_post.dart';
 import '../../services/api_service.dart';
 import '../../services/notification_service.dart';
 import '../../widgets/app_loading.dart';
+import '../social/qa_detail_screen.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -129,19 +131,46 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
   }
 
-  void _handleTap(Map<String, dynamic> notif) {
+  Future<void> _handleTap(Map<String, dynamic> notif) async {
     final type = notif['type'] as String? ?? 'system';
     final refId = notif['refId'] as String?;
+    final notifId = notif['id'] as String? ?? notif['Id'] as String?;
+    final isRead = notif['isRead'] as bool? ?? false;
+
+    // Mark as read immediately
+    if (!isRead && notifId != null) {
+      _api.markNotificationRead(notifId);
+      setState(() {
+        notif['isRead'] = true;
+        _unreadCount = (_unreadCount - 1).clamp(0, 999);
+      });
+    }
+
     final ns = NotificationService();
     switch (type) {
-      case 'follow':
-        // refId = followerId → sang profile tab (đơn giản nhất)
-        ns.navigationRequests.add('friends');
-        Navigator.of(context).pop();
-        break;
       case 'qa_answer':
-        // refId = postId → sang tab cộng đồng
-        ns.navigationRequests.add('qa');
+        if (refId != null) {
+          final postData = await _api.getQaPost(refId);
+          if (postData != null && mounted) {
+            final post = QaPost.fromJson(postData);
+            Navigator.of(context).pop();
+            await Future.delayed(const Duration(milliseconds: 100));
+            if (mounted) {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => QaDetailScreen(post: post)),
+              );
+            }
+          } else if (mounted) {
+            ns.navigationRequests.add('qa');
+            Navigator.of(context).pop();
+          }
+        } else {
+          ns.navigationRequests.add('qa');
+          Navigator.of(context).pop();
+        }
+        break;
+      case 'follow':
+        ns.navigationRequests.add('friends');
         Navigator.of(context).pop();
         break;
       case 'achievement':
@@ -226,6 +255,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ],
         ),
       ),
+    )
     );
   }
 

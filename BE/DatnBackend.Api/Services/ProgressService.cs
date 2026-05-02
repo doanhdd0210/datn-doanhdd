@@ -162,15 +162,9 @@ public class ProgressService
 
         await _db.SaveChangesAsync();
 
-        // Cập nhật XP stats chỉ khi có XP mới (lần đầu làm đúng 100%)
         if (xpEarned > 0)
         {
             await UpdateUserStatsAsync(userId, xpEarned, 0);
-        }
-
-        // Streak tính khi đúng ít nhất 1 câu
-        if (correct > 0)
-        {
             await UpdateDailyProgressAsync(userId, 0, xpEarned, request.TimeSpentSeconds);
         }
 
@@ -241,6 +235,9 @@ public class ProgressService
             }
             else
             {
+                // Chỉ tạo record và tính streak khi ngày đó kiếm được XP
+                if (xpAdded <= 0) return;
+
                 var yesterday = DateTime.UtcNow.AddDays(-1).ToString("yyyy-MM-dd");
                 var yesterdayId = $"{userId}_{yesterday}";
                 var yesterdayDoc = await _db.DailyProgresses.FirstOrDefaultAsync(d => d.Id == yesterdayId);

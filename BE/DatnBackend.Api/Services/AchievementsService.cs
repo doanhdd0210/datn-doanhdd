@@ -219,7 +219,9 @@ public class AchievementsService
                         UserId = userId,
                         Type = "achievement",
                         Title = $"{ach.Icon} Thành tích mới!",
-                        Body = $"Bạn đã mở khóa \"{ach.Title}\"",
+                        Body = ach.XpReward > 0
+                            ? $"Bạn đã mở khóa \"{ach.Title}\" · +{ach.XpReward} XP"
+                            : $"Bạn đã mở khóa \"{ach.Title}\"",
                         IsRead = false,
                         CreatedAt = DateTime.UtcNow,
                     });
@@ -233,12 +235,18 @@ public class AchievementsService
                     var userProfile = await _db.UserProfiles.FirstOrDefaultAsync(p => p.Uid == userId);
                     if (userProfile?.FcmTokens.Count > 0)
                     {
-                        var achNames = string.Join(", ", newlyUnlocked.Select(ua =>
-                            allAchievements.First(a => a.Id == ua.AchievementId).Title));
+                        var achSummary = string.Join(", ", newlyUnlocked.Select(ua => {
+                            var a = allAchievements.First(x => x.Id == ua.AchievementId);
+                            return a.XpReward > 0 ? $"{a.Title} (+{a.XpReward} XP)" : a.Title;
+                        }));
+                        var totalXp = newlyUnlocked.Sum(ua =>
+                            allAchievements.First(a => a.Id == ua.AchievementId).XpReward);
                         await _notifService.SendToTokensAsync(new SendNotificationRequest
                         {
                             Title = "🏆 Thành tích mới!",
-                            Body = $"Bạn vừa mở khóa: {achNames}",
+                            Body = totalXp > 0
+                                ? $"Bạn vừa mở khóa: {achSummary}"
+                                : $"Bạn vừa mở khóa: {achSummary}",
                             Data = new Dictionary<string, string> { ["screen"] = "profile", ["type"] = "achievement" },
                         }, userProfile.FcmTokens);
                     }

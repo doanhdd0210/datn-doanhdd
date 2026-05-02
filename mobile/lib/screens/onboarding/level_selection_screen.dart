@@ -34,7 +34,7 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
     ),
     _LevelData(
       id: 'intermediate',
-      emoji: '⚡',
+      emoji: '🪴',
       title: 'Trung cấp',
       subtitle: 'Tôi biết một chút Java',
       description: 'Bỏ qua phần cơ bản. Lao vào OOP, collections và design patterns.',
@@ -45,7 +45,7 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
     ),
     _LevelData(
       id: 'advanced',
-      emoji: '🔥',
+      emoji: '🌳',
       title: 'Nâng cao',
       subtitle: 'Tôi đã code Java',
       description: 'Đi thẳng vào algorithms, concurrency và các tính năng Java nâng cao.',

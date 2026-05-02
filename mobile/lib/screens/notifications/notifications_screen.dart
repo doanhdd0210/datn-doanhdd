@@ -1,9 +1,12 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_text_styles.dart';
 import '../../constants/app_theme.dart';
+import '../../models/leaderboard_entry.dart';
+import '../../providers/user_provider.dart';
 import '../../services/api_service.dart';
 import '../../services/notification_service.dart';
 import '../../widgets/app_loading.dart';
@@ -172,8 +175,25 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         }
         break;
       case 'follow':
-        ns.navigationRequests.add('friends');
-        Navigator.of(context).pop();
+        final actorId = notif['actorId'] as String?;
+        if (actorId != null) {
+          final entry = await _api.getUserPublicProfile(actorId);
+          if (mounted) {
+            final profile = entry ?? LeaderboardEntry(
+              userId: actorId,
+              name: notif['actorName'] as String? ?? 'Người dùng',
+              avatar: notif['actorAvatar'] as String? ?? '',
+              totalXp: 0,
+              streak: 0,
+              rank: 0,
+              isCurrentUser: false,
+            );
+            await _showActorProfile(profile);
+          }
+        } else {
+          ns.navigationRequests.add('friends');
+          Navigator.of(context).pop();
+        }
         break;
       case 'achievement':
         ns.navigationRequests.add('profile');
@@ -182,6 +202,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       default:
         break;
     }
+  }
+
+  Future<void> _showActorProfile(LeaderboardEntry entry) async {
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => _ActorProfileSheet(entry: entry, api: _api),
+    );
   }
 
   Widget _buildItem(Map<String, dynamic> notif, BuildContext context) {
@@ -349,4 +378,174 @@ class _NotifConfig {
   final IconData icon;
   final Color color;
   const _NotifConfig(this.icon, this.color);
+}
+
+class _ActorProfileSheet extends StatefulWidget {
+  final LeaderboardEntry entry;
+  final ApiService api;
+  const _ActorProfileSheet({required this.entry, required this.api});
+
+  @override
+  State<_ActorProfileSheet> createState() => _ActorProfileSheetState();
+}
+
+class _ActorProfileSheetState extends State<_ActorProfileSheet> {
+  bool _isFollowing = false;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkFollowStatus();
+  }
+
+  Future<void> _checkFollowStatus() async {
+    try {
+      final following = await widget.api.getFollowing();
+      if (mounted) {
+        setState(() {
+          _isFollowing = following.any((u) => u.userId == widget.entry.userId);
+        });
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _toggleFollow() async {
+    setState(() => _isLoading = true);
+    try {
+      if (_isFollowing) {
+        await widget.api.unfollowUser(widget.entry.userId);
+        if (mounted) setState(() => _isFollowing = false);
+      } else {
+        await widget.api.followUser(widget.entry.userId, widget.entry.name, widget.entry.avatar);
+        if (mounted) {
+          context.read<UserProvider>().markFollowed();
+          setState(() => _isFollowing = true);
+        }
+      }
+    } catch (_) {
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final entry = widget.entry;
+    return Container(
+      decoration: BoxDecoration(
+        color: context.surfaceColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: EdgeInsets.fromLTRB(24, 12, 24, MediaQuery.of(context).padding.bottom + 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 40, height: 4,
+            decoration: BoxDecoration(
+              color: context.borderColor,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 20),
+          CircleAvatar(
+            radius: 44,
+            backgroundColor: AppColors.primary.withValues(alpha: 0.15),
+            backgroundImage: entry.avatar.isNotEmpty
+                ? CachedNetworkImageProvider(entry.avatar)
+                : null,
+            child: entry.avatar.isEmpty
+                ? Text(
+                    entry.name.isNotEmpty ? entry.name[0].toUpperCase() : 'U',
+                    style: const TextStyle(
+                      fontSize: 32, fontWeight: FontWeight.w800, color: AppColors.primary,
+                    ),
+                  )
+                : null,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            entry.name,
+            style: TextStyle(
+              fontSize: 20, fontWeight: FontWeight.w900, color: context.textPrimary,
+            ),
+          ),
+          if (entry.rank > 0) ...[
+            const SizedBox(height: 4),
+            Text(
+              '#${entry.rank} trên bảng xếp hạng',
+              style: TextStyle(fontSize: 13, color: context.textSecondary),
+            ),
+          ],
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _StatChip(label: 'XP', value: '${entry.totalXp}', icon: '⚡'),
+              const SizedBox(width: 12),
+              _StatChip(label: 'Streak', value: '${entry.streak}', icon: '🔥'),
+              const SizedBox(width: 12),
+              _StatChip(label: 'Bài học', value: '${entry.lessonsCompleted}', icon: '📚'),
+            ],
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _isLoading ? null : _toggleFollow,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _isFollowing ? context.surfaceElevatedColor : AppColors.primary,
+                foregroundColor: _isFollowing ? context.textPrimary : Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                elevation: 0,
+              ),
+              child: _isLoading
+                  ? const SizedBox(
+                      width: 20, height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Text(
+                      _isFollowing ? 'Đang theo dõi' : 'Theo dõi',
+                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                    ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatChip extends StatelessWidget {
+  final String label;
+  final String value;
+  final String icon;
+  const _StatChip({required this.label, required this.value, required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: context.surfaceElevatedColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: context.borderColor),
+      ),
+      child: Column(
+        children: [
+          Text(icon, style: const TextStyle(fontSize: 18)),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 15, fontWeight: FontWeight.w900, color: context.textPrimary,
+            ),
+          ),
+          Text(label, style: TextStyle(fontSize: 11, color: context.textSecondary)),
+        ],
+      ),
+    );
+  }
 }

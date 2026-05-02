@@ -441,6 +441,19 @@ class ApiService {
     }).toList();
   }
 
+  Future<LeaderboardEntry?> getUserPublicProfile(String userId) async {
+    try {
+      final data = await _get('/friends/profile/$userId');
+      final entry = data is Map ? (data['data'] ?? data) : data;
+      if (entry is Map<String, dynamic>) {
+        return LeaderboardEntry.fromJson(entry, isCurrentUser: false);
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<List<LeaderboardEntry>> getLeaderboard() async {
     final data = await _get('/friends/leaderboard');
     List<dynamic> list;

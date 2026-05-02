@@ -152,6 +152,24 @@ public class FriendsService
         await _db.SaveChangesAsync();
     }
 
+    public async Task<LeaderboardEntry?> GetPublicProfileAsync(string userId)
+    {
+        var profile = await _db.UserProfiles.FirstOrDefaultAsync(p => p.Uid == userId);
+        if (profile == null) return null;
+
+        var globalRank = await _db.UserProfiles.CountAsync(p => p.TotalXp > profile.TotalXp) + 1;
+        return new LeaderboardEntry
+        {
+            Rank = globalRank,
+            UserId = profile.Uid,
+            DisplayName = profile.DisplayName,
+            PhotoUrl = profile.PhotoUrl,
+            TotalXp = profile.TotalXp,
+            LessonsCompleted = profile.LessonsCompleted,
+            CurrentStreak = profile.CurrentStreak,
+        };
+    }
+
     public async Task<List<LeaderboardEntry>> GetLeaderboardAsync(int limit = 20)
     {
         var cacheKey = $"leaderboard:{limit}";

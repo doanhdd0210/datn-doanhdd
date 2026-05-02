@@ -84,6 +84,18 @@ public class FriendsController : ControllerBase
         }
     }
 
+    /// <summary>Get public profile of any user by userId</summary>
+    [HttpGet("profile/{userId}")]
+    public async Task<ActionResult<ApiResponse<LeaderboardEntry>>> GetPublicProfile(string userId)
+    {
+        var uid = UserId;
+        if (uid == null) return Unauthorized(ApiResponse<LeaderboardEntry>.Fail("Unauthorized"));
+
+        var entry = await _friendsService.GetPublicProfileAsync(userId);
+        if (entry == null) return NotFound(ApiResponse<LeaderboardEntry>.Fail("User not found"));
+        return Ok(ApiResponse<LeaderboardEntry>.Ok(entry));
+    }
+
     /// <summary>Get leaderboard - top users by total XP</summary>
     [HttpGet("leaderboard")]
     public async Task<ActionResult<ApiResponse<List<LeaderboardEntry>>>> GetLeaderboard([FromQuery] int limit = 20)

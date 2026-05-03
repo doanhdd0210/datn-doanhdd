@@ -35,9 +35,31 @@ public class UsersController : ControllerBase
 
         var profile = await _db.UserProfiles.FirstOrDefaultAsync(p => p.Uid == uid);
         if (profile == null)
-            return NotFound(ApiResponse<object>.Fail("Profile chưa tồn tại"));
+        {
+            // Profile chưa tồn tại — tạo mới với level đã chọn
+            try
+            {
+                var firebaseUser = await FirebaseAdmin.Auth.FirebaseAuth.DefaultInstance.GetUserAsync(uid);
+                profile = new UserProfile
+                {
+                    Uid = uid,
+                    DisplayName = firebaseUser.DisplayName ?? firebaseUser.Email?.Split('@')[0] ?? "User",
+                    PhotoUrl = firebaseUser.PhotoUrl,
+                    Level = request.Level,
+                    FcmTokens = [],
+                };
+                _db.UserProfiles.Add(profile);
+            }
+            catch
+            {
+                return StatusCode(503, ApiResponse<object>.Fail("Không thể tạo profile"));
+            }
+        }
+        else
+        {
+            profile.Level = request.Level;
+        }
 
-        profile.Level = request.Level;
         await _db.SaveChangesAsync();
         return Ok(ApiResponse<object>.Ok(new { level = request.Level }, "Level updated"));
     }

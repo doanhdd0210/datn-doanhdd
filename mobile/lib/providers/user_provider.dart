@@ -159,9 +159,10 @@ class UserProvider extends ChangeNotifier {
       _longestStreak = stats['longestStreak'] as int? ?? 0;
       _lessonsCompleted = stats['lessonsCompleted'] as int? ?? 0;
       _rank = stats['rank']?.toString() ?? '-';
-      // Đồng bộ level từ BE (BE là nguồn gốc sự thật)
+      // Đồng bộ level từ BE — chỉ nhận nếu BE có giá trị khác default
+      // hoặc local đang ở default (tránh BE override level user đã chọn)
       final beLevel = stats['level'] as String?;
-      if (beLevel != null && beLevel.isNotEmpty) {
+      if (beLevel != null && beLevel.isNotEmpty && (beLevel != 'beginner' || _level == 'beginner')) {
         _level = beLevel;
         final uid = FirebaseAuth.instance.currentUser?.uid;
         final prefs = await SharedPreferences.getInstance();

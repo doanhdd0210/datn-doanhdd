@@ -37,6 +37,7 @@ export default function CodeSnippetsPage() {
   const [importProgress, setImportProgress] = useState('')
   const [runOutput, setRunOutput] = useState('')
   const [running, setRunning] = useState(false)
+  const [expandEditor, setExpandEditor] = useState(false)
   const importRef = useRef()
 
   const showToast = (msg, type = 'success') => {
@@ -277,7 +278,16 @@ export default function CodeSnippetsPage() {
             <label style={s.label}>Mô tả</label>
             <textarea style={{ ...s.input, minHeight: 60, resize: 'vertical' }} value={form.description ?? ''} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Mô tả ngắn..." />
 
-            <label style={s.label}>Code</label>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, marginBottom: 4 }}>
+              <span style={s.label}>Code</span>
+              <button
+                onClick={() => setExpandEditor(true)}
+                title="Mở rộng editor"
+                style={{ padding: '3px 10px', background: '#f1f5f9', border: '1.5px solid #e2e8f0', borderRadius: 6, cursor: 'pointer', fontSize: 12, color: '#475569', display: 'flex', alignItems: 'center', gap: 4 }}
+              >
+                ⛶ Mở rộng
+              </button>
+            </div>
             <div style={{ border: '1.5px solid #e2e8f0', borderRadius: 8, overflow: 'hidden' }}>
               <Editor
                 height="300px"
@@ -332,6 +342,76 @@ export default function CodeSnippetsPage() {
             <div style={s.modalActions}>
               <button onClick={closeModal} style={s.cancelBtn}>Huỷ</button>
               <button onClick={handleSave} disabled={saving} style={s.btnPrimary}>{saving ? 'Đang lưu...' : 'Lưu'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Expand Editor Overlay */}
+      {expandEditor && (
+        <div style={{ position: 'fixed', inset: 0, background: '#0f172a', zIndex: 300, display: 'flex', flexDirection: 'column' }}>
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', background: '#1e293b', borderBottom: '1px solid #334155', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span style={{ color: '#94a3b8', fontSize: 13 }}>
+                {form.language ?? 'java'} — {form.title || 'Code Snippet'}
+              </span>
+              <select
+                value={form.language ?? 'java'}
+                onChange={e => setForm(f => ({ ...f, language: e.target.value }))}
+                style={{ padding: '4px 8px', background: '#334155', color: '#e2e8f0', border: '1px solid #475569', borderRadius: 6, fontSize: 12, cursor: 'pointer' }}
+              >
+                {LANGUAGES.map(l => <option key={l} value={l}>{l}</option>)}
+              </select>
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                onClick={handleTestRun}
+                disabled={running}
+                style={{ padding: '6px 18px', background: running ? '#334155' : '#22c55e', color: '#fff', border: 'none', borderRadius: 6, cursor: running ? 'wait' : 'pointer', fontSize: 13, fontWeight: 700 }}
+              >
+                {running ? '⏳ Đang chạy...' : '▶ Run'}
+              </button>
+              <button
+                onClick={() => setExpandEditor(false)}
+                style={{ padding: '6px 14px', background: '#334155', color: '#e2e8f0', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13 }}
+              >
+                ✕ Đóng
+              </button>
+            </div>
+          </div>
+
+          {/* Editor + Output split */}
+          <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+            {/* Editor pane */}
+            <div style={{ flex: 1, overflow: 'hidden' }}>
+              <Editor
+                height="100%"
+                language={MONACO_LANG[form.language] ?? 'java'}
+                value={form.code ?? ''}
+                onChange={val => setForm(f => ({ ...f, code: val ?? '' }))}
+                theme="vs-dark"
+                options={{
+                  fontSize: 14,
+                  minimap: { enabled: true },
+                  scrollBeyondLastLine: false,
+                  wordWrap: 'on',
+                  tabSize: 4,
+                  automaticLayout: true,
+                  lineNumbers: 'on',
+                  folding: true,
+                }}
+              />
+            </div>
+
+            {/* Output pane */}
+            <div style={{ width: 380, background: '#0f172a', borderLeft: '1px solid #334155', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+              <div style={{ padding: '8px 14px', borderBottom: '1px solid #334155', color: '#64748b', fontSize: 12, fontWeight: 600, letterSpacing: '0.05em' }}>
+                OUTPUT
+              </div>
+              <pre style={{ flex: 1, margin: 0, padding: '14px 16px', color: runOutput ? '#e2e8f0' : '#475569', fontSize: 13, fontFamily: 'monospace', whiteSpace: 'pre-wrap', wordBreak: 'break-all', overflowY: 'auto' }}>
+                {runOutput || '// Nhấn ▶ Run để chạy code...'}
+              </pre>
             </div>
           </div>
         </div>

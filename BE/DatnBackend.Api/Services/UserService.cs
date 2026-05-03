@@ -109,7 +109,7 @@ public class UserService : IUserService
 
     public async Task DeleteUserAsync(string uid)
     {
-        await _auth.DeleteUserAsync(uid);
+        // Delete all DB data first — if this fails, Firebase Auth still exists so delete can be retried
 
         // Notifications (as recipient or actor)
         await _db.UserNotifications
@@ -181,6 +181,9 @@ public class UserService : IUserService
         await _db.UserProfiles
             .Where(p => p.Uid == uid)
             .ExecuteDeleteAsync();
+
+        // Delete Firebase Auth account last — ensures DB is clean before account is gone
+        await _auth.DeleteUserAsync(uid);
     }
 
     public async Task<AppUser> SetDisabledAsync(string uid, bool disabled)

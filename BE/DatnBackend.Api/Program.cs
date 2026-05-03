@@ -198,6 +198,21 @@ using (var scope = app.Services.CreateScope())
         ALTER TABLE ""UserProfiles"" ADD COLUMN IF NOT EXISTS ""Level"" text NOT NULL DEFAULT 'beginner';
     ");
 
+    // Tạo bảng DailyGoalBonusClaims nếu chưa có
+    await db.Database.ExecuteSqlRawAsync(@"
+        CREATE TABLE IF NOT EXISTS ""DailyGoalBonusClaims"" (
+            ""Id"" text NOT NULL PRIMARY KEY,
+            ""UserId"" text NOT NULL,
+            ""Date"" text NOT NULL,
+            ""GoalTarget"" integer NOT NULL DEFAULT 0,
+            ""BonusXp"" integer NOT NULL DEFAULT 0,
+            ""ClaimedAt"" timestamp with time zone NOT NULL DEFAULT now(),
+            CONSTRAINT ""UQ_DailyGoalBonusClaims_UserId_Date"" UNIQUE (""UserId"", ""Date"")
+        );
+        CREATE INDEX IF NOT EXISTS ""IX_DailyGoalBonusClaims_UserId_Date""
+            ON ""DailyGoalBonusClaims"" (""UserId"", ""Date"");
+    ");
+
     await DbSeeder.SeedAsync(db);
     await DbSeeder.SeedAchievementsAsync(db);
 }

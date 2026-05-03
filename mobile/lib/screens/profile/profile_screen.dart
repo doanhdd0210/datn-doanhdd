@@ -8,6 +8,7 @@ import '../../constants/app_theme.dart';
 import '../../models/achievement.dart';
 import '../../providers/user_provider.dart';
 import '../../services/auth_service.dart';
+import '../login_screen.dart';
 import '../settings/settings_screen.dart';
 import 'stats_screen.dart';
 import '../../widgets/app_snackbar.dart';
@@ -496,6 +497,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             onPressed: () async {
               Navigator.pop(ctx);
               await authService.signOut();
+              if (context.mounted) {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  (_) => false,
+                );
+              }
             },
             child: const Text('Đăng xuất',
                 style: TextStyle(color: AppColors.heartRed)),

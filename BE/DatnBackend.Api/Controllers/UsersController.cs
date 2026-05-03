@@ -155,6 +155,39 @@ public class UsersController : ControllerBase
         }
     }
 
+    /// <summary>Xoá toàn bộ QA posts + answers của các user không còn tồn tại trong UserProfiles</summary>
+    [HttpDelete("cleanup/orphan-qa")]
+    public async Task<ActionResult<ApiResponse<object>>> CleanupOrphanQa()
+    {
+        var activeUids = await _db.UserProfiles.Select(p => p.Uid).ToListAsync();
+
+        var orphanPostIds = await _db.QaPosts
+            .Where(p => !activeUids.Contains(p.UserId))
+            .Select(p => p.Id)
+            .ToListAsync();
+
+        int answersDeleted = 0;
+        int postsDeleted = 0;
+
+        if (orphanPostIds.Count > 0)
+        {
+            answersDeleted += await _db.QaAnswers
+                .Where(a => orphanPostIds.Contains(a.PostId))
+                .ExecuteDeleteAsync();
+
+            postsDeleted = await _db.QaPosts
+                .Where(p => orphanPostIds.Contains(p.Id))
+                .ExecuteDeleteAsync();
+        }
+
+        // Xoá answers của user không còn tồn tại (trả lời trên post người khác)
+        answersDeleted += await _db.QaAnswers
+            .Where(a => !activeUids.Contains(a.UserId))
+            .ExecuteDeleteAsync();
+
+        return Ok(ApiResponse<object>.Ok(new { postsDeleted, answersDeleted }, "Cleanup hoàn tất"));
+    }
+
     /// <summary>Cấp / thu hồi quyền admin</summary>
     [HttpPatch("{uid}/admin")]
     public async Task<ActionResult<ApiResponse<object>>> SetAdmin(string uid, [FromBody] SetAdminRequest request)

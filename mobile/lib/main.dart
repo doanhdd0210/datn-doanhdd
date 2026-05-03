@@ -78,6 +78,10 @@ class AuthWrapper extends StatelessWidget {
           });
           return const _OnboardingGate();
         }
+        // Safety net: clear provider state whenever auth becomes null
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          context.read<UserProvider>().reset();
+        });
         return const LoginScreen();
       },
     );

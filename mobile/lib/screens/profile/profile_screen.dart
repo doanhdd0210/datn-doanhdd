@@ -496,6 +496,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           TextButton(
             onPressed: () async {
               Navigator.pop(ctx);
+              context.read<UserProvider>().reset();
               await authService.signOut();
               if (context.mounted) {
                 Navigator.of(context).pushAndRemoveUntil(

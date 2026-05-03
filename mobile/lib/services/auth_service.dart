@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthService {
@@ -53,9 +54,14 @@ class AuthService {
 
   // Đăng xuất
   Future<void> signOut() async {
+    // Run independently so one failure doesn't block the other
     await Future.wait([
-      _auth.signOut(),
-      _googleSignIn.signOut(),
+      _auth.signOut().catchError((e) {
+        debugPrint('[Auth] Firebase sign-out error: $e');
+      }),
+      _googleSignIn.signOut().catchError((e) {
+        debugPrint('[Auth] Google sign-out error: $e');
+      }),
     ]);
   }
 

@@ -379,6 +379,32 @@ class UserProvider extends ChangeNotifier {
     return '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
   }
 
+  /// Xoá toàn bộ state khi logout — gọi trước khi navigate về LoginScreen
+  void reset() {
+    _heartTimer?.cancel();
+    _heartTimer = null;
+    _totalXp = 0;
+    _streak = 0;
+    _longestStreak = 0;
+    _hearts = maxHearts;
+    _lessonsCompleted = 0;
+    _rank = '-';
+    _isLoading = false;
+    _error = null;
+    _level = 'beginner';
+    _todayXp = 0;
+    _dailyGoal = 20;
+    _dailyGoalJustReached = false;
+    _pendingBonusXp = 0;
+    _achievements = [];
+    _achievementsLoaded = false;
+    _pendingAchievements.clear();
+    _completedLessons.clear();
+    _topicProgressMap.clear();
+    _lastHeartLostAt = null;
+    notifyListeners();
+  }
+
   @override
   void dispose() {
     _heartTimer?.cancel();

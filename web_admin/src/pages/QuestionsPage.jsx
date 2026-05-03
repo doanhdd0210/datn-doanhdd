@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { questionsApi, topicsApi, lessonsApi } from '../services/api'
-import { exportJson, exportCsv, importJson, importCsv } from '../utils/importExport'
+import { exportQuestionsExcel, importQuestionsExcel, downloadQuestionsSampleExcel } from '../utils/importExport'
 
 const ANSWER_LABELS = ['A', 'B', 'C', 'D']
 
@@ -30,8 +30,7 @@ export default function QuestionsPage() {
   const [form, setForm] = useState({})
   const [toast, setToast] = useState({ msg: '', type: 'success' })
   const [importProgress, setImportProgress] = useState('')
-  const importJsonRef = useRef()
-  const importCsvRef = useRef()
+  const importRef = useRef()
 
   const showToast = (msg, type = 'success') => {
     setToast({ msg, type })
@@ -122,13 +121,12 @@ export default function QuestionsPage() {
     }
   }
 
-  const handleImportJson = async (e) => {
+  const handleImport = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
     e.target.value = ''
     try {
-      const data = await importJson(file)
-      if (!Array.isArray(data)) throw new Error('File phải là một mảng JSON')
+      const data = await importQuestionsExcel(file, selectedLesson)
       for (let i = 0; i < data.length; i++) {
         setImportProgress(`Đang import ${i + 1}/${data.length}...`)
         await questionsApi.create(data[i])
@@ -140,50 +138,6 @@ export default function QuestionsPage() {
       setImportProgress('')
       showToast('Lỗi: ' + e.message, 'error')
     }
-  }
-
-  const handleImportCsv = async (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    e.target.value = ''
-    if (!selectedLesson) { showToast('Vui lòng chọn bài học trước', 'error'); return }
-    try {
-      const rows = await importCsv(file)
-      for (let i = 0; i < rows.length; i++) {
-        setImportProgress(`Đang import ${i + 1}/${rows.length}...`)
-        const r = rows[i]
-        await questionsApi.create({
-          lessonId: selectedLesson,
-          questionText: r.questionText ?? '',
-          options: [r.optionA ?? '', r.optionB ?? '', r.optionC ?? '', r.optionD ?? ''],
-          correctAnswerIndex: Number(r.correctAnswerIndex ?? 0),
-          explanation: r.explanation ?? '',
-          points: Number(r.points ?? 10),
-          order: Number(r.order ?? 0),
-        })
-      }
-      setImportProgress('')
-      showToast(`Đã import ${rows.length} câu hỏi từ CSV`)
-      await loadQuestions()
-    } catch (e) {
-      setImportProgress('')
-      showToast('Lỗi: ' + e.message, 'error')
-    }
-  }
-
-  const handleExportJson = () => exportJson(questions, `questions_lesson_${selectedLesson}.json`)
-  const handleExportCsv = () => {
-    const rows = questions.map(q => ({
-      questionText: q.questionText,
-      optionA: q.options?.[0] ?? '',
-      optionB: q.options?.[1] ?? '',
-      optionC: q.options?.[2] ?? '',
-      optionD: q.options?.[3] ?? '',
-      correctAnswerIndex: q.correctAnswerIndex ?? 0,
-      explanation: q.explanation ?? '',
-      points: q.points ?? 10,
-    }))
-    exportCsv(rows, ['questionText', 'optionA', 'optionB', 'optionC', 'optionD', 'correctAnswerIndex', 'explanation', 'points'], 'questions.csv')
   }
 
   const setOption = (idx, val) => {
@@ -229,13 +183,11 @@ export default function QuestionsPage() {
         <button onClick={loadQuestions} style={s.btnSecondary} disabled={!selectedLesson}>⟳ Làm mới</button>
         <button onClick={openCreate} style={s.btnPrimary} disabled={!selectedLesson}>+ Thêm câu hỏi</button>
         <div style={s.btnGroup}>
-          <button onClick={() => importJsonRef.current?.click()} style={s.btnSm}>📥 Import JSON</button>
-          <button onClick={() => importCsvRef.current?.click()} style={s.btnSm} disabled={!selectedLesson}>📥 Import CSV</button>
-          <button onClick={handleExportJson} style={s.btnSm} disabled={!selectedLesson}>📤 Export JSON</button>
-          <button onClick={handleExportCsv} style={s.btnSm} disabled={!selectedLesson}>📊 Export CSV</button>
+          <button onClick={() => importRef.current?.click()} style={s.btnSm}>📥 Import Excel</button>
+          <button onClick={() => exportQuestionsExcel(questions, `questions_lesson_${selectedLesson}.xlsx`)} style={s.btnSm} disabled={!selectedLesson}>📤 Export Excel</button>
+          <button onClick={downloadQuestionsSampleExcel} style={{ ...s.btnSm, color: '#1a73e8', borderColor: '#93c5fd' }}>📋 Tải Excel mẫu</button>
         </div>
-        <input type="file" accept=".json" ref={importJsonRef} style={{ display: 'none' }} onChange={handleImportJson} />
-        <input type="file" accept=".csv" ref={importCsvRef} style={{ display: 'none' }} onChange={handleImportCsv} />
+        <input type="file" accept=".xlsx,.xls" ref={importRef} style={{ display: 'none' }} onChange={handleImport} />
       </div>
 
       {importProgress && <div style={s.progressBox}>{importProgress}</div>}

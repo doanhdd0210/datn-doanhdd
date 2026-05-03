@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { lessonsApi, topicsApi } from '../services/api'
-import { exportJson, exportCsv, importJson } from '../utils/importExport'
+import { exportLessonsExcel, importLessonsExcel, downloadLessonsSampleExcel } from '../utils/importExport'
 
 function Toast({ msg, type }) {
   if (!msg) return null
@@ -114,8 +114,7 @@ export default function LessonsPage() {
     if (!file) return
     e.target.value = ''
     try {
-      const data = await importJson(file)
-      if (!Array.isArray(data)) throw new Error('File phải là một mảng JSON')
+      const data = await importLessonsExcel(file)
       for (let i = 0; i < data.length; i++) {
         setImportProgress(`Đang import ${i + 1}/${data.length}...`)
         await lessonsApi.create(data[i])
@@ -127,12 +126,6 @@ export default function LessonsPage() {
       setImportProgress('')
       showToast('Lỗi: ' + e.message, 'error')
     }
-  }
-
-  const handleExportJson = () => exportJson(filtered, 'lessons_export.json')
-  const handleExportCsv = () => {
-    const headers = ['id', 'topicId', 'title', 'summary', 'xpReward', 'estimatedMinutes', 'order', 'isActive']
-    exportCsv(filtered, headers, 'lessons.csv')
   }
 
   return (
@@ -154,11 +147,11 @@ export default function LessonsPage() {
         <button onClick={load} style={s.btnSecondary}>⟳ Làm mới</button>
         <button onClick={openCreate} style={s.btnPrimary}>+ Thêm bài học</button>
         <div style={s.btnGroup}>
-          <button onClick={() => importRef.current?.click()} style={s.btnSm}>📥 Import JSON</button>
-          <button onClick={handleExportJson} style={s.btnSm}>📤 Export JSON</button>
-          <button onClick={handleExportCsv} style={s.btnSm}>📊 Export CSV</button>
+          <button onClick={() => importRef.current?.click()} style={s.btnSm}>📥 Import Excel</button>
+          <button onClick={() => exportLessonsExcel(filtered, 'lessons_export.xlsx')} style={s.btnSm}>📤 Export Excel</button>
+          <button onClick={downloadLessonsSampleExcel} style={{ ...s.btnSm, color: '#1a73e8', borderColor: '#93c5fd' }}>📋 Tải Excel mẫu</button>
         </div>
-        <input type="file" accept=".json" ref={importRef} style={{ display: 'none' }} onChange={handleImport} />
+        <input type="file" accept=".xlsx,.xls" ref={importRef} style={{ display: 'none' }} onChange={handleImport} />
       </div>
 
       {importProgress && <div style={s.progressBox}>{importProgress}</div>}

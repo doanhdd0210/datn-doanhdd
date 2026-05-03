@@ -138,7 +138,10 @@
       "Bash(awk -F: '{print $1}')",
       "Bash(xargs ls *)",
       "Bash(python3 -c \" import sys, json lines = sys.stdin.readlines\\(\\) for line in lines[-20:]: try: d = json.loads\\(line\\) role = d.get\\('role', ''\\) content = d.get\\('content', ''\\) if isinstance\\(content, list\\): for c in content: if isinstance\\(c, dict\\) and c.get\\('type'\\) == 'text': print\\(f'[{role}]: {c[\\\\\"text\\\\\"][:300]}'\\) elif isinstance\\(content, str\\): print\\(f'[{role}]: {content[:300]}'\\) except: pass \")",
-      "Bash(xargs cat *)"
+      "Bash(xargs cat *)",
+      "Bash(sed -n '55,75p' /Users/doducdoanh/StudioProjects/datn.doanhdd/mobile/lib/services/auth_service.dart)",
+      "Bash(sed -n '60,100p' /Users/doducdoanh/StudioProjects/datn.doanhdd/mobile/lib/screens/settings/settings_screen.dart)",
+      "Bash(sed -n '481,510p' /Users/doducdoanh/StudioProjects/datn.doanhdd/mobile/lib/screens/profile/profile_screen.dart)"
     ]
   }
 }

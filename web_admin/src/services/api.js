@@ -97,6 +97,7 @@ export const codeSnippetsApi = {
   create: (data) => request('POST', '/api/code-snippets', data),
   update: (id, data) => request('PUT', `/api/code-snippets/${id}`, data),
   delete: (id) => request('DELETE', `/api/code-snippets/${id}`),
+  runCode: (language, code, stdin = '') => request('POST', '/api/code-snippets/run', { language, code, stdin }),
 }
 
 // ─── QA ──────────────────────────────────────────────────────────────────────

@@ -194,11 +194,9 @@ public class UsersController : ControllerBase
     {
         if (!IsAdmin) return StatusCode(403, ApiResponse<object>.Fail("Forbidden"));
 
-        // Lấy tất cả UID còn tồn tại trong Firebase Auth
         var firebaseUsers = await _userService.ListUsersAsync();
-        var activeUids = firebaseUsers.Select(u => u.Uid).ToHashSet();
+        var activeUids = firebaseUsers.Select(u => u.Uid).ToList();
 
-        // Tìm profiles không còn trong Firebase
         var orphanUids = await _db.UserProfiles
             .Where(p => !activeUids.Contains(p.Uid))
             .Select(p => p.Uid)
@@ -207,11 +205,24 @@ public class UsersController : ControllerBase
         if (orphanUids.Count == 0)
             return Ok(ApiResponse<object>.Ok(new { deleted = 0 }, "Không có dữ liệu thừa"));
 
-        // Cascade delete cho từng orphan UID
-        foreach (var uid in orphanUids)
-            await _userService.DeleteUserAsync(uid, skipFirebase: true);
+        // Bulk delete — single query per table, much faster than per-uid loop
+        await _db.UserNotifications.Where(n => orphanUids.Contains(n.UserId) || orphanUids.Contains(n.ActorId)).ExecuteDeleteAsync();
+        await _db.UserAchievements.Where(a => orphanUids.Contains(a.UserId)).ExecuteDeleteAsync();
+        await _db.DailyGoalBonusClaims.Where(d => orphanUids.Contains(d.UserId)).ExecuteDeleteAsync();
+        await _db.DailyProgresses.Where(d => orphanUids.Contains(d.UserId)).ExecuteDeleteAsync();
+        await _db.PracticeResults.Where(p => orphanUids.Contains(p.UserId)).ExecuteDeleteAsync();
+        await _db.QuizResults.Where(q => orphanUids.Contains(q.UserId)).ExecuteDeleteAsync();
+        await _db.UserProgresses.Where(p => orphanUids.Contains(p.UserId)).ExecuteDeleteAsync();
+        await _db.UserFollows.Where(f => orphanUids.Contains(f.FollowerId) || orphanUids.Contains(f.FollowingId)).ExecuteDeleteAsync();
+        await _db.QaAnswers.Where(a => orphanUids.Contains(a.UserId)).ExecuteDeleteAsync();
+        var orphanPostIds = await _db.QaPosts.Where(p => orphanUids.Contains(p.UserId)).Select(p => p.Id).ToListAsync();
+        if (orphanPostIds.Count > 0)
+            await _db.QaAnswers.Where(a => orphanPostIds.Contains(a.PostId)).ExecuteDeleteAsync();
+        await _db.QaPosts.Where(p => orphanUids.Contains(p.UserId)).ExecuteDeleteAsync();
+        await _db.NotificationHistory.Where(n => orphanUids.Contains(n.SentByUid)).ExecuteDeleteAsync();
+        await _db.UserProfiles.Where(p => orphanUids.Contains(p.Uid)).ExecuteDeleteAsync();
 
-        return Ok(ApiResponse<object>.Ok(new { deleted = orphanUids.Count, uids = orphanUids }, $"Đã xoá {orphanUids.Count} profile thừa"));
+        return Ok(ApiResponse<object>.Ok(new { deleted = orphanUids.Count }, $"Đã xoá {orphanUids.Count} profile thừa"));
     }
 
     /// <summary>Xoá toàn bộ non-admin users (Firebase Auth + DB cascade)</summary>
@@ -220,23 +231,47 @@ public class UsersController : ControllerBase
     {
         if (!IsAdmin) return StatusCode(403, ApiResponse<object>.Fail("Forbidden"));
 
-        // 1. Xoá orphaned profiles (không còn trong Firebase) — DB only
         var firebaseUsers = await _userService.ListUsersAsync();
-        var activeUids = firebaseUsers.Select(u => u.Uid).ToHashSet();
-        var orphanUids = await _db.UserProfiles
-            .Where(p => !activeUids.Contains(p.Uid) && !p.IsAdmin)
-            .Select(p => p.Uid).ToListAsync();
-        foreach (var uid in orphanUids)
-            await _userService.DeleteUserAsync(uid, skipFirebase: true);
-
-        // 2. Xoá non-admin Firebase Auth users + DB cascade
         var nonAdmins = firebaseUsers.Where(u => !u.IsAdmin).ToList();
+
+        // Lấy tất cả non-admin UIDs từ cả Firebase lẫn DB (bao gồm orphans)
+        var firebaseNonAdminUids = nonAdmins.Select(u => u.Uid).ToList();
+        var dbNonAdminUids = await _db.UserProfiles
+            .Where(p => !p.IsAdmin)
+            .Select(p => p.Uid)
+            .ToListAsync();
+        var allUids = firebaseNonAdminUids.Union(dbNonAdminUids).ToList();
+
+        if (allUids.Count == 0)
+            return Ok(ApiResponse<object>.Ok(new { deletedUsers = 0 }, "Không có user nào để xoá"));
+
+        // Bulk delete DB — single query per table
+        await _db.UserNotifications.Where(n => allUids.Contains(n.UserId) || allUids.Contains(n.ActorId)).ExecuteDeleteAsync();
+        await _db.UserAchievements.Where(a => allUids.Contains(a.UserId)).ExecuteDeleteAsync();
+        await _db.DailyGoalBonusClaims.Where(d => allUids.Contains(d.UserId)).ExecuteDeleteAsync();
+        await _db.DailyProgresses.Where(d => allUids.Contains(d.UserId)).ExecuteDeleteAsync();
+        await _db.PracticeResults.Where(p => allUids.Contains(p.UserId)).ExecuteDeleteAsync();
+        await _db.QuizResults.Where(q => allUids.Contains(q.UserId)).ExecuteDeleteAsync();
+        await _db.UserProgresses.Where(p => allUids.Contains(p.UserId)).ExecuteDeleteAsync();
+        await _db.UserFollows.Where(f => allUids.Contains(f.FollowerId) || allUids.Contains(f.FollowingId)).ExecuteDeleteAsync();
+        await _db.QaAnswers.Where(a => allUids.Contains(a.UserId)).ExecuteDeleteAsync();
+        var postIds = await _db.QaPosts.Where(p => allUids.Contains(p.UserId)).Select(p => p.Id).ToListAsync();
+        if (postIds.Count > 0)
+            await _db.QaAnswers.Where(a => postIds.Contains(a.PostId)).ExecuteDeleteAsync();
+        await _db.QaPosts.Where(p => allUids.Contains(p.UserId)).ExecuteDeleteAsync();
+        await _db.NotificationHistory.Where(n => allUids.Contains(n.SentByUid)).ExecuteDeleteAsync();
+        await _db.UserProfiles.Where(p => allUids.Contains(p.Uid)).ExecuteDeleteAsync();
+
+        // Xoá Firebase Auth (bỏ qua nếu user không còn tồn tại)
         foreach (var u in nonAdmins)
-            await _userService.DeleteUserAsync(u.Uid);
+        {
+            try { await _userService.DeleteUserAsync(u.Uid); }
+            catch { }
+        }
 
         return Ok(ApiResponse<object>.Ok(
-            new { deletedUsers = nonAdmins.Count, deletedOrphans = orphanUids.Count },
-            $"Đã xoá {nonAdmins.Count} user và {orphanUids.Count} profile thừa"));
+            new { deletedUsers = nonAdmins.Count, deletedOrphans = dbNonAdminUids.Count - firebaseNonAdminUids.Count },
+            $"Đã xoá {nonAdmins.Count} user"));
     }
 
     /// <summary>Cấp / thu hồi quyền admin</summary>

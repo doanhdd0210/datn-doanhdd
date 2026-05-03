@@ -186,7 +186,11 @@ public class UserService : IUserService
 
         // Delete Firebase Auth account last — ensures DB is clean before account is gone
         if (!skipFirebase)
-            await _auth.DeleteUserAsync(uid);
+        {
+            try { await _auth.DeleteUserAsync(uid); }
+            catch (FirebaseAdmin.Auth.FirebaseAuthException ex)
+                when (ex.AuthErrorCode == FirebaseAdmin.Auth.AuthErrorCode.UserNotFound) { }
+        }
     }
 
     public async Task<AppUser> SetDisabledAsync(string uid, bool disabled)

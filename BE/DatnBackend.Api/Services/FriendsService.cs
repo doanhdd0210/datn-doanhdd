@@ -1,3 +1,4 @@
+using FirebaseAdmin.Auth;
 using Microsoft.EntityFrameworkCore;
 using DatnBackend.Api.Data;
 using DatnBackend.Api.Models;
@@ -170,6 +171,35 @@ public class FriendsService
         };
     }
 
+    // Fill in missing DisplayName/PhotoUrl from Firebase Auth for entries where profile has no name
+    private async Task _enrichNamesAsync(List<LeaderboardEntry> entries)
+    {
+        var missing = entries.Where(e => string.IsNullOrWhiteSpace(e.DisplayName)).ToList();
+        if (missing.Count == 0) return;
+
+        var tasks = missing.Select(async e =>
+        {
+            try
+            {
+                var record = await FirebaseAuth.DefaultInstance.GetUserAsync(e.UserId);
+                e.DisplayName = record.DisplayName ?? record.Email?.Split('@')[0] ?? e.UserId[..6];
+                if (string.IsNullOrWhiteSpace(e.PhotoUrl))
+                    e.PhotoUrl = record.PhotoUrl;
+
+                // Persist to DB so next call is instant
+                var profile = await _db.UserProfiles.FirstOrDefaultAsync(p => p.Uid == e.UserId);
+                if (profile != null)
+                {
+                    profile.DisplayName = e.DisplayName;
+                    if (string.IsNullOrWhiteSpace(profile.PhotoUrl)) profile.PhotoUrl = e.PhotoUrl;
+                    await _db.SaveChangesAsync();
+                }
+            }
+            catch { /* user may have been deleted from Firebase */ }
+        });
+        await Task.WhenAll(tasks);
+    }
+
     public async Task<List<LeaderboardEntry>> GetLeaderboardAsync(int limit = 20)
     {
         var cacheKey = $"leaderboard:{limit}";
@@ -192,6 +222,7 @@ public class FriendsService
             CurrentStreak = p.CurrentStreak,
         }).ToList();
 
+        await _enrichNamesAsync(entries);
         await _cache.SetAsync(cacheKey, entries, TimeSpan.FromMinutes(1));
         return entries;
     }
@@ -227,7 +258,7 @@ public class FriendsService
                 {
                     Rank = i + 1,
                     UserId = x.UserId,
-                    DisplayName = profile?.DisplayName ?? "Unknown",
+                    DisplayName = profile?.DisplayName ?? "",
                     PhotoUrl = profile?.PhotoUrl,
                     TotalXp = x.WeeklyXp,
                     LessonsCompleted = profile?.LessonsCompleted ?? 0,
@@ -236,6 +267,7 @@ public class FriendsService
             })
             .ToList();
 
+        await _enrichNamesAsync(entries);
         await _cache.SetAsync(cacheKey, entries, TimeSpan.FromMinutes(5));
         return entries;
     }

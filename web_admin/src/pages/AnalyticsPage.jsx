@@ -19,9 +19,10 @@ export default function AnalyticsPage() {
       const lessons = lessonsRes.status === 'fulfilled' ? (lessonsRes.value ?? []) : []
       const lb = lbRes.status === 'fulfilled' ? (lbRes.value ?? []) : []
 
-      const activeUsers = users.filter(u => !u.disabled)
+      const nonAdmins = users.filter(u => !u.isAdmin)
+      const activeUsers = nonAdmins.filter(u => !u.disabled)
       const adminUsers = users.filter(u => u.isAdmin)
-      const disabledUsers = users.filter(u => u.disabled)
+      const disabledUsers = nonAdmins.filter(u => u.disabled)
 
       const usersWithXp = lb.filter(u => (u.xp ?? u.totalXp ?? 0) > 0)
       const totalXp = lb.reduce((s, u) => s + (u.xp ?? u.totalXp ?? 0), 0)
@@ -35,7 +36,7 @@ export default function AnalyticsPage() {
       const monthlyReg = Array.from({ length: 6 }, (_, i) => {
         const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1)
         const label = d.toLocaleDateString('vi-VN', { month: 'short', year: 'numeric' })
-        const count = users.filter(u => {
+        const count = nonAdmins.filter(u => {
           const created = new Date(u.createdAt)
           return created.getFullYear() === d.getFullYear() && created.getMonth() === d.getMonth()
         }).length
@@ -52,7 +53,7 @@ export default function AnalyticsPage() {
       ]
 
       setData({
-        users, activeUsers, adminUsers, disabledUsers,
+        users: nonAdmins, activeUsers, adminUsers, disabledUsers,
         topics, lessons,
         lb, usersWithXp, totalXp, avgXp, usersWithStreak, maxStreak, totalLessonsCompleted,
         monthlyReg, xpBuckets,

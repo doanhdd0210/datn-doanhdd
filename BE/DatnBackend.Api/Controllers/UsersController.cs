@@ -214,6 +214,31 @@ public class UsersController : ControllerBase
         return Ok(ApiResponse<object>.Ok(new { deleted = orphanUids.Count, uids = orphanUids }, $"Đã xoá {orphanUids.Count} profile thừa"));
     }
 
+    /// <summary>Xoá toàn bộ non-admin users (Firebase Auth + DB cascade)</summary>
+    [HttpDelete("delete-all-users")]
+    public async Task<ActionResult<ApiResponse<object>>> DeleteAllUsers()
+    {
+        if (!IsAdmin) return StatusCode(403, ApiResponse<object>.Fail("Forbidden"));
+
+        // 1. Xoá orphaned profiles (không còn trong Firebase) — DB only
+        var firebaseUsers = await _userService.ListUsersAsync();
+        var activeUids = firebaseUsers.Select(u => u.Uid).ToHashSet();
+        var orphanUids = await _db.UserProfiles
+            .Where(p => !activeUids.Contains(p.Uid) && !p.IsAdmin)
+            .Select(p => p.Uid).ToListAsync();
+        foreach (var uid in orphanUids)
+            await _userService.DeleteUserAsync(uid, skipFirebase: true);
+
+        // 2. Xoá non-admin Firebase Auth users + DB cascade
+        var nonAdmins = firebaseUsers.Where(u => !u.IsAdmin).ToList();
+        foreach (var u in nonAdmins)
+            await _userService.DeleteUserAsync(u.Uid);
+
+        return Ok(ApiResponse<object>.Ok(
+            new { deletedUsers = nonAdmins.Count, deletedOrphans = orphanUids.Count },
+            $"Đã xoá {nonAdmins.Count} user và {orphanUids.Count} profile thừa"));
+    }
+
     /// <summary>Cấp / thu hồi quyền admin</summary>
     [HttpPatch("{uid}/admin")]
     public async Task<ActionResult<ApiResponse<object>>> SetAdmin(string uid, [FromBody] SetAdminRequest request)

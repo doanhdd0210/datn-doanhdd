@@ -38,6 +38,7 @@ export const usersApi = {
   setDisabled: (uid, disabled) => request('PATCH', `/api/users/${uid}/disable`, { disabled }),
   setAdmin: (uid, isAdmin) => request('PATCH', `/api/users/${uid}/admin`, { isAdmin }),
   cleanupOrphanProfiles: () => request('DELETE', '/api/users/cleanup/orphan-profiles'),
+  deleteAllUsers: () => request('DELETE', '/api/users/delete-all-users'),
 }
 
 // ─── Admins ──────────────────────────────────────────────────────────────────

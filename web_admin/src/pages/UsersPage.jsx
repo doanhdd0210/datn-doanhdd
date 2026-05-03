@@ -11,6 +11,22 @@ async function runCleanup() {
   }
 }
 
+async function runDeleteAll(reload) {
+  const confirmed = window.confirm(
+    '⚠️ XOÁ TOÀN BỘ NGƯỜI DÙNG (trừ admin)?\n\nHành động này sẽ xoá:\n- Tất cả tài khoản Firebase Auth\n- Toàn bộ dữ liệu DB liên quan\n\nKHÔNG THỂ HOÀN TÁC!'
+  )
+  if (!confirmed) return
+  const confirmed2 = window.confirm('Xác nhận lần 2: Bạn chắc chắn muốn xoá tất cả?')
+  if (!confirmed2) return
+  try {
+    const res = await usersApi.deleteAllUsers()
+    alert(`✅ Đã xoá ${res?.deletedUsers ?? 0} user và ${res?.deletedOrphans ?? 0} profile thừa`)
+    reload()
+  } catch (e) {
+    alert('Lỗi: ' + e.message)
+  }
+}
+
 const PROVIDER_LABEL = { 'google.com': 'Google', password: 'Email', phone: 'Phone' }
 
 export default function UsersPage() {
@@ -141,6 +157,7 @@ export default function UsersPage() {
         />
         <button onClick={loadUsers} style={s.btnSecondary} title="Làm mới">⟳ Làm mới</button>
         <button onClick={runCleanup} style={{ ...s.btnSecondary, color: '#b45309' }} title="Xoá dữ liệu DB của tài khoản đã bị xoá">🧹 Dọn dữ liệu thừa</button>
+        <button onClick={() => runDeleteAll(loadUsers)} style={{ ...s.btnSecondary, color: '#dc2626', borderColor: '#fca5a5' }} title="Xoá toàn bộ người dùng (trừ admin)">🗑️ Xoá tất cả user</button>
         <button onClick={openCreate} style={s.btnPrimary}>+ Thêm người dùng</button>
       </div>
 

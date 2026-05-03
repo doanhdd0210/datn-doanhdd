@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:developer' as dev;
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
@@ -58,46 +57,83 @@ class ApiService {
     final data = json?['data'];
     final rawError = json?['error'] as String? ?? json?['message'];
 
-    // Describe data shape concisely
-    String _describeData(dynamic d) {
-      if (d == null) return 'null';
-      if (d is List) return 'Array[${d.length}]';
-      if (d is Map) {
-        final keys = (d as Map<String, dynamic>).keys.take(4).join(', ');
-        return 'Object{ $keys${d.length > 4 ? ', …' : ''} }';
-      }
-      final s = d.toString();
-      return s.length > 60 ? '${s.substring(0, 60)}…' : s;
+    // Summarise a single map: show up to 5 key: value pairs, truncate long values
+    String _summariseMap(Map<String, dynamic> m) {
+      final parts = m.entries.take(5).map((e) {
+        final v = e.value;
+        String vs;
+        if (v == null) {
+          vs = 'null';
+        } else if (v is String) {
+          vs = v.length > 40 ? '"${v.substring(0, 40)}…"' : '"$v"';
+        } else if (v is List) {
+          vs = '[…${v.length}]';
+        } else if (v is Map) {
+          vs = '{…}';
+        } else {
+          vs = v.toString();
+        }
+        return '${e.key}: $vs';
+      }).join(', ');
+      return '{ $parts${m.length > 5 ? ', …' : ''} }';
     }
 
+    // ANSI colour helpers
+    const reset  = '\x1B[0m';
+    const bold   = '\x1B[1m';
+    const dim    = '\x1B[2m';
+    const green  = '\x1B[32m';
+    const red    = '\x1B[31m';
+    const cyan   = '\x1B[36m';
+    const yellow = '\x1B[33m';
+
+    final c      = ok ? green : red;   // primary colour for this request
+    final sepClr = '$dim$sep$reset';
+
     final lines = StringBuffer();
-    lines.writeln(sep);
+    lines.writeln(sepClr);
 
     // Request line
     final methodPad = method.padRight(7);
-    lines.writeln(' ${ok ? '✓' : '✗'}  $methodPad $path');
+    lines.writeln(' $c${bold}${ok ? '✓' : '✗'}$reset  $bold$methodPad$reset $path');
 
     // Request body (POST / PUT)
     if (requestBody != null && requestBody.isNotEmpty) {
-      final bodyDesc = _describeData(requestBody);
-      lines.writeln('    ↑ body  →  $bodyDesc');
+      lines.writeln('    $dim↑ body$reset  →  $yellow${_summariseMap(requestBody)}$reset');
     }
 
     // Status + timing + message
-    final msgPart = (ok && message != null) ? '  "$message"' : '';
-    lines.writeln('    $code ${ok ? 'OK' : 'ERR'}  ·  ${ms}ms$msgPart');
+    final msgPart = (ok && message != null) ? '  $dim"$message"$reset' : '';
+    lines.writeln('    $c$bold$code ${ok ? 'OK' : 'ERR'}$reset  $dim·  ${ms}ms$reset$msgPart');
 
-    // Data or error
+    // Data detail
     if (ok && data != null) {
-      lines.writeln('    ↓ data  →  ${_describeData(data)}');
+      if (data is List) {
+        lines.writeln('    $cyan↓ data$reset  →  ${bold}Array[${data.length}]$reset');
+        final preview = data.take(5);
+        for (final item in preview) {
+          if (item is Map<String, dynamic>) {
+            lines.writeln('               $dim•$reset $cyan${_summariseMap(item)}$reset');
+          } else {
+            final s = item.toString();
+            lines.writeln('               $dim•$reset $cyan${s.length > 80 ? '${s.substring(0, 80)}…' : s}$reset');
+          }
+        }
+        if (data.length > 5) lines.writeln('               $dim… +${data.length - 5} more$reset');
+      } else if (data is Map<String, dynamic>) {
+        lines.writeln('    $cyan↓ data$reset  →  $cyan${_summariseMap(data)}$reset');
+      } else {
+        final s = data.toString();
+        lines.writeln('    $cyan↓ data$reset  →  $cyan${s.length > 100 ? '${s.substring(0, 100)}…' : s}$reset');
+      }
     } else if (!ok) {
       final errText = rawError ?? response.body.substring(0, response.body.length.clamp(0, 120));
-      lines.writeln('    ✗ error →  $errText');
+      lines.writeln('    $red✗ error$reset →  $red$bold$errText$reset');
     }
 
-    lines.write(sep);
+    lines.write(sepClr);
 
-    dev.log(lines.toString(), name: 'API');
+    debugPrint('[API] ${lines.toString()}');
   }
 
   Future<Map<String, String>> _getHeaders() async {

@@ -112,7 +112,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 32),
                   // Title
                   const Text(
-                    'JavaLearn',
+                    'JavaUp',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontFamily: 'Nunito',

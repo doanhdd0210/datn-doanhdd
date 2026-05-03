@@ -424,7 +424,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           const SizedBox(height: 24),
           const Center(
-            child: Text('JavaLearn v1.0.0',
+            child: Text('JavaUp v1.0.0',
                 style: AppTextStyles.bodySmall),
           ),
         ],

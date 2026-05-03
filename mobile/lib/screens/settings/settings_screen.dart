@@ -177,7 +177,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onTap: () => _showTextDialog(
                 title: 'Điều khoản sử dụng',
                 content:
-                    'Bằng cách sử dụng JavaLearn, bạn đồng ý:\n\n'
+                    'Bằng cách sử dụng JavaUp, bạn đồng ý:\n\n'
                     '• Sử dụng ứng dụng cho mục đích học tập cá nhân.\n'
                     '• Không chia sẻ tài khoản với người khác.\n'
                     '• Không phát tán nội dung vi phạm pháp luật trên Q&A.\n'
@@ -192,7 +192,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onTap: () => _showTextDialog(
                 title: 'Chính sách bảo mật',
                 content:
-                    'JavaLearn thu thập và sử dụng dữ liệu như sau:\n\n'
+                    'JavaUp thu thập và sử dụng dữ liệu như sau:\n\n'
                     '• Email và tên hiển thị: dùng để xác thực và hiển thị hồ sơ.\n'
                     '• Tiến độ học tập: lưu trên server để đồng bộ giữa các thiết bị.\n'
                     '• FCM token: dùng để gửi thông báo học tập.\n\n'

@@ -495,13 +495,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           TextButton(
             onPressed: () async {
               Navigator.pop(ctx);
+              // popUntil TRƯỚC signOut: tránh race condition context.mounted=false
+              // khi AuthWrapper rebuild quá nhanh sau Firebase sign-out event
+              Navigator.of(context).popUntil((route) => route.isFirst);
               context.read<UserProvider>().reset();
               await authService.signOut();
-              // AuthWrapper's StreamBuilder detects auth=null and shows LoginScreen.
-              // popUntil(isFirst) ensures any stacked routes are cleared first.
-              if (context.mounted) {
-                Navigator.of(context).popUntil((route) => route.isFirst);
-              }
             },
             child: const Text('Đăng xuất',
                 style: TextStyle(color: AppColors.heartRed)),

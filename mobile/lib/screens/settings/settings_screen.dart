@@ -81,14 +81,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
     if (confirm == true && mounted) {
+      // popUntil TRƯỚC signOut: tránh race condition context.mounted=false
+      Navigator.of(context).popUntil((route) => route.isFirst);
       context.read<UserProvider>().reset();
       await _authService.signOut();
-      // Pop back to the root route (AuthWrapper) — its StreamBuilder detects
-      // auth=null and shows LoginScreen. Never use pushAndRemoveUntil(LoginScreen)
-      // as that kills AuthWrapper and breaks subsequent sign-in navigation.
-      if (mounted) {
-        Navigator.of(context).popUntil((route) => route.isFirst);
-      }
     }
   }
 

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../constants/app_colors.dart';
+import '../../constants/level_config.dart';
 import '../../providers/user_provider.dart';
 import '../../../main.dart' show onboardingDoneKey;
 import '../main_navigation_screen.dart';
@@ -20,41 +21,7 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
   String? _selectedLevel;
   late AnimationController _controller;
 
-  static const _levels = [
-    _LevelData(
-      id: 'beginner',
-      emoji: '🌱',
-      title: 'Mới bắt đầu',
-      subtitle: 'Tôi mới học Java',
-      description: 'Bắt đầu từ nền tảng cơ bản nhất — biến, vòng lặp và các chương trình đơn giản.',
-      color: AppColors.primary,
-      shadowColor: AppColors.primaryDark,
-      bgColor: AppColors.surface,
-      unlockedTopics: 1,
-    ),
-    _LevelData(
-      id: 'intermediate',
-      emoji: '🪴',
-      title: 'Trung cấp',
-      subtitle: 'Tôi biết một chút Java',
-      description: 'Bỏ qua phần cơ bản. Lao vào OOP, collections và design patterns.',
-      color: AppColors.secondary,
-      shadowColor: AppColors.secondaryLight,
-      bgColor: AppColors.surface,
-      unlockedTopics: 2,
-    ),
-    _LevelData(
-      id: 'advanced',
-      emoji: '🌳',
-      title: 'Nâng cao',
-      subtitle: 'Tôi đã code Java',
-      description: 'Đi thẳng vào algorithms, concurrency và các tính năng Java nâng cao.',
-      color: AppColors.streakOrange,
-      shadowColor: Color(0xFFCC6600),
-      bgColor: AppColors.surface,
-      unlockedTopics: 3,
-    ),
-  ];
+  static const _levels = LevelConfig.levels;
 
   @override
   void initState() {
@@ -229,7 +196,7 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
 }
 
 class _LevelCard extends StatelessWidget {
-  final _LevelData level;
+  final LevelConfig level;
   final bool isSelected;
   final VoidCallback onTap;
   final int delay;
@@ -285,7 +252,7 @@ class _LevelCard extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        level.title,
+                        level.selectionTitle,
                         style: TextStyle(
                           fontWeight: FontWeight.w900,
                           fontSize: 18,
@@ -301,7 +268,7 @@ class _LevelCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          level.subtitle,
+                          level.selectionSubtitle,
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
@@ -344,26 +311,3 @@ class _LevelCard extends StatelessWidget {
   }
 }
 
-class _LevelData {
-  final String id;
-  final String emoji;
-  final String title;
-  final String subtitle;
-  final String description;
-  final Color color;
-  final Color shadowColor;
-  final Color bgColor;
-  final int unlockedTopics;
-
-  const _LevelData({
-    required this.id,
-    required this.emoji,
-    required this.title,
-    required this.subtitle,
-    required this.description,
-    required this.color,
-    required this.shadowColor,
-    required this.bgColor,
-    required this.unlockedTopics,
-  });
-}

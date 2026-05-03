@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../constants/app_colors.dart';
+import '../../constants/level_config.dart';
 import '../../providers/user_provider.dart';
 import '../../../main.dart' show onboardingDoneKey;
 import '../main_navigation_screen.dart';
@@ -414,40 +415,7 @@ class _PlacementTestScreenState extends State<PlacementTestScreen>
   }
 
   Widget _buildResult() {
-    final Map<String, _ResultData> results = {
-      'beginner': const _ResultData(
-        emoji: '🌱',
-        title: 'Bạn đang ở trình độ cơ bản!',
-        subtitle: 'Không sao cả — ai cũng phải bắt đầu từ đâu đó. Chúng tôi sẽ xây dựng nền tảng cho bạn từng bước.',
-        color: AppColors.primary,
-        shadowColor: AppColors.primaryDark,
-        bgColor: AppColors.surface,
-        levelLabel: 'Lộ trình cơ bản',
-        unlockText: 'Bắt đầu từ bài học đầu tiên',
-      ),
-      'intermediate': const _ResultData(
-        emoji: '🪴',
-        title: 'Bạn đang ở trình độ trung cấp!',
-        subtitle: 'Tuyệt! Bạn đã nắm cơ bản. Chúng tôi sẽ đưa bạn thẳng vào OOP và hơn thế nữa.',
-        color: AppColors.secondary,
-        shadowColor: AppColors.secondaryLight,
-        bgColor: AppColors.surface,
-        levelLabel: 'Lộ trình trung cấp',
-        unlockText: 'Đã mở khóa 2 chủ đề đầu tiên',
-      ),
-      'advanced': const _ResultData(
-        emoji: '🌳',
-        title: 'Bạn đang ở trình độ nâng cao!',
-        subtitle: 'Ấn tượng! Tất cả chủ đề đã được mở khóa. Bắt tay vào những thứ khó ngay thôi.',
-        color: AppColors.streakOrange,
-        shadowColor: Color(0xFFCC6600),
-        bgColor: AppColors.surface,
-        levelLabel: 'Lộ trình nâng cao',
-        unlockText: 'Đã mở khóa 3 chủ đề đầu tiên',
-      ),
-    };
-
-    final r = results[_resultLevel]!;
+    final r = LevelConfig.byId(_resultLevel);
 
     return Container(
       color: r.bgColor,
@@ -494,7 +462,7 @@ class _PlacementTestScreenState extends State<PlacementTestScreen>
             child: Column(
               children: [
                 Text(
-                  r.title,
+                  r.resultTitle,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 28,
@@ -504,7 +472,7 @@ class _PlacementTestScreenState extends State<PlacementTestScreen>
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  r.subtitle,
+                  r.resultSubtitle,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 15,
@@ -685,24 +653,3 @@ class _PlacementQuestion {
   });
 }
 
-class _ResultData {
-  final String emoji;
-  final String title;
-  final String subtitle;
-  final Color color;
-  final Color shadowColor;
-  final Color bgColor;
-  final String levelLabel;
-  final String unlockText;
-
-  const _ResultData({
-    required this.emoji,
-    required this.title,
-    required this.subtitle,
-    required this.color,
-    required this.shadowColor,
-    required this.bgColor,
-    required this.levelLabel,
-    required this.unlockText,
-  });
-}

@@ -255,6 +255,9 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
     }
 
     if (mounted) {
+      // Refresh streak + stats in background so home screen is up-to-date when user returns
+      context.read<UserProvider>().loadStats();
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(

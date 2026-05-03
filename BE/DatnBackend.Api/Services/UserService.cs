@@ -111,12 +111,76 @@ public class UserService : IUserService
     {
         await _auth.DeleteUserAsync(uid);
 
-        var profile = await _db.UserProfiles.FirstOrDefaultAsync(p => p.Uid == uid);
-        if (profile != null)
+        // Notifications (as recipient or actor)
+        await _db.UserNotifications
+            .Where(n => n.UserId == uid || n.ActorId == uid)
+            .ExecuteDeleteAsync();
+
+        // Achievements
+        await _db.UserAchievements
+            .Where(a => a.UserId == uid)
+            .ExecuteDeleteAsync();
+
+        // Daily goal bonus claims
+        await _db.DailyGoalBonusClaims
+            .Where(d => d.UserId == uid)
+            .ExecuteDeleteAsync();
+
+        // Daily progress / streaks
+        await _db.DailyProgresses
+            .Where(d => d.UserId == uid)
+            .ExecuteDeleteAsync();
+
+        // Practice & quiz results
+        await _db.PracticeResults
+            .Where(p => p.UserId == uid)
+            .ExecuteDeleteAsync();
+
+        await _db.QuizResults
+            .Where(q => q.UserId == uid)
+            .ExecuteDeleteAsync();
+
+        // Lesson progress
+        await _db.UserProgresses
+            .Where(p => p.UserId == uid)
+            .ExecuteDeleteAsync();
+
+        // Follow relationships (both directions)
+        await _db.UserFollows
+            .Where(f => f.FollowerId == uid || f.FollowingId == uid)
+            .ExecuteDeleteAsync();
+
+        // QA: answers written by this user on any post
+        await _db.QaAnswers
+            .Where(a => a.UserId == uid)
+            .ExecuteDeleteAsync();
+
+        // QA: answers on this user's posts (before deleting the posts)
+        var userPostIds = await _db.QaPosts
+            .Where(p => p.UserId == uid)
+            .Select(p => p.Id)
+            .ToListAsync();
+        if (userPostIds.Count > 0)
         {
-            _db.UserProfiles.Remove(profile);
-            await _db.SaveChangesAsync();
+            await _db.QaAnswers
+                .Where(a => userPostIds.Contains(a.PostId))
+                .ExecuteDeleteAsync();
         }
+
+        // QA posts
+        await _db.QaPosts
+            .Where(p => p.UserId == uid)
+            .ExecuteDeleteAsync();
+
+        // Notification history sent by this user (admin actions)
+        await _db.NotificationHistory
+            .Where(n => n.SentByUid == uid)
+            .ExecuteDeleteAsync();
+
+        // User profile
+        await _db.UserProfiles
+            .Where(p => p.Uid == uid)
+            .ExecuteDeleteAsync();
     }
 
     public async Task<AppUser> SetDisabledAsync(string uid, bool disabled)

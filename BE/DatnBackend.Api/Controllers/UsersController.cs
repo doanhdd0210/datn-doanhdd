@@ -188,6 +188,32 @@ public class UsersController : ControllerBase
         return Ok(ApiResponse<object>.Ok(new { postsDeleted, answersDeleted }, "Cleanup hoàn tất"));
     }
 
+    /// <summary>Xoá toàn bộ dữ liệu DB của các UserProfile không còn tồn tại trong Firebase Auth</summary>
+    [HttpDelete("cleanup/orphan-profiles")]
+    public async Task<ActionResult<ApiResponse<object>>> CleanupOrphanProfiles()
+    {
+        if (!IsAdmin) return StatusCode(403, ApiResponse<object>.Fail("Forbidden"));
+
+        // Lấy tất cả UID còn tồn tại trong Firebase Auth
+        var firebaseUsers = await _userService.ListUsersAsync();
+        var activeUids = firebaseUsers.Select(u => u.Uid).ToHashSet();
+
+        // Tìm profiles không còn trong Firebase
+        var orphanUids = await _db.UserProfiles
+            .Where(p => !activeUids.Contains(p.Uid))
+            .Select(p => p.Uid)
+            .ToListAsync();
+
+        if (orphanUids.Count == 0)
+            return Ok(ApiResponse<object>.Ok(new { deleted = 0 }, "Không có dữ liệu thừa"));
+
+        // Cascade delete cho từng orphan UID
+        foreach (var uid in orphanUids)
+            await _userService.DeleteUserAsync(uid, skipFirebase: true);
+
+        return Ok(ApiResponse<object>.Ok(new { deleted = orphanUids.Count, uids = orphanUids }, $"Đã xoá {orphanUids.Count} profile thừa"));
+    }
+
     /// <summary>Cấp / thu hồi quyền admin</summary>
     [HttpPatch("{uid}/admin")]
     public async Task<ActionResult<ApiResponse<object>>> SetAdmin(string uid, [FromBody] SetAdminRequest request)

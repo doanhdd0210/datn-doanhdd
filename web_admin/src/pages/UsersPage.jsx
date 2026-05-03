@@ -1,6 +1,16 @@
 import { useState, useEffect, useCallback } from 'react'
 import { usersApi, statsApi } from '../services/api'
 
+async function runCleanup() {
+  if (!window.confirm('Xoá toàn bộ dữ liệu DB của các tài khoản đã bị xoá khỏi Firebase?\nHành động này không thể hoàn tác.')) return
+  try {
+    const res = await usersApi.cleanupOrphanProfiles()
+    alert(`✅ Đã dọn dẹp ${res?.deleted ?? 0} profile thừa`)
+  } catch (e) {
+    alert('Lỗi: ' + e.message)
+  }
+}
+
 const PROVIDER_LABEL = { 'google.com': 'Google', password: 'Email', phone: 'Phone' }
 
 export default function UsersPage() {
@@ -130,6 +140,7 @@ export default function UsersPage() {
           style={s.searchInput}
         />
         <button onClick={loadUsers} style={s.btnSecondary} title="Làm mới">⟳ Làm mới</button>
+        <button onClick={runCleanup} style={{ ...s.btnSecondary, color: '#b45309' }} title="Xoá dữ liệu DB của tài khoản đã bị xoá">🧹 Dọn dữ liệu thừa</button>
         <button onClick={openCreate} style={s.btnPrimary}>+ Thêm người dùng</button>
       </div>
 

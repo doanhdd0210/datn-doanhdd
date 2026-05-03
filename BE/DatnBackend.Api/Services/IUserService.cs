@@ -9,6 +9,7 @@ public interface IUserService
     Task<AppUser> CreateUserAsync(CreateUserRequest request);
     Task<AppUser> UpdateUserAsync(string uid, UpdateUserRequest request);
     Task DeleteUserAsync(string uid);
+    Task DeleteUserAsync(string uid, bool skipFirebase);
     Task<AppUser> SetDisabledAsync(string uid, bool disabled);
     Task SetAdminClaimAsync(string uid, bool isAdmin);
     Task<List<AppUser>> ListAdminsAsync();

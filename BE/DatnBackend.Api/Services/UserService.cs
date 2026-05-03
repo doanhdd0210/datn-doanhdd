@@ -107,7 +107,9 @@ public class UserService : IUserService
         return MapUser(record);
     }
 
-    public async Task DeleteUserAsync(string uid)
+    public Task DeleteUserAsync(string uid) => DeleteUserAsync(uid, skipFirebase: false);
+
+    public async Task DeleteUserAsync(string uid, bool skipFirebase)
     {
         // Delete all DB data first — if this fails, Firebase Auth still exists so delete can be retried
 
@@ -183,7 +185,8 @@ public class UserService : IUserService
             .ExecuteDeleteAsync();
 
         // Delete Firebase Auth account last — ensures DB is clean before account is gone
-        await _auth.DeleteUserAsync(uid);
+        if (!skipFirebase)
+            await _auth.DeleteUserAsync(uid);
     }
 
     public async Task<AppUser> SetDisabledAsync(string uid, bool disabled)

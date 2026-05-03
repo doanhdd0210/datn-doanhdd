@@ -47,93 +47,43 @@ class ApiService {
     final code = response.statusCode;
     final ok = code >= 200 && code < 300;
     final ms = elapsed.inMilliseconds;
-    final sep = '─' * 52;
 
-    // Parse response
-    Map<String, dynamic>? json;
-    try { json = jsonDecode(response.body) as Map<String, dynamic>?; } catch (_) {}
+    const green = '\x1B[32m';
+    const red   = '\x1B[31m';
+    const reset = '\x1B[0m';
+    const dim   = '\x1B[2m';
+    const bold  = '\x1B[1m';
 
-    final message = json?['message'] as String?;
-    final data = json?['data'];
-    final rawError = json?['error'] as String? ?? json?['message'];
+    final c   = ok ? green : red;
+    final sep = '$dim${'─' * 60}$reset';
 
-    // Summarise a single map: show up to 5 key: value pairs, truncate long values
-    String _summariseMap(Map<String, dynamic> m) {
-      final parts = m.entries.take(5).map((e) {
-        final v = e.value;
-        String vs;
-        if (v == null) {
-          vs = 'null';
-        } else if (v is String) {
-          vs = v.length > 40 ? '"${v.substring(0, 40)}…"' : '"$v"';
-        } else if (v is List) {
-          vs = '[…${v.length}]';
-        } else if (v is Map) {
-          vs = '{…}';
-        } else {
-          vs = v.toString();
-        }
-        return '${e.key}: $vs';
-      }).join(', ');
-      return '{ $parts${m.length > 5 ? ', …' : ''} }';
-    }
-
-    // ANSI colour helpers
-    const reset  = '\x1B[0m';
-    const bold   = '\x1B[1m';
-    const dim    = '\x1B[2m';
-    const green  = '\x1B[32m';
-    const red    = '\x1B[31m';
-    const cyan   = '\x1B[36m';
-    const yellow = '\x1B[33m';
-
-    final c      = ok ? green : red;   // primary colour for this request
-    final sepClr = '$dim$sep$reset';
-
-    final lines = StringBuffer();
-    lines.writeln(sepClr);
-
-    // Request line
-    final methodPad = method.padRight(7);
-    lines.writeln(' $c${bold}${ok ? '✓' : '✗'}$reset  $bold$methodPad$reset $path');
-
-    // Request body (POST / PUT)
-    if (requestBody != null && requestBody.isNotEmpty) {
-      lines.writeln('    $dim↑ body$reset  →  $yellow${_summariseMap(requestBody)}$reset');
-    }
-
-    // Status + timing + message
-    final msgPart = (ok && message != null) ? '  $dim"$message"$reset' : '';
-    lines.writeln('    $c$bold$code ${ok ? 'OK' : 'ERR'}$reset  $dim·  ${ms}ms$reset$msgPart');
-
-    // Data detail
-    if (ok && data != null) {
-      if (data is List) {
-        lines.writeln('    $cyan↓ data$reset  →  ${bold}Array[${data.length}]$reset');
-        final preview = data.take(5);
-        for (final item in preview) {
-          if (item is Map<String, dynamic>) {
-            lines.writeln('               $dim•$reset $cyan${_summariseMap(item)}$reset');
-          } else {
-            final s = item.toString();
-            lines.writeln('               $dim•$reset $cyan${s.length > 80 ? '${s.substring(0, 80)}…' : s}$reset');
-          }
-        }
-        if (data.length > 5) lines.writeln('               $dim… +${data.length - 5} more$reset');
-      } else if (data is Map<String, dynamic>) {
-        lines.writeln('    $cyan↓ data$reset  →  $cyan${_summariseMap(data)}$reset');
-      } else {
-        final s = data.toString();
-        lines.writeln('    $cyan↓ data$reset  →  $cyan${s.length > 100 ? '${s.substring(0, 100)}…' : s}$reset');
+    // Pretty-print JSON
+    String prettyJson(dynamic raw) {
+      try {
+        return const JsonEncoder.withIndent('  ').convert(raw);
+      } catch (_) {
+        return raw.toString();
       }
-    } else if (!ok) {
-      final errText = rawError ?? response.body.substring(0, response.body.length.clamp(0, 120));
-      lines.writeln('    $red✗ error$reset →  $red$bold$errText$reset');
     }
 
-    lines.write(sepClr);
+    final buf = StringBuffer();
+    buf.writeln(sep);
+    buf.writeln('$c$bold ${ok ? '✓' : '✗'} $method $path$reset  $dim· ${ms}ms · $code$reset');
 
-    debugPrint('[API] ${lines.toString()}');
+    if (requestBody != null && requestBody.isNotEmpty) {
+      buf.writeln('$dim── Request Body$reset');
+      buf.writeln(prettyJson(requestBody));
+    }
+
+    buf.writeln('$dim── Response$reset');
+    try {
+      buf.writeln(prettyJson(jsonDecode(response.body)));
+    } catch (_) {
+      buf.writeln(response.body);
+    }
+
+    buf.write(sep);
+    debugPrint(buf.toString());
   }
 
   Future<Map<String, String>> _getHeaders() async {

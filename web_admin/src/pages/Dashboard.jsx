@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { signOut } from '../services/auth'
 import { useAuth } from '../context/AuthContext'
@@ -46,8 +46,8 @@ export default function Dashboard() {
       {/* Sidebar */}
       <aside style={styles.sidebar}>
         <div style={styles.sidebarHeader}>
-          <span style={styles.sidebarIcon}>🛡️</span>
-          <span style={styles.sidebarTitle}>Admin Panel</span>
+          <span style={styles.sidebarIcon}>☕</span>
+          <span style={styles.sidebarTitle}>JavaUp Admin</span>
         </div>
 
         <nav style={styles.nav}>
@@ -97,7 +97,7 @@ export default function Dashboard() {
         </header>
 
         <div style={styles.content}>
-          {activeNav === 'overview'      && <OverviewCards />}
+          {activeNav === 'overview'      && <OverviewCards setActiveNav={setActiveNav} />}
           {activeNav === 'analytics'     && <AnalyticsPage />}
           {activeNav === 'users'         && <UsersPage />}
           {activeNav === 'topics'        && <TopicsPage />}
@@ -137,7 +137,7 @@ export default function Dashboard() {
 
 // ─── Overview Cards ────────────────────────────────────────────────────────
 
-function OverviewCards() {
+function OverviewCards({ setActiveNav }) {
   const [stats, setStats] = useState({
     totalUsers: '…', activeUsers: '…', admins: '…', disabled: '…',
     totalTopics: '…', totalLessons: '…', totalQuestions: '…', totalSnippets: '…',
@@ -149,22 +149,23 @@ function OverviewCards() {
       usersApi.list(1000),
       topicsApi.list(),
       lessonsApi.list(),
-      questionsApi.list(),       // list all questions (no lessonId = all)
-      codeSnippetsApi.list(),    // list all snippets
+      questionsApi.count(),
+      codeSnippetsApi.list(),
     ]).then(([usersRes, topicsRes, lessonsRes, qRes, snipRes]) => {
-      const users     = usersRes.status     === 'fulfilled' ? (usersRes.value     ?? []) : []
-      const topics    = topicsRes.status    === 'fulfilled' ? (topicsRes.value    ?? []) : []
-      const lessons   = lessonsRes.status   === 'fulfilled' ? (lessonsRes.value   ?? []) : []
-      const questions = qRes.status         === 'fulfilled' ? (qRes.value         ?? []) : []
-      const snippets  = snipRes.status      === 'fulfilled' ? (snipRes.value      ?? []) : []
+      const users    = usersRes.status  === 'fulfilled' ? (usersRes.value  ?? []) : []
+      const topics   = topicsRes.status === 'fulfilled' ? (topicsRes.value ?? []) : []
+      const lessons  = lessonsRes.status === 'fulfilled' ? (lessonsRes.value ?? []) : []
+      const snippets = snipRes.status   === 'fulfilled' ? (snipRes.value   ?? []) : []
+      const qCount   = qRes.status      === 'fulfilled' ? (qRes.value      ?? 0)  : 0
+      const nonAdmins = users.filter((u) => !u.isAdmin)
       setStats({
-        totalUsers:     users.length,
-        activeUsers:    users.filter((u) => !u.disabled).length,
+        totalUsers:     nonAdmins.length,
+        activeUsers:    nonAdmins.filter((u) => !u.disabled).length,
         admins:         users.filter((u) => u.isAdmin).length,
-        disabled:       users.filter((u) => u.disabled).length,
+        disabled:       nonAdmins.filter((u) => u.disabled).length,
         totalTopics:    topics.length,
         totalLessons:   lessons.length,
-        totalQuestions: questions.length,
+        totalQuestions: qCount,
         totalSnippets:  snippets.length,
       })
     }).finally(() => setLoading(false))
@@ -196,19 +197,25 @@ function OverviewCards() {
       <div style={styles.quickActions}>
         <h3 style={{ margin: '0 0 12px', fontSize: 16, color: '#1e293b' }}>Truy cập nhanh</h3>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          <QuickBtn label="Quản lý người dùng" icon="👥" desc="Thêm, sửa, xoá, khoá tài khoản" color="#e8f0fe" />
-          <QuickBtn label="Chủ đề &amp; Bài học"   icon="📚" desc="Quản lý nội dung học tập" color="#fef9c3" />
-          <QuickBtn label="Câu hỏi Quiz"        icon="❓" desc="Quiz theo từng bài học" color="#f3e8ff" />
-          <QuickBtn label="Gửi thông báo"       icon="🔔" desc="Push notification đến người dùng" color="#fff7ed" />
+          <QuickBtn label="Quản lý người dùng" icon="👥" desc="Thêm, sửa, xoá, khoá tài khoản" color="#e8f0fe" onClick={() => setActiveNav('users')} />
+          <QuickBtn label="Chủ đề"             icon="📚" desc="Quản lý chủ đề học tập"          color="#fef9c3" onClick={() => setActiveNav('topics')} />
+          <QuickBtn label="Bài học"            icon="📖" desc="Quản lý bài học theo chủ đề"     color="#f3e8ff" onClick={() => setActiveNav('lessons')} />
+          <QuickBtn label="Câu hỏi Quiz"       icon="❓" desc="Quiz theo từng bài học"           color="#ecfdf5" onClick={() => setActiveNav('questions')} />
+          <QuickBtn label="Gửi thông báo"      icon="🔔" desc="Push notification đến người dùng" color="#fff7ed" onClick={() => setActiveNav('notifications')} />
         </div>
       </div>
     </div>
   )
 }
 
-function QuickBtn({ icon, label, desc, color }) {
+function QuickBtn({ icon, label, desc, color, onClick }) {
   return (
-    <div style={{ background: color, padding: '16px 20px', borderRadius: 12, minWidth: 200 }}>
+    <div
+      onClick={onClick}
+      style={{ background: color, padding: '16px 20px', borderRadius: 12, minWidth: 180, cursor: 'pointer', transition: 'opacity 0.15s' }}
+      onMouseEnter={e => e.currentTarget.style.opacity = '0.8'}
+      onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+    >
       <div style={{ fontSize: 24, marginBottom: 6 }}>{icon}</div>
       <div style={{ fontWeight: 700, color: '#1e293b', marginBottom: 4 }}>{label}</div>
       <div style={{ fontSize: 12, color: '#64748b' }}>{desc}</div>

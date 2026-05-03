@@ -29,6 +29,15 @@ public class QuestionsController : ControllerBase
         return Ok(ApiResponse<List<Question>>.Ok(questions, $"{questions.Count} questions"));
     }
 
+    /// <summary>Count all questions (admin only)</summary>
+    [HttpGet("count")]
+    public async Task<ActionResult<ApiResponse<int>>> Count()
+    {
+        if (!IsAdmin) return StatusCode(403, ApiResponse<int>.Fail("Forbidden"));
+        var count = await _questionService.CountAllAsync();
+        return Ok(ApiResponse<int>.Ok(count, $"{count} questions total"));
+    }
+
     /// <summary>Create question (admin only)</summary>
     [HttpPost]
     public async Task<ActionResult<ApiResponse<Question>>> Create([FromBody] CreateQuestionRequest request)

@@ -196,6 +196,7 @@ using (var scope = app.Services.CreateScope())
     // Add Level column to UserProfiles if not exists
     await db.Database.ExecuteSqlRawAsync(@"
         ALTER TABLE ""UserProfiles"" ADD COLUMN IF NOT EXISTS ""Level"" text NOT NULL DEFAULT 'beginner';
+        ALTER TABLE ""UserProfiles"" ADD COLUMN IF NOT EXISTS ""IsAdmin"" boolean NOT NULL DEFAULT false;
     ");
 
     // Tạo bảng DailyGoalBonusClaims nếu chưa có
@@ -212,6 +213,23 @@ using (var scope = app.Services.CreateScope())
         CREATE INDEX IF NOT EXISTS ""IX_DailyGoalBonusClaims_UserId_Date""
             ON ""DailyGoalBonusClaims"" (""UserId"", ""Date"");
     ");
+
+    // Sync IsAdmin flag from Firebase claims to UserProfiles
+    try
+    {
+        var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
+        var admins = await userService.ListAdminsAsync();
+        var adminUids = admins.Select(a => a.Uid).ToList();
+        if (adminUids.Count > 0)
+        {
+            await db.Database.ExecuteSqlRawAsync(
+                $@"UPDATE ""UserProfiles"" SET ""IsAdmin"" = true WHERE ""Uid"" = ANY(ARRAY[{string.Join(",", adminUids.Select(u => $"'{u}'"))}]::text[])");
+        }
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogWarning(ex, "Failed to sync admin flags to UserProfiles");
+    }
 
     await DbSeeder.SeedAsync(db);
     await DbSeeder.SeedAchievementsAsync(db);

@@ -178,6 +178,7 @@ public class FriendsService
 
         // Only users that still exist in UserProfiles (inner join = no deleted users)
         var profiles = await _db.UserProfiles
+            .Where(p => !p.IsAdmin)
             .OrderByDescending(p => p.TotalXp)
             .Take(limit)
             .ToListAsync();
@@ -208,7 +209,7 @@ public class FriendsService
         // Chỉ lấy DailyProgress của user còn tồn tại trong UserProfiles (loại tk đã xoá)
         var weeklyXp = await _db.DailyProgresses
             .Where(d => string.Compare(d.Date, since) >= 0)
-            .Where(d => _db.UserProfiles.Any(p => p.Uid == d.UserId))
+            .Where(d => _db.UserProfiles.Any(p => p.Uid == d.UserId && !p.IsAdmin))
             .GroupBy(d => d.UserId)
             .Select(g => new { UserId = g.Key, WeeklyXp = g.Sum(d => d.XpEarned) })
             .OrderByDescending(x => x.WeeklyXp)

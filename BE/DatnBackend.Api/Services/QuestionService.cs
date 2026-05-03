@@ -32,6 +32,8 @@ public class QuestionService
         return questions;
     }
 
+    public async Task<int> CountAllAsync() => await _db.Questions.CountAsync();
+
     public async Task<Question?> GetQuestionAsync(string id)
     {
         return await _db.Questions.FirstOrDefaultAsync(q => q.Id == id);

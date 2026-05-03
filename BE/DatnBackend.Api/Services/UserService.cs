@@ -199,6 +199,13 @@ public class UserService : IUserService
             ? new Dictionary<string, object> { ["admin"] = true }
             : new Dictionary<string, object>();
         await _auth.SetCustomUserClaimsAsync(uid, claims);
+
+        var profile = await _db.UserProfiles.FirstOrDefaultAsync(p => p.Uid == uid);
+        if (profile != null)
+        {
+            profile.IsAdmin = isAdmin;
+            await _db.SaveChangesAsync();
+        }
     }
 
     public async Task<List<AppUser>> ListAdminsAsync()

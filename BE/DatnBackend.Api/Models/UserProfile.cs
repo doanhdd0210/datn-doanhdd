@@ -11,5 +11,6 @@ public class UserProfile
     public int LessonsCompleted { get; set; }
     public string Rank { get; set; } = "Beginner";
     public string Level { get; set; } = "beginner";  // beginner | intermediate | advanced
+    public bool IsAdmin { get; set; }
     public List<string> FcmTokens { get; set; } = new();
 }

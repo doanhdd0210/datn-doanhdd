@@ -33,6 +33,7 @@ export default function UsersPage() {
   useEffect(() => { loadUsers() }, [loadUsers])
 
   const filtered = users.filter((u) => {
+    if (u.isAdmin) return false
     const q = search.toLowerCase()
     return (
       u.email?.toLowerCase().includes(q) ||
@@ -136,10 +137,9 @@ export default function UsersPage() {
 
       {/* Stats */}
       <div style={s.statsRow}>
-        <span style={s.stat}>Tổng: <strong>{users.length}</strong></span>
+        <span style={s.stat}>Tổng: <strong>{users.filter((u) => !u.isAdmin).length}</strong></span>
         <span style={s.stat}>Đang hiển thị: <strong>{filtered.length}</strong></span>
-        <span style={s.stat}>Admin: <strong>{users.filter((u) => u.isAdmin).length}</strong></span>
-        <span style={s.stat}>Bị khoá: <strong>{users.filter((u) => u.disabled).length}</strong></span>
+        <span style={s.stat}>Bị khoá: <strong>{users.filter((u) => !u.isAdmin && u.disabled).length}</strong></span>
       </div>
 
       {/* Table */}
@@ -338,7 +338,7 @@ export default function UsersPage() {
               Bạn chắc chắn muốn xoá <strong>{modal.user?.email}</strong>?
             </p>
             <p style={{ color: '#ef4444', fontSize: 13, marginBottom: 24 }}>
-              Hành động này không thể hoàn tác. Tài khoản sẽ bị xoá khỏi Firebase Auth và Firestore.
+              Hành động này không thể hoàn tác. Tài khoản sẽ bị xoá khỏi Firebase Auth và toàn bộ dữ liệu trong cơ sở dữ liệu.
             </p>
             <div style={s.modalActions}>
               <button onClick={closeModal} style={s.cancelBtn}>Huỷ</button>

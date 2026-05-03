@@ -188,8 +188,7 @@ public class UserService : IUserService
         if (!skipFirebase)
         {
             try { await _auth.DeleteUserAsync(uid); }
-            catch (FirebaseAdmin.Auth.FirebaseAuthException ex)
-                when (ex.AuthErrorCode == FirebaseAdmin.Auth.AuthErrorCode.UserNotFound) { }
+            catch (FirebaseAuthException) { } // ignore USER_NOT_FOUND
         }
     }
 

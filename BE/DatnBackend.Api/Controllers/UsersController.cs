@@ -262,12 +262,9 @@ public class UsersController : ControllerBase
         await _db.NotificationHistory.Where(n => allUids.Contains(n.SentByUid)).ExecuteDeleteAsync();
         await _db.UserProfiles.Where(p => allUids.Contains(p.Uid)).ExecuteDeleteAsync();
 
-        // Xoá Firebase Auth (bỏ qua nếu user không còn tồn tại)
+        // Xoá Firebase Auth accounts (DB đã xoá ở trên)
         foreach (var u in nonAdmins)
-        {
-            try { await _userService.DeleteUserAsync(u.Uid); }
-            catch { }
-        }
+            await _userService.DeleteUserAsync(u.Uid);
 
         return Ok(ApiResponse<object>.Ok(
             new { deletedUsers = nonAdmins.Count, deletedOrphans = dbNonAdminUids.Count - firebaseNonAdminUids.Count },

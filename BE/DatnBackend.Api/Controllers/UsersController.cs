@@ -21,6 +21,7 @@ public class UsersController : ControllerBase
     }
 
     private string? UserId => HttpContext.Items["FirebaseUid"]?.ToString();
+    private bool IsAdmin => HttpContext.Items.TryGetValue("FirebaseIsAdmin", out var v) && v is true;
 
     /// <summary>Cập nhật level học của user hiện tại</summary>
     [HttpPut("me/level")]

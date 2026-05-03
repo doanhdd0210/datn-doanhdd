@@ -222,8 +222,9 @@ using (var scope = app.Services.CreateScope())
         var adminUids = admins.Select(a => a.Uid).ToList();
         if (adminUids.Count > 0)
         {
-            await db.Database.ExecuteSqlRawAsync(
-                $@"UPDATE ""UserProfiles"" SET ""IsAdmin"" = true WHERE ""Uid"" = ANY(ARRAY[{string.Join(",", adminUids.Select(u => $"'{u}'"))}]::text[])");
+            await db.UserProfiles
+                .Where(p => adminUids.Contains(p.Uid))
+                .ExecuteUpdateAsync(s => s.SetProperty(p => p.IsAdmin, true));
         }
     }
     catch (Exception ex)

@@ -36,25 +36,68 @@ class ApiService {
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  void _log(String method, String path, http.Response response) {
+  void _log(
+    String method,
+    String path,
+    http.Response response,
+    Duration elapsed, {
+    Map<String, dynamic>? requestBody,
+  }) {
     if (!kDebugMode) return;
+
     final code = response.statusCode;
     final ok = code >= 200 && code < 300;
-    final icon = ok ? '✓' : '✗';
+    final ms = elapsed.inMilliseconds;
+    final sep = '─' * 52;
 
-    String body;
-    try {
-      final decoded = jsonDecode(response.body);
-      body = const JsonEncoder.withIndent('  ').convert(decoded);
-    } catch (_) {
-      body = response.body;
+    // Parse response
+    Map<String, dynamic>? json;
+    try { json = jsonDecode(response.body) as Map<String, dynamic>?; } catch (_) {}
+
+    final message = json?['message'] as String?;
+    final data = json?['data'];
+    final rawError = json?['error'] as String? ?? json?['message'];
+
+    // Describe data shape concisely
+    String _describeData(dynamic d) {
+      if (d == null) return 'null';
+      if (d is List) return 'Array[${d.length}]';
+      if (d is Map) {
+        final keys = (d as Map<String, dynamic>).keys.take(4).join(', ');
+        return 'Object{ $keys${d.length > 4 ? ', …' : ''} }';
+      }
+      final s = d.toString();
+      return s.length > 60 ? '${s.substring(0, 60)}…' : s;
     }
-    if (body.length > 800) body = '${body.substring(0, 800)}\n  ... [truncated]';
 
-    dev.log(
-      '$icon $method $path [$code]\n$body',
-      name: 'API',
-    );
+    final lines = StringBuffer();
+    lines.writeln(sep);
+
+    // Request line
+    final methodPad = method.padRight(7);
+    lines.writeln(' ${ok ? '✓' : '✗'}  $methodPad $path');
+
+    // Request body (POST / PUT)
+    if (requestBody != null && requestBody.isNotEmpty) {
+      final bodyDesc = _describeData(requestBody);
+      lines.writeln('    ↑ body  →  $bodyDesc');
+    }
+
+    // Status + timing + message
+    final msgPart = (ok && message != null) ? '  "$message"' : '';
+    lines.writeln('    $code ${ok ? 'OK' : 'ERR'}  ·  ${ms}ms$msgPart');
+
+    // Data or error
+    if (ok && data != null) {
+      lines.writeln('    ↓ data  →  ${_describeData(data)}');
+    } else if (!ok) {
+      final errText = rawError ?? response.body.substring(0, response.body.length.clamp(0, 120));
+      lines.writeln('    ✗ error →  $errText');
+    }
+
+    lines.write(sep);
+
+    dev.log(lines.toString(), name: 'API');
   }
 
   Future<Map<String, String>> _getHeaders() async {
@@ -89,10 +132,11 @@ class ApiService {
   Future<dynamic> _get(String path) async {
     try {
       final headers = await _getHeaders();
+      final t = Stopwatch()..start();
       final response = await http
           .get(Uri.parse('$_baseUrl$path'), headers: headers)
           .timeout(const Duration(seconds: 20));
-      _log('GET', path, response);
+      _log('GET', path, response, t.elapsed);
       if (response.statusCode >= 200 && response.statusCode < 300) {
         if (response.body.isEmpty) return null;
         return _unwrap(jsonDecode(response.body));
@@ -108,6 +152,7 @@ class ApiService {
   Future<dynamic> _post(String path, Map<String, dynamic> body) async {
     try {
       final headers = await _getHeaders();
+      final t = Stopwatch()..start();
       final response = await http
           .post(
             Uri.parse('$_baseUrl$path'),
@@ -115,7 +160,7 @@ class ApiService {
             body: jsonEncode(body),
           )
           .timeout(const Duration(seconds: 20));
-      _log('POST', path, response);
+      _log('POST', path, response, t.elapsed, requestBody: body);
       if (response.statusCode >= 200 && response.statusCode < 300) {
         if (response.body.isEmpty) return {};
         return _unwrap(jsonDecode(response.body));
@@ -131,10 +176,11 @@ class ApiService {
   Future<dynamic> _put(String path, Map<String, dynamic> body) async {
     try {
       final headers = await _getHeaders();
+      final t = Stopwatch()..start();
       final response = await http
           .put(Uri.parse('$_baseUrl$path'), headers: headers, body: jsonEncode(body))
           .timeout(const Duration(seconds: 20));
-      _log('PUT', path, response);
+      _log('PUT', path, response, t.elapsed, requestBody: body);
       if (response.statusCode >= 200 && response.statusCode < 300) {
         if (response.body.isEmpty) return {};
         return _unwrap(jsonDecode(response.body));
@@ -150,10 +196,11 @@ class ApiService {
   Future<dynamic> _delete(String path) async {
     try {
       final headers = await _getHeaders();
+      final t = Stopwatch()..start();
       final response = await http
           .delete(Uri.parse('$_baseUrl$path'), headers: headers)
           .timeout(const Duration(seconds: 20));
-      _log('DELETE', path, response);
+      _log('DELETE', path, response, t.elapsed);
       if (response.statusCode >= 200 && response.statusCode < 300) {
         if (response.body.isEmpty) return {};
         return _unwrap(jsonDecode(response.body));

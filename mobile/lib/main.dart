@@ -78,7 +78,9 @@ class AuthWrapper extends StatelessWidget {
           });
           return const _OnboardingGate();
         }
-        // Safety net: clear provider state whenever auth becomes null
+        // Auth state → null: reset provider as safety net, then show LoginScreen.
+        // Logout handlers call reset() explicitly before signOut, but this
+        // catches any edge case (token expiry, remote sign-out, etc.).
         WidgetsBinding.instance.addPostFrameCallback((_) {
           context.read<UserProvider>().reset();
         });

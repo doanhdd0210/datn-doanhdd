@@ -9,7 +9,6 @@ import '../../providers/theme_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/app_snackbar.dart';
-import '../login_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -84,11 +83,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (confirm == true && mounted) {
       context.read<UserProvider>().reset();
       await _authService.signOut();
+      // Pop back to the root route (AuthWrapper) — its StreamBuilder detects
+      // auth=null and shows LoginScreen. Never use pushAndRemoveUntil(LoginScreen)
+      // as that kills AuthWrapper and breaks subsequent sign-in navigation.
       if (mounted) {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
-          (_) => false,
-        );
+        Navigator.of(context).popUntil((route) => route.isFirst);
       }
     }
   }

@@ -8,7 +8,6 @@ import '../../constants/app_theme.dart';
 import '../../models/achievement.dart';
 import '../../providers/user_provider.dart';
 import '../../services/auth_service.dart';
-import '../login_screen.dart';
 import '../settings/settings_screen.dart';
 import 'stats_screen.dart';
 import '../../widgets/app_snackbar.dart';
@@ -498,11 +497,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Navigator.pop(ctx);
               context.read<UserProvider>().reset();
               await authService.signOut();
+              // AuthWrapper's StreamBuilder detects auth=null and shows LoginScreen.
+              // popUntil(isFirst) ensures any stacked routes are cleared first.
               if (context.mounted) {
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const LoginScreen()),
-                  (_) => false,
-                );
+                Navigator.of(context).popUntil((route) => route.isFirst);
               }
             },
             child: const Text('Đăng xuất',

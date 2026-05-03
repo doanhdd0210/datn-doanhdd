@@ -1,8 +1,14 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import Editor from '@monaco-editor/react'
 import { codeSnippetsApi, topicsApi } from '../services/api'
-import { exportJson, exportCsv, importJson } from '../utils/importExport'
+import { exportExcel, importExcel, downloadSampleExcel } from '../utils/importExport'
 
 const LANGUAGES = ['java', 'python', 'javascript', 'kotlin', 'cpp', 'c', 'typescript']
+
+const MONACO_LANG = {
+  java: 'java', python: 'python', javascript: 'javascript',
+  kotlin: 'kotlin', cpp: 'cpp', c: 'c', typescript: 'typescript',
+}
 
 function Toast({ msg, type }) {
   if (!msg) return null
@@ -131,8 +137,7 @@ export default function CodeSnippetsPage() {
     if (!file) return
     e.target.value = ''
     try {
-      const data = await importJson(file)
-      if (!Array.isArray(data)) throw new Error('File phải là một mảng JSON')
+      const data = await importExcel(file)
       for (let i = 0; i < data.length; i++) {
         setImportProgress(`Đang import ${i + 1}/${data.length}...`)
         await codeSnippetsApi.create(data[i])
@@ -146,11 +151,7 @@ export default function CodeSnippetsPage() {
     }
   }
 
-  const handleExportJson = () => exportJson(filtered, 'code_snippets_export.json')
-  const handleExportCsv = () => {
-    const rows = filtered.map(s => ({ id: s.id, topicId: s.topicId, title: s.title, description: s.description, language: s.language, xpReward: s.xpReward, order: s.order, isActive: s.isActive }))
-    exportCsv(rows, ['id', 'topicId', 'title', 'description', 'language', 'xpReward', 'order', 'isActive'], 'code_snippets.csv')
-  }
+  const handleExportExcel = () => exportExcel(filtered, 'code_snippets_export.xlsx')
 
   const langBadgeColor = (lang) => {
     const m = { java: '#e8f0fe', python: '#fef9c3', javascript: '#fef3c7', kotlin: '#f3e8ff', cpp: '#fee2e2', c: '#fee2e2', typescript: '#dbeafe' }
@@ -171,11 +172,11 @@ export default function CodeSnippetsPage() {
         <button onClick={load} style={s.btnSecondary}>⟳ Làm mới</button>
         <button onClick={openCreate} style={s.btnPrimary}>+ Thêm snippet</button>
         <div style={s.btnGroup}>
-          <button onClick={() => importRef.current?.click()} style={s.btnSm}>📥 Import JSON</button>
-          <button onClick={handleExportJson} style={s.btnSm}>📤 Export JSON</button>
-          <button onClick={handleExportCsv} style={s.btnSm}>📊 Export CSV</button>
+          <button onClick={() => importRef.current?.click()} style={s.btnSm}>📥 Import Excel</button>
+          <button onClick={handleExportExcel} style={s.btnSm}>📤 Export Excel</button>
+          <button onClick={downloadSampleExcel} style={{ ...s.btnSm, color: '#1a73e8', borderColor: '#93c5fd' }}>📋 Tải Excel mẫu</button>
         </div>
-        <input type="file" accept=".json" ref={importRef} style={{ display: 'none' }} onChange={handleImport} />
+        <input type="file" accept=".xlsx,.xls" ref={importRef} style={{ display: 'none' }} onChange={handleImport} />
       </div>
 
       {importProgress && <div style={s.progressBox}>{importProgress}</div>}
@@ -277,7 +278,23 @@ export default function CodeSnippetsPage() {
             <textarea style={{ ...s.input, minHeight: 60, resize: 'vertical' }} value={form.description ?? ''} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Mô tả ngắn..." />
 
             <label style={s.label}>Code</label>
-            <textarea style={{ ...s.input, minHeight: 200, resize: 'vertical', fontFamily: 'monospace', fontSize: 13 }} value={form.code ?? ''} onChange={e => setForm({ ...form, code: e.target.value })} placeholder="// Nhập code ở đây..." spellCheck={false} />
+            <div style={{ border: '1.5px solid #e2e8f0', borderRadius: 8, overflow: 'hidden' }}>
+              <Editor
+                height="300px"
+                language={MONACO_LANG[form.language] ?? 'java'}
+                value={form.code ?? ''}
+                onChange={val => setForm(f => ({ ...f, code: val ?? '' }))}
+                theme="vs-dark"
+                options={{
+                  fontSize: 13,
+                  minimap: { enabled: false },
+                  scrollBeyondLastLine: false,
+                  wordWrap: 'on',
+                  tabSize: 4,
+                  automaticLayout: true,
+                }}
+              />
+            </div>
 
             <button
               onClick={handleTestRun}
@@ -364,7 +381,7 @@ const s = {
   btnEdit: { padding: '4px 10px', background: '#e0f2fe', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 14 },
   btnDelete: { padding: '4px 10px', background: '#fee2e2', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 14 },
   overlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200 },
-  modal: { background: '#fff', borderRadius: 14, padding: '28px 32px', width: 600, maxWidth: '90vw', maxHeight: '90vh', overflowY: 'auto' },
+  modal: { background: '#fff', borderRadius: 14, padding: '28px 32px', width: 680, maxWidth: '95vw', maxHeight: '92vh', overflowY: 'auto' },
   modalTitle: { margin: '0 0 20px', fontSize: 18, fontWeight: 700, color: '#1e293b' },
   label: { display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 4, marginTop: 12 },
   input: { width: '100%', padding: '9px 12px', border: '1.5px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none', boxSizing: 'border-box' },

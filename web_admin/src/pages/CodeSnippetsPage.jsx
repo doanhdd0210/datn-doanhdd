@@ -119,13 +119,20 @@ export default function CodeSnippetsPage() {
       const res = await fetch('https://emkc.org/api/v2/piston/execute', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ language: form.language || 'java', version: '*', files: [{ content: form.code }] }),
+        body: JSON.stringify({
+          language: form.language || 'java',
+          version: '*',
+          files: [{ name: 'Main.java', content: form.code }],
+        }),
       })
+      if (!res.ok) { setRunOutput(`HTTP ${res.status}: ${res.statusText}`); return }
       const data = await res.json()
-      const out = data.run?.output || data.run?.stderr || data.compile?.stderr || '(không có output)'
-      setRunOutput(out)
+      const compileOut = (data.compile?.output ?? '') + (data.compile?.stderr ?? '')
+      const runOut    = (data.run?.output    ?? '') + (data.run?.stderr    ?? '')
+      const combined  = (compileOut + runOut).trim()
+      setRunOutput(combined || '(không có output)')
     } catch (e) {
-      setRunOutput('Lỗi kết nối: ' + e.message)
+      setRunOutput('Lỗi kết nối Piston API: ' + e.message)
     } finally {
       setRunning(false)
     }

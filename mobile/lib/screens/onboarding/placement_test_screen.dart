@@ -433,7 +433,7 @@ class _PlacementTestScreenState extends State<PlacementTestScreen>
         shadowColor: AppColors.blueDark,
         bgColor: Color(0xFFCCEDFF),
         levelLabel: 'Lộ trình trung cấp',
-        unlockText: 'Đã mở khóa 4 chủ đề đầu tiên',
+        unlockText: 'Đã mở khóa 2 chủ đề đầu tiên',
       ),
       'advanced': const _ResultData(
         emoji: '🔥',

@@ -30,7 +30,7 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
       color: AppColors.primary,
       shadowColor: AppColors.primaryDark,
       bgColor: AppColors.surface,
-      unlockedTopics: 2,
+      unlockedTopics: 1,
     ),
     _LevelData(
       id: 'intermediate',
@@ -41,7 +41,7 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
       color: AppColors.secondary,
       shadowColor: AppColors.secondaryLight,
       bgColor: AppColors.surface,
-      unlockedTopics: 4,
+      unlockedTopics: 2,
     ),
     _LevelData(
       id: 'advanced',
@@ -52,7 +52,7 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
       color: AppColors.streakOrange,
       shadowColor: Color(0xFFCC6600),
       bgColor: AppColors.surface,
-      unlockedTopics: 999,
+      unlockedTopics: 3,
     ),
   ];
 

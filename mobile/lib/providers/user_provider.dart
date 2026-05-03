@@ -96,10 +96,10 @@ class UserProvider extends ChangeNotifier {
   int get unlockedTopicCount {
     switch (_level) {
       case 'advanced':
-        return 999;
-      case 'intermediate':
         return 3;
-      default:
+      case 'intermediate':
+        return 2;
+      default: // beginner
         return 1;
     }
   }

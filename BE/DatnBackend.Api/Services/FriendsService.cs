@@ -1,4 +1,3 @@
-using FirebaseAdmin.Auth;
 using Microsoft.EntityFrameworkCore;
 using DatnBackend.Api.Data;
 using DatnBackend.Api.Models;
@@ -171,41 +170,13 @@ public class FriendsService
         };
     }
 
-    // Fill in missing DisplayName/PhotoUrl from Firebase Auth for entries where profile has no name
-    private async Task _enrichNamesAsync(List<LeaderboardEntry> entries)
-    {
-        var missing = entries.Where(e => string.IsNullOrWhiteSpace(e.DisplayName)).ToList();
-        if (missing.Count == 0) return;
-
-        var tasks = missing.Select(async e =>
-        {
-            try
-            {
-                var record = await FirebaseAuth.DefaultInstance.GetUserAsync(e.UserId);
-                e.DisplayName = record.DisplayName ?? record.Email?.Split('@')[0] ?? e.UserId[..6];
-                if (string.IsNullOrWhiteSpace(e.PhotoUrl))
-                    e.PhotoUrl = record.PhotoUrl;
-
-                // Persist to DB so next call is instant
-                var profile = await _db.UserProfiles.FirstOrDefaultAsync(p => p.Uid == e.UserId);
-                if (profile != null)
-                {
-                    profile.DisplayName = e.DisplayName;
-                    if (string.IsNullOrWhiteSpace(profile.PhotoUrl)) profile.PhotoUrl = e.PhotoUrl;
-                    await _db.SaveChangesAsync();
-                }
-            }
-            catch { /* user may have been deleted from Firebase */ }
-        });
-        await Task.WhenAll(tasks);
-    }
-
     public async Task<List<LeaderboardEntry>> GetLeaderboardAsync(int limit = 20)
     {
         var cacheKey = $"leaderboard:{limit}";
         var cached = await _cache.GetAsync<List<LeaderboardEntry>>(cacheKey);
         if (cached != null) return cached;
 
+        // Only users that still exist in UserProfiles (inner join = no deleted users)
         var profiles = await _db.UserProfiles
             .OrderByDescending(p => p.TotalXp)
             .Take(limit)
@@ -222,7 +193,6 @@ public class FriendsService
             CurrentStreak = p.CurrentStreak,
         }).ToList();
 
-        await _enrichNamesAsync(entries);
         await _cache.SetAsync(cacheKey, entries, TimeSpan.FromMinutes(1));
         return entries;
     }
@@ -235,9 +205,10 @@ public class FriendsService
 
         var since = DateTime.UtcNow.AddDays(-7).ToString("yyyy-MM-dd");
 
-        // Sum XP from DailyProgress for the past 7 days, group by user
+        // Chỉ lấy DailyProgress của user còn tồn tại trong UserProfiles (loại tk đã xoá)
         var weeklyXp = await _db.DailyProgresses
             .Where(d => string.Compare(d.Date, since) >= 0)
+            .Where(d => _db.UserProfiles.Any(p => p.Uid == d.UserId))
             .GroupBy(d => d.UserId)
             .Select(g => new { UserId = g.Key, WeeklyXp = g.Sum(d => d.XpEarned) })
             .OrderByDescending(x => x.WeeklyXp)
@@ -252,22 +223,18 @@ public class FriendsService
             .ToDictionaryAsync(p => p.Uid);
 
         var entries = weeklyXp
-            .Select((x, i) => {
-                profiles.TryGetValue(x.UserId, out var profile);
-                return new LeaderboardEntry
-                {
-                    Rank = i + 1,
-                    UserId = x.UserId,
-                    DisplayName = profile?.DisplayName ?? "",
-                    PhotoUrl = profile?.PhotoUrl,
-                    TotalXp = x.WeeklyXp,
-                    LessonsCompleted = profile?.LessonsCompleted ?? 0,
-                    CurrentStreak = profile?.CurrentStreak ?? 0,
-                };
+            .Select((x, i) => new LeaderboardEntry
+            {
+                Rank = i + 1,
+                UserId = x.UserId,
+                DisplayName = profiles[x.UserId].DisplayName,
+                PhotoUrl = profiles[x.UserId].PhotoUrl,
+                TotalXp = x.WeeklyXp,
+                LessonsCompleted = profiles[x.UserId].LessonsCompleted,
+                CurrentStreak = profiles[x.UserId].CurrentStreak,
             })
             .ToList();
 
-        await _enrichNamesAsync(entries);
         await _cache.SetAsync(cacheKey, entries, TimeSpan.FromMinutes(5));
         return entries;
     }

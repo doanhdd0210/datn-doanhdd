@@ -177,7 +177,7 @@ class _PlacementTestScreenState extends State<PlacementTestScreen>
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
-      (_) => false,
+      (r) => r.isFirst,
     );
   }
 

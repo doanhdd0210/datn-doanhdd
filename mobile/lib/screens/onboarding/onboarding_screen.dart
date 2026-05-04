@@ -81,7 +81,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   }
 
   void _goToLevelSelection() {
-    Navigator.pushReplacement(
+    Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const LevelSelectionScreen()),
     );

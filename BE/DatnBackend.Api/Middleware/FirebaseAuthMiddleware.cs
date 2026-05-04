@@ -83,7 +83,10 @@ public class FirebaseAuthMiddleware
                 || AdminOnlyNotificationPaths.Any(p =>
                 path.Equals(p, StringComparison.OrdinalIgnoreCase));
 
-            if (isAdminOnlyPath && !isAdmin)
+            // /api/users/me/* is accessible to the authenticated user themselves
+            bool isUserSelfPath = path.StartsWith("/api/users/me", StringComparison.OrdinalIgnoreCase);
+
+            if (isAdminOnlyPath && !isAdmin && !isUserSelfPath)
             {
                 context.Response.StatusCode = StatusCodes.Status403Forbidden;
                 await context.Response.WriteAsJsonAsync(

@@ -52,7 +52,7 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
-      (_) => false,
+      (r) => r.isFirst,
     );
   }
 

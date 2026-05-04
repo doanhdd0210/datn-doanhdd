@@ -24,6 +24,8 @@ class NotificationService {
 
   final foregroundMessages = StreamController<RemoteMessage>.broadcast();
   final navigationRequests = StreamController<String>.broadcast();
+  // Emits the data payload of every received notification (foreground + opened from bg/terminated)
+  final dataMessages = StreamController<Map<String, dynamic>>.broadcast();
 
   Future<void> init() async {
     // Thử lấy token để kiểm tra FCM có khả dụng không
@@ -56,11 +58,13 @@ class NotificationService {
     FirebaseMessaging.onMessage.listen((msg) {
       debugPrint('[FCM Foreground] ${msg.notification?.title}: ${msg.notification?.body}');
       foregroundMessages.add(msg);
+      dataMessages.add(msg.data);
     });
 
     FirebaseMessaging.onMessageOpenedApp.listen((msg) {
       debugPrint('[FCM Opened] ${msg.data}');
       _handleNavigationData(msg.data);
+      dataMessages.add(msg.data);
     });
 
     try {
@@ -69,6 +73,7 @@ class NotificationService {
         debugPrint('[FCM Initial] App mở từ notification: ${initialMessage.data}');
         Future.delayed(const Duration(milliseconds: 500), () {
           _handleNavigationData(initialMessage.data);
+          dataMessages.add(initialMessage.data);
         });
       }
     } catch (e) {
@@ -125,5 +130,6 @@ class NotificationService {
   void dispose() {
     foregroundMessages.close();
     navigationRequests.close();
+    dataMessages.close();
   }
 }

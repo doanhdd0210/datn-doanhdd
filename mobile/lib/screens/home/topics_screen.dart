@@ -1014,18 +1014,20 @@ class _NotifBellState extends State<_NotifBell> {
   final _api = ApiService();
   int _unread = 0;
   Timer? _timer;
+  StreamSubscription<Map<String, dynamic>>? _notifSub;
 
   @override
   void initState() {
     super.initState();
     _fetchCount();
-    // Tự refresh mỗi 30 giây để badge luôn cập nhật
     _timer = Timer.periodic(const Duration(seconds: 30), (_) => _fetchCount());
+    _notifSub = NotificationService().dataMessages.stream.listen((_) => _fetchCount());
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    _notifSub?.cancel();
     super.dispose();
   }
 

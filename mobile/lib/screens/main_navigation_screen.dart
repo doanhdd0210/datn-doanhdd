@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_theme.dart';
+import '../providers/user_provider.dart';
 import '../services/notification_service.dart';
 import '../widgets/app_snackbar.dart';
 import 'home/topics_screen.dart';
@@ -22,6 +24,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
   StreamSubscription<RemoteMessage>? _fgSub;
   StreamSubscription<String>? _navSub;
+  StreamSubscription<Map<String, dynamic>>? _dataSub;
 
   final List<Widget> _screens = const [
     TopicsScreen(),
@@ -73,12 +76,32 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       final idx = _screenIndex[screen];
       if (idx != null) setState(() => _currentIndex = idx);
     });
+
+    _dataSub = ns.dataMessages.stream.listen((data) {
+      if (!mounted) return;
+      _handleDataRefresh(data);
+    });
+  }
+
+  void _handleDataRefresh(Map<String, dynamic> data) {
+    final type = data['type'] as String?;
+    final screen = data['screen'] as String?;
+
+    if (type == 'achievement' || screen == 'profile') {
+      context.read<UserProvider>().pollNewAchievements();
+    }
+
+    if (screen == 'qa' || type == 'follow' || screen == 'friends') {
+      // Trigger unread count refresh in NotifBell via a lightweight stats reload
+      context.read<UserProvider>().loadStats();
+    }
   }
 
   @override
   void dispose() {
     _fgSub?.cancel();
     _navSub?.cancel();
+    _dataSub?.cancel();
     super.dispose();
   }
 

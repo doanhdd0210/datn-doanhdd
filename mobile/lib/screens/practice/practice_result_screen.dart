@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:percent_indicator/percent_indicator.dart';
+import 'package:provider/provider.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_text_styles.dart';
 import '../../models/api_code_snippet.dart';
+import '../../providers/user_provider.dart';
 
 class PracticeResultScreen extends StatelessWidget {
   final ApiCodeSnippet snippet;
@@ -187,8 +189,11 @@ class PracticeResultScreen extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () => Navigator.of(context)
-                    .popUntil((route) => route.isFirst || route.settings.name == '/'),
+                onPressed: () {
+                  context.read<UserProvider>().loadStats();
+                  Navigator.of(context)
+                      .popUntil((route) => route.isFirst || route.settings.name == '/');
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,

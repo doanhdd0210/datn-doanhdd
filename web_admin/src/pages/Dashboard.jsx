@@ -116,11 +116,16 @@ export default function Dashboard() {
       {showLogoutModal && (
         <div style={styles.overlay}>
           <div style={styles.modal}>
-            <h3 style={{ margin: '0 0 8px' }}>Đăng xuất</h3>
-            <p style={{ color: '#6b7280', margin: '0 0 24px' }}>
-              Bạn có chắc muốn đăng xuất không?
-            </p>
-            <div style={styles.modalActions}>
+            <div style={styles.modalHeader}>
+              <h3 style={styles.modalTitle}>Đăng xuất</h3>
+              <button onClick={() => setShowLogoutModal(false)} style={styles.modalClose}>✕</button>
+            </div>
+            <div style={styles.modalBody}>
+              <p style={{ color: '#6b7280', margin: 0 }}>
+                Bạn có chắc muốn đăng xuất không?
+              </p>
+            </div>
+            <div style={styles.modalFooter}>
               <button onClick={() => setShowLogoutModal(false)} style={styles.cancelBtn}>
                 Huỷ
               </button>
@@ -298,8 +303,12 @@ const styles = {
     position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)',
     display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100,
   },
-  modal: { background: '#fff', borderRadius: 14, padding: '28px 32px', width: 320 },
-  modalActions: { display: 'flex', justifyContent: 'flex-end', gap: 12 },
+  modal: { background: '#fff', borderRadius: 14, width: 340, maxWidth: '90vw', display: 'flex', flexDirection: 'column', overflow: 'hidden' },
+  modalHeader: { padding: '18px 24px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 },
+  modalTitle: { margin: 0, fontSize: 18, fontWeight: 700, color: '#1e293b' },
+  modalBody: { padding: '20px 24px', overflowY: 'auto', flex: 1 },
+  modalFooter: { padding: '14px 24px', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end', gap: 12, flexShrink: 0 },
+  modalClose: { background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: '#94a3b8', padding: '2px 4px', lineHeight: 1, borderRadius: 4 },
   cancelBtn: { padding: '8px 20px', border: '1.5px solid #d1d5db', borderRadius: 8, background: '#fff', cursor: 'pointer', fontWeight: 500 },
   confirmBtn: { padding: '8px 20px', border: 'none', borderRadius: 8, background: '#dc2626', color: '#fff', cursor: 'pointer', fontWeight: 500 },
 }

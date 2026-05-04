@@ -259,55 +259,58 @@ export default function QuestionsPage() {
       {modal && modal.mode !== 'delete' && (
         <div style={s.overlay}>
           <div style={s.modal}>
-            <h3 style={s.modalTitle}>{modal.mode === 'create' ? 'Thêm câu hỏi mới' : 'Sửa câu hỏi'}</h3>
+            <div style={s.modalHeader}>
+              <h3 style={s.modalTitle}>{modal.mode === 'create' ? 'Thêm câu hỏi mới' : 'Sửa câu hỏi'}</h3>
+              <button onClick={closeModal} style={s.modalClose}>✕</button>
+            </div>
+            <div style={s.modalBody}>
+              <label style={s.label}>Bài học</label>
+              <select style={s.input} value={form.lessonId ?? ''} onChange={e => setForm({ ...form, lessonId: e.target.value })}>
+                <option value="">-- Chọn bài học --</option>
+                {lessons.map(l => <option key={l.id} value={l.id}>{l.title}</option>)}
+              </select>
 
-            <label style={s.label}>Bài học</label>
-            <select style={s.input} value={form.lessonId ?? ''} onChange={e => setForm({ ...form, lessonId: e.target.value })}>
-              <option value="">-- Chọn bài học --</option>
-              {lessons.map(l => <option key={l.id} value={l.id}>{l.title}</option>)}
-            </select>
+              <label style={s.label}>Câu hỏi *</label>
+              <textarea style={{ ...s.input, minHeight: 80, resize: 'vertical' }} value={form.questionText ?? ''} onChange={e => setForm({ ...form, questionText: e.target.value })} placeholder="Nội dung câu hỏi..." />
 
-            <label style={s.label}>Câu hỏi *</label>
-            <textarea style={{ ...s.input, minHeight: 80, resize: 'vertical' }} value={form.questionText ?? ''} onChange={e => setForm({ ...form, questionText: e.target.value })} placeholder="Nội dung câu hỏi..." />
-
-            <label style={s.label}>Các đáp án</label>
-            {ANSWER_LABELS.map((lbl, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                <span style={{ fontWeight: 700, color: '#475569', width: 20 }}>{lbl}.</span>
-                <input
-                  style={{ ...s.input, flex: 1 }}
-                  value={(form.options ?? [])[i] ?? ''}
-                  onChange={e => setOption(i, e.target.value)}
-                  placeholder={`Đáp án ${lbl}...`}
-                />
-              </div>
-            ))}
-
-            <label style={s.label}>Đáp án đúng</label>
-            <div style={{ display: 'flex', gap: 16, marginTop: 4 }}>
+              <label style={s.label}>Các đáp án</label>
               {ANSWER_LABELS.map((lbl, i) => (
-                <label key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontWeight: form.correctAnswerIndex === i ? 700 : 400, color: form.correctAnswerIndex === i ? '#16a34a' : '#374151' }}>
-                  <input type="radio" name="correct" checked={form.correctAnswerIndex === i} onChange={() => setForm({ ...form, correctAnswerIndex: i })} />
-                  {lbl}
-                </label>
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                  <span style={{ fontWeight: 700, color: '#475569', width: 20 }}>{lbl}.</span>
+                  <input
+                    style={{ ...s.input, flex: 1 }}
+                    value={(form.options ?? [])[i] ?? ''}
+                    onChange={e => setOption(i, e.target.value)}
+                    placeholder={`Đáp án ${lbl}...`}
+                  />
+                </div>
               ))}
-            </div>
 
-            <label style={s.label}>Giải thích (tùy chọn)</label>
-            <textarea style={{ ...s.input, minHeight: 60, resize: 'vertical' }} value={form.explanation ?? ''} onChange={e => setForm({ ...form, explanation: e.target.value })} placeholder="Giải thích đáp án đúng..." />
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              <div>
-                <label style={s.label}>Điểm</label>
-                <input style={s.input} type="number" value={form.points ?? 10} onChange={e => setForm({ ...form, points: Number(e.target.value) })} />
+              <label style={s.label}>Đáp án đúng</label>
+              <div style={{ display: 'flex', gap: 16, marginTop: 4 }}>
+                {ANSWER_LABELS.map((lbl, i) => (
+                  <label key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontWeight: form.correctAnswerIndex === i ? 700 : 400, color: form.correctAnswerIndex === i ? '#16a34a' : '#374151' }}>
+                    <input type="radio" name="correct" checked={form.correctAnswerIndex === i} onChange={() => setForm({ ...form, correctAnswerIndex: i })} />
+                    {lbl}
+                  </label>
+                ))}
               </div>
-              <div>
-                <label style={s.label}>Thứ tự</label>
-                <input style={s.input} type="number" value={form.order ?? 0} onChange={e => setForm({ ...form, order: Number(e.target.value) })} />
+
+              <label style={s.label}>Giải thích (tùy chọn)</label>
+              <textarea style={{ ...s.input, minHeight: 60, resize: 'vertical' }} value={form.explanation ?? ''} onChange={e => setForm({ ...form, explanation: e.target.value })} placeholder="Giải thích đáp án đúng..." />
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                  <label style={s.label}>Điểm</label>
+                  <input style={s.input} type="number" value={form.points ?? 10} onChange={e => setForm({ ...form, points: Number(e.target.value) })} />
+                </div>
+                <div>
+                  <label style={s.label}>Thứ tự</label>
+                  <input style={s.input} type="number" value={form.order ?? 0} onChange={e => setForm({ ...form, order: Number(e.target.value) })} />
+                </div>
               </div>
             </div>
-
-            <div style={s.modalActions}>
+            <div style={s.modalFooter}>
               <button onClick={closeModal} style={s.cancelBtn}>Huỷ</button>
               <button onClick={handleSave} disabled={saving} style={s.btnPrimary}>{saving ? 'Đang lưu...' : 'Lưu'}</button>
             </div>
@@ -319,11 +322,16 @@ export default function QuestionsPage() {
       {modal?.mode === 'delete' && (
         <div style={s.overlay}>
           <div style={{ ...s.modal, maxWidth: 400 }}>
-            <h3 style={s.modalTitle}>Xoá câu hỏi</h3>
-            <p style={{ color: '#6b7280', marginBottom: 8 }}>Bạn chắc chắn muốn xoá câu hỏi này?</p>
-            <p style={{ color: '#475569', fontSize: 13, marginBottom: 8, fontStyle: 'italic' }}>{modal.item?.questionText}</p>
-            <p style={{ color: '#ef4444', fontSize: 13, marginBottom: 24 }}>Hành động này không thể hoàn tác.</p>
-            <div style={s.modalActions}>
+            <div style={s.modalHeader}>
+              <h3 style={s.modalTitle}>Xoá câu hỏi</h3>
+              <button onClick={closeModal} style={s.modalClose}>✕</button>
+            </div>
+            <div style={s.modalBody}>
+              <p style={{ color: '#6b7280', marginBottom: 8 }}>Bạn chắc chắn muốn xoá câu hỏi này?</p>
+              <p style={{ color: '#475569', fontSize: 13, marginBottom: 8, fontStyle: 'italic' }}>{modal.item?.questionText}</p>
+              <p style={{ color: '#ef4444', fontSize: 13, margin: 0 }}>Hành động này không thể hoàn tác.</p>
+            </div>
+            <div style={s.modalFooter}>
               <button onClick={closeModal} style={s.cancelBtn}>Huỷ</button>
               <button onClick={handleDelete} disabled={saving} style={{ ...s.btnPrimary, background: '#ef4444' }}>{saving ? 'Đang xoá...' : 'Xoá'}</button>
             </div>
@@ -360,10 +368,13 @@ const s = {
   btnEdit: { padding: '4px 10px', background: '#e0f2fe', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 14 },
   btnDelete: { padding: '4px 10px', background: '#fee2e2', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 14 },
   overlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200 },
-  modal: { background: '#fff', borderRadius: 14, padding: '28px 32px', width: 600, maxWidth: '90vw', maxHeight: '90vh', overflowY: 'auto' },
-  modalTitle: { margin: '0 0 20px', fontSize: 18, fontWeight: 700, color: '#1e293b' },
+  modal: { background: '#fff', borderRadius: 14, width: 600, maxWidth: '90vw', maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' },
+  modalHeader: { padding: '18px 24px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 },
+  modalTitle: { margin: 0, fontSize: 18, fontWeight: 700, color: '#1e293b' },
+  modalBody: { padding: '20px 24px', overflowY: 'auto', flex: 1 },
+  modalFooter: { padding: '14px 24px', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end', gap: 12, flexShrink: 0 },
+  modalClose: { background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: '#94a3b8', padding: '2px 4px', lineHeight: 1, borderRadius: 4 },
   label: { display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 4, marginTop: 12 },
   input: { width: '100%', padding: '9px 12px', border: '1.5px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none', boxSizing: 'border-box' },
-  modalActions: { display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24 },
   cancelBtn: { padding: '9px 20px', border: '1.5px solid #e2e8f0', borderRadius: 8, background: '#fff', cursor: 'pointer', fontWeight: 500 },
 }

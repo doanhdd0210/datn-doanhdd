@@ -198,44 +198,44 @@ export default function QaManagementPage() {
       {modal?.mode === 'view' && (
         <div style={s.overlay}>
           <div style={{ ...s.modal, maxWidth: 700 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
-              <h3 style={{ ...s.modalTitle, margin: 0, flex: 1 }}>{modal.item.title || '(Không có tiêu đề)'}</h3>
-              <button onClick={closeModal} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: '#94a3b8', marginLeft: 8 }}>✕</button>
+            <div style={s.modalHeader}>
+              <h3 style={s.modalTitle}>{modal.item.title || '(Không có tiêu đề)'}</h3>
+              <button onClick={closeModal} style={s.modalClose}>✕</button>
             </div>
-
-            <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
-              <span style={s.badge}>👤 {modal.item.authorName || modal.item.authorEmail || '—'}</span>
-              <span style={{ ...s.badge, background: modal.item.isSolved ? '#dcfce7' : '#fff7ed', color: modal.item.isSolved ? '#16a34a' : '#c2410c' }}>
-                {modal.item.isSolved ? '✓ Đã giải' : '○ Chưa giải'}
-              </span>
-              <span style={s.badge}>📅 {formatDate(modal.item.createdAt)}</span>
-              {(modal.item.tags ?? []).map((tag, i) => (
-                <span key={i} style={{ ...s.badge, background: '#dbeafe', color: '#1d4ed8' }}>{tag}</span>
-              ))}
-            </div>
-
-            <div style={{ background: '#f8fafc', borderRadius: 8, padding: 16, marginBottom: 16, color: '#374151', lineHeight: 1.6 }}>
-              {modal.item.body || modal.item.content || modal.item.question || '(Không có nội dung)'}
-            </div>
-
-            {(modal.item.answers ?? []).length > 0 && (
-              <div>
-                <h4 style={{ margin: '0 0 10px', fontSize: 15, color: '#1e293b' }}>Trả lời ({modal.item.answers.length})</h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {modal.item.answers.map((ans, i) => (
-                    <div key={i} style={{ background: ans.isAccepted ? '#f0fdf4' : '#f8fafc', border: ans.isAccepted ? '1px solid #86efac' : '1px solid #e2e8f0', borderRadius: 8, padding: '12px 14px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                        <span style={{ fontWeight: 600, fontSize: 13, color: '#374151' }}>{ans.authorName || ans.authorEmail || '—'}</span>
-                        {ans.isAccepted && <span style={{ ...s.badge, background: '#dcfce7', color: '#16a34a' }}>✓ Đáp án được chọn</span>}
-                      </div>
-                      <div style={{ color: '#475569', fontSize: 14, lineHeight: 1.5 }}>{ans.body || ans.content || '—'}</div>
-                    </div>
-                  ))}
-                </div>
+            <div style={s.modalBody}>
+              <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
+                <span style={s.badge}>👤 {modal.item.authorName || modal.item.authorEmail || '—'}</span>
+                <span style={{ ...s.badge, background: modal.item.isSolved ? '#dcfce7' : '#fff7ed', color: modal.item.isSolved ? '#16a34a' : '#c2410c' }}>
+                  {modal.item.isSolved ? '✓ Đã giải' : '○ Chưa giải'}
+                </span>
+                <span style={s.badge}>📅 {formatDate(modal.item.createdAt)}</span>
+                {(modal.item.tags ?? []).map((tag, i) => (
+                  <span key={i} style={{ ...s.badge, background: '#dbeafe', color: '#1d4ed8' }}>{tag}</span>
+                ))}
               </div>
-            )}
 
-            <div style={s.modalActions}>
+              <div style={{ background: '#f8fafc', borderRadius: 8, padding: 16, marginBottom: 16, color: '#374151', lineHeight: 1.6 }}>
+                {modal.item.body || modal.item.content || modal.item.question || '(Không có nội dung)'}
+              </div>
+
+              {(modal.item.answers ?? []).length > 0 && (
+                <div>
+                  <h4 style={{ margin: '0 0 10px', fontSize: 15, color: '#1e293b' }}>Trả lời ({modal.item.answers.length})</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {modal.item.answers.map((ans, i) => (
+                      <div key={i} style={{ background: ans.isAccepted ? '#f0fdf4' : '#f8fafc', border: ans.isAccepted ? '1px solid #86efac' : '1px solid #e2e8f0', borderRadius: 8, padding: '12px 14px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                          <span style={{ fontWeight: 600, fontSize: 13, color: '#374151' }}>{ans.authorName || ans.authorEmail || '—'}</span>
+                          {ans.isAccepted && <span style={{ ...s.badge, background: '#dcfce7', color: '#16a34a' }}>✓ Đáp án được chọn</span>}
+                        </div>
+                        <div style={{ color: '#475569', fontSize: 14, lineHeight: 1.5 }}>{ans.body || ans.content || '—'}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            <div style={s.modalFooter}>
               <button onClick={() => { closeModal(); openDelete(modal.item) }} style={{ ...s.cancelBtn, color: '#dc2626', border: '1.5px solid #dc2626' }}>🗑️ Xoá bài đăng</button>
               <button onClick={closeModal} style={s.btnPrimary}>Đóng</button>
             </div>
@@ -247,10 +247,15 @@ export default function QaManagementPage() {
       {modal?.mode === 'delete' && (
         <div style={s.overlay}>
           <div style={{ ...s.modal, maxWidth: 400 }}>
-            <h3 style={s.modalTitle}>Xoá bài đăng QA</h3>
-            <p style={{ color: '#6b7280', marginBottom: 8 }}>Xoá bài đăng: <strong>{modal.item?.title || '(không có tiêu đề)'}</strong>?</p>
-            <p style={{ color: '#ef4444', fontSize: 13, marginBottom: 24 }}>Hành động này không thể hoàn tác. Tất cả câu trả lời cũng sẽ bị xoá.</p>
-            <div style={s.modalActions}>
+            <div style={s.modalHeader}>
+              <h3 style={s.modalTitle}>Xoá bài đăng QA</h3>
+              <button onClick={closeModal} style={s.modalClose}>✕</button>
+            </div>
+            <div style={s.modalBody}>
+              <p style={{ color: '#6b7280', marginBottom: 8 }}>Xoá bài đăng: <strong>{modal.item?.title || '(không có tiêu đề)'}</strong>?</p>
+              <p style={{ color: '#ef4444', fontSize: 13, margin: 0 }}>Hành động này không thể hoàn tác. Tất cả câu trả lời cũng sẽ bị xoá.</p>
+            </div>
+            <div style={s.modalFooter}>
               <button onClick={closeModal} style={s.cancelBtn}>Huỷ</button>
               <button onClick={handleDelete} disabled={deleting} style={{ ...s.btnPrimary, background: '#ef4444' }}>{deleting ? 'Đang xoá...' : 'Xoá'}</button>
             </div>
@@ -286,8 +291,11 @@ const s = {
   btnEdit: { padding: '4px 10px', background: '#e0f2fe', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 14 },
   btnDelete: { padding: '4px 10px', background: '#fee2e2', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 14 },
   overlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200 },
-  modal: { background: '#fff', borderRadius: 14, padding: '28px 32px', width: 600, maxWidth: '90vw', maxHeight: '90vh', overflowY: 'auto' },
-  modalTitle: { margin: '0 0 20px', fontSize: 18, fontWeight: 700, color: '#1e293b' },
-  modalActions: { display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24 },
+  modal: { background: '#fff', borderRadius: 14, width: 600, maxWidth: '90vw', maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' },
+  modalHeader: { padding: '18px 24px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 },
+  modalTitle: { margin: 0, fontSize: 18, fontWeight: 700, color: '#1e293b' },
+  modalBody: { padding: '20px 24px', overflowY: 'auto', flex: 1 },
+  modalFooter: { padding: '14px 24px', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end', gap: 12, flexShrink: 0 },
+  modalClose: { background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: '#94a3b8', padding: '2px 4px', lineHeight: 1, borderRadius: 4 },
   cancelBtn: { padding: '9px 20px', border: '1.5px solid #e2e8f0', borderRadius: 8, background: '#fff', cursor: 'pointer', fontWeight: 500 },
 }

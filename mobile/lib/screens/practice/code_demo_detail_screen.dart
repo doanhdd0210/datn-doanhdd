@@ -80,24 +80,7 @@ class _CodeDemoDetailScreenState extends State<CodeDemoDetailScreen>
         _isRunning = false;
         _result = result;
       });
-      // Submit practice
-      try {
-        await _api.submitPractice(
-          widget.snippet.id,
-          _codeController.text,
-          result.stdout,
-          result.isSuccess,
-        );
-        if (mounted && result.isSuccess) {
-          setState(() => _isPassed = true);
-        }
-      } catch (_) {
-        if (mounted && result.isSuccess) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Không thể lưu kết quả. Kiểm tra kết nối mạng.')),
-          );
-        }
-      }
+      // Demo screen chỉ chạy code để xem, không submit practice result
     }
   }
 

@@ -80,8 +80,8 @@ class _QaDetailScreenState extends State<QaDetailScreen> {
                     child: OutlinedButton(
                       onPressed: () => Navigator.pop(ctx, false),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.red,
-                        side: const BorderSide(color: AppColors.red, width: 1.5),
+                        foregroundColor: AppColors.textGray,
+                        side: const BorderSide(color: AppColors.textGray, width: 1.5),
                         fixedSize: const Size.fromHeight(48),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),

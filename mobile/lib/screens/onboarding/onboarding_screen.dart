@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'level_selection_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
-  const OnboardingScreen({super.key});
+  final VoidCallback onComplete;
+  const OnboardingScreen({super.key, required this.onComplete});
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
@@ -83,7 +84,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   void _goToLevelSelection() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const LevelSelectionScreen()),
+      MaterialPageRoute(builder: (_) => LevelSelectionScreen(onComplete: widget.onComplete)),
     );
   }
 

@@ -6,10 +6,9 @@ import '../../constants/app_colors.dart';
 import '../../constants/level_config.dart';
 import '../../providers/user_provider.dart';
 import '../../../main.dart' show onboardingDoneKey;
-import '../main_navigation_screen.dart';
-
 class PlacementTestScreen extends StatefulWidget {
-  const PlacementTestScreen({super.key});
+  final VoidCallback onComplete;
+  const PlacementTestScreen({super.key, required this.onComplete});
 
   @override
   State<PlacementTestScreen> createState() => _PlacementTestScreenState();
@@ -174,11 +173,8 @@ class _PlacementTestScreenState extends State<PlacementTestScreen>
     final provider = context.read<UserProvider>();
     await provider.setLevel(_resultLevel);
     if (!mounted) return;
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
-      (r) => r.isFirst,
-    );
+    Navigator.of(context).popUntil((r) => r.isFirst);
+    widget.onComplete();
   }
 
   @override

@@ -130,6 +130,8 @@ class _OnboardingGateState extends State<_OnboardingGate> {
     if (_onboardingDone!) {
       return const MainNavigationScreen();
     }
-    return const OnboardingScreen();
+    return OnboardingScreen(onComplete: () {
+      if (mounted) setState(() => _onboardingDone = true);
+    });
   }
 }

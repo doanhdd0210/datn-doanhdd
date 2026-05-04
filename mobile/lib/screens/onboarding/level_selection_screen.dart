@@ -6,11 +6,11 @@ import '../../constants/app_colors.dart';
 import '../../constants/level_config.dart';
 import '../../providers/user_provider.dart';
 import '../../../main.dart' show onboardingDoneKey;
-import '../main_navigation_screen.dart';
 import 'placement_test_screen.dart';
 
 class LevelSelectionScreen extends StatefulWidget {
-  const LevelSelectionScreen({super.key});
+  final VoidCallback onComplete;
+  const LevelSelectionScreen({super.key, required this.onComplete});
 
   @override
   State<LevelSelectionScreen> createState() => _LevelSelectionScreenState();
@@ -49,11 +49,8 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
     final provider = context.read<UserProvider>();
     await provider.setLevel(_selectedLevel!);
     if (!mounted) return;
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
-      (r) => r.isFirst,
-    );
+    Navigator.of(context).popUntil((r) => r.isFirst);
+    widget.onComplete();
   }
 
   @override
@@ -158,7 +155,7 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (_) => const PlacementTestScreen()),
+                          builder: (_) => PlacementTestScreen(onComplete: widget.onComplete)),
                     ),
                     child: Container(
                       width: double.infinity,

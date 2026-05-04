@@ -224,6 +224,12 @@ public class ProgressService
         var todayId = $"{userId}_{DateTime.UtcNow:yyyy-MM-dd}";
         var todayProgress = await _db.DailyProgresses.FirstOrDefaultAsync(d => d.Id == todayId);
 
+        var todayStart = DateTime.UtcNow.Date;
+        var todayAchievementXp = await _db.UserAchievements
+            .Where(ua => ua.UserId == userId && ua.UnlockedAt >= todayStart)
+            .Join(_db.Achievements, ua => ua.AchievementId, a => a.Id, (ua, a) => a.XpReward)
+            .SumAsync();
+
         var stats = new UserStatsResponse
         {
             TotalXp = profile?.TotalXp ?? 0,
@@ -232,7 +238,7 @@ public class ProgressService
             LongestStreak = profile?.LongestStreak ?? 0,
             Rank = profile?.Rank ?? "Beginner",
             Level = profile?.Level ?? "beginner",
-            TodayXp = todayProgress?.XpEarned ?? 0,
+            TodayXp = (todayProgress?.XpEarned ?? 0) + todayAchievementXp,
         };
 
         await _cache.SetAsync(cacheKey, stats, TimeSpan.FromMinutes(2));

@@ -231,21 +231,6 @@ public class AchievementsService
 
                 await _db.SaveChangesAsync();
 
-                // Cộng XP thành tích vào daily progress (để tính mục tiêu hôm nay)
-                int totalAchievementXp = newlyUnlocked.Sum(ua =>
-                    allAchievements.First(a => a.Id == ua.AchievementId).XpReward);
-                if (totalAchievementXp > 0)
-                {
-                    var today = DateTime.UtcNow.ToString("yyyy-MM-dd");
-                    var dailyId = $"{userId}_{today}";
-                    var dailyProgress = await _db.DailyProgresses.FirstOrDefaultAsync(d => d.Id == dailyId);
-                    if (dailyProgress != null)
-                    {
-                        dailyProgress.XpEarned += totalAchievementXp;
-                        await _db.SaveChangesAsync();
-                    }
-                }
-
                 // Invalidate leaderboard cache vì TotalXp đã thay đổi
                 await _cache.RemoveAsync($"stats:{userId}", "leaderboard:20", "leaderboard:50", "leaderboard_weekly:20", "leaderboard_weekly:50");
 

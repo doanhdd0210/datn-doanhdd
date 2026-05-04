@@ -220,16 +220,28 @@ public class FriendsService
             .Select(g => new { UserId = g.Key, Bonus = g.Sum(c => c.BonusXp) })
             .ToListAsync();
 
+        var sinceDate = DateTime.UtcNow.AddDays(-7);
+        var weeklyAchievementList = await _db.UserAchievements
+            .Where(ua => ua.UnlockedAt >= sinceDate)
+            .Where(ua => _db.UserProfiles.Any(p => p.Uid == ua.UserId && !p.IsAdmin))
+            .Join(_db.Achievements, ua => ua.AchievementId, a => a.Id, (ua, a) => new { ua.UserId, a.XpReward })
+            .GroupBy(x => x.UserId)
+            .Select(g => new { UserId = g.Key, AchievementXp = g.Sum(x => x.XpReward) })
+            .ToListAsync();
+
         var bonusDict = weeklyBonusList.ToDictionary(x => x.UserId, x => x.Bonus);
+        var achievementDict = weeklyAchievementList.ToDictionary(x => x.UserId, x => x.AchievementXp);
 
         var merged = weeklyXpList
             .Select(x => x.UserId)
             .Union(bonusDict.Keys)
+            .Union(achievementDict.Keys)
             .Select(uid => new
             {
                 UserId = uid,
                 WeeklyXp = (weeklyXpList.FirstOrDefault(x => x.UserId == uid)?.Xp ?? 0)
-                         + (bonusDict.TryGetValue(uid, out var b) ? b : 0),
+                         + (bonusDict.TryGetValue(uid, out var b) ? b : 0)
+                         + (achievementDict.TryGetValue(uid, out var a) ? a : 0),
             })
             .OrderByDescending(x => x.WeeklyXp)
             .Take(limit)

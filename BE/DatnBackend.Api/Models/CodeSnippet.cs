@@ -14,3 +14,18 @@ public class CodeSnippet
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; }
 }
+
+public class CodeSnippetDto(CodeSnippet s, bool isPassed)
+{
+    public string Id { get; } = s.Id;
+    public string TopicId { get; } = s.TopicId;
+    public string Title { get; } = s.Title;
+    public string Description { get; } = s.Description;
+    public string Code { get; } = s.Code;
+    public string Language { get; } = s.Language;
+    public string ExpectedOutput { get; } = s.ExpectedOutput;
+    public int Order { get; } = s.Order;
+    public int XpReward { get; } = s.XpReward;
+    public bool IsActive { get; } = s.IsActive;
+    public bool IsPassed { get; } = isPassed;
+}

@@ -19,7 +19,6 @@ class _CodeDemoListScreenState extends State<CodeDemoListScreen> {
   final _api = ApiService();
   List<ApiCodeSnippet> _snippets = [];
   List<Topic> _topics = [];
-  Set<String> _passedIds = {};
   bool _isLoading = true;
   String? _selectedTopicId;
 
@@ -35,13 +34,11 @@ class _CodeDemoListScreenState extends State<CodeDemoListScreen> {
       final results = await Future.wait([
         _api.getCodeSnippets(topicId: _selectedTopicId),
         _api.getTopics(),
-        _api.getPassedSnippetIds(),
       ]);
       if (mounted) {
         setState(() {
           _snippets = results[0] as List<ApiCodeSnippet>;
           _topics = results[1] as List<Topic>;
-          _passedIds = results[2] as Set<String>;
           _isLoading = false;
         });
       }
@@ -139,19 +136,19 @@ class _CodeDemoListScreenState extends State<CodeDemoListScreen> {
                     delegate: SliverChildBuilderDelegate(
                       (context, index) => _SnippetCard(
                         snippet: _snippets[index],
-                        isPassed: _passedIds.contains(_snippets[index].id),
+                        isPassed: _snippets[index].isPassed,
                         onTap: () async {
                           await Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (_) => CodeDemoDetailScreen(
                                 snippet: _snippets[index],
+                                isPassed: _snippets[index].isPassed,
                               ),
                             ),
                           );
-                          // Reload passed status after returning
-                          final passed = await _api.getPassedSnippetIds();
-                          if (mounted) setState(() => _passedIds = passed);
+                          // Reload list so isPassed status reflects latest from BE
+                          _loadData();
                         },
                       ),
                       childCount: _snippets.length,

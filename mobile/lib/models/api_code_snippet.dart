@@ -9,6 +9,7 @@ class ApiCodeSnippet {
   final String expectedOutput;
   final int order;
   final int xpReward;
+  final bool isPassed;
 
   const ApiCodeSnippet({
     required this.id,
@@ -20,6 +21,7 @@ class ApiCodeSnippet {
     required this.expectedOutput,
     required this.order,
     required this.xpReward,
+    this.isPassed = false,
   });
 
   factory ApiCodeSnippet.fromJson(Map<String, dynamic> json) {
@@ -33,6 +35,7 @@ class ApiCodeSnippet {
       expectedOutput: json['expectedOutput'] as String? ?? '',
       order: json['order'] as int? ?? 0,
       xpReward: json['xpReward'] as int? ?? 10,
+      isPassed: json['isPassed'] as bool? ?? false,
     );
   }
 

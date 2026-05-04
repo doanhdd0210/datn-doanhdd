@@ -17,19 +17,25 @@ public class CodeSnippetService
         _logger = logger;
     }
 
-    public async Task<List<CodeSnippet>> ListSnippetsAsync(string? topicId = null, bool activeOnly = true)
+    public async Task<List<CodeSnippetDto>> ListSnippetsAsync(string? userId = null, string? topicId = null, bool activeOnly = true)
     {
-        var cacheKey = $"snippets:topic:{topicId ?? "all"}:{activeOnly}";
-        var cached = await _cache.GetAsync<List<CodeSnippet>>(cacheKey);
-        if (cached != null) return cached;
-
         var query = _db.CodeSnippets.AsQueryable();
         if (topicId != null) query = query.Where(s => s.TopicId == topicId);
         if (activeOnly) query = query.Where(s => s.IsActive);
         var snippets = await query.OrderBy(s => s.Order).ToListAsync();
 
-        await _cache.SetAsync(cacheKey, snippets, TimeSpan.FromMinutes(10));
-        return snippets;
+        HashSet<string> passedIds = [];
+        if (userId != null)
+        {
+            var passed = await _db.PracticeResults
+                .Where(r => r.UserId == userId && r.IsPassed)
+                .Select(r => r.CodeSnippetId)
+                .Distinct()
+                .ToListAsync();
+            passedIds = [.. passed];
+        }
+
+        return snippets.Select(s => new CodeSnippetDto(s, passedIds.Contains(s.Id))).ToList();
     }
 
     public async Task<CodeSnippet?> GetSnippetAsync(string id)

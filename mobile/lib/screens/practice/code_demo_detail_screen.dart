@@ -7,14 +7,15 @@ import '../../constants/app_colors.dart';
 import '../../constants/app_text_styles.dart';
 import '../../models/api_code_snippet.dart';
 import '../../services/compiler_service.dart';
-import '../../services/api_service.dart';
+
 import 'code_practice_screen.dart';
 import '../../widgets/app_snackbar.dart';
 
 class CodeDemoDetailScreen extends StatefulWidget {
   final ApiCodeSnippet snippet;
+  final bool isPassed;
 
-  const CodeDemoDetailScreen({super.key, required this.snippet});
+  const CodeDemoDetailScreen({super.key, required this.snippet, this.isPassed = false});
 
   @override
   State<CodeDemoDetailScreen> createState() => _CodeDemoDetailScreenState();
@@ -23,28 +24,22 @@ class CodeDemoDetailScreen extends StatefulWidget {
 class _CodeDemoDetailScreenState extends State<CodeDemoDetailScreen>
     with SingleTickerProviderStateMixin {
   final _compiler = CompilerService();
-  final _api = ApiService();
   late CodeController _codeController;
   late TabController _tabController;
 
   bool _isRunning = false;
   CompileResult? _result;
-  bool _isPassed = false;
+  late bool _isPassed;
 
   @override
   void initState() {
     super.initState();
+    _isPassed = widget.isPassed;
     _tabController = TabController(length: 2, vsync: this);
     _codeController = CodeController(
       text: widget.snippet.code,
       language: java,
     );
-    _checkPassed();
-  }
-
-  Future<void> _checkPassed() async {
-    final ids = await _api.getPassedSnippetIds();
-    if (mounted) setState(() => _isPassed = ids.contains(widget.snippet.id));
   }
 
   @override

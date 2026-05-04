@@ -15,7 +15,7 @@ public class CodeSnippet
     public DateTime CreatedAt { get; set; }
 }
 
-public class CodeSnippetDto(CodeSnippet s, bool isPassed)
+public class CodeSnippetDto(CodeSnippet s, bool isPassed, int bestScore = 0)
 {
     public string Id { get; } = s.Id;
     public string TopicId { get; } = s.TopicId;
@@ -28,4 +28,6 @@ public class CodeSnippetDto(CodeSnippet s, bool isPassed)
     public int XpReward { get; } = s.XpReward;
     public bool IsActive { get; } = s.IsActive;
     public bool IsPassed { get; } = isPassed;
+    /// <summary>Điểm cao nhất user đạt được (0-100), 0 nếu chưa làm</summary>
+    public int BestScore { get; } = bestScore;
 }

@@ -352,20 +352,26 @@ class ApiService {
   }
 
   // Backend: POST /api/code-snippets/practice-submit
-  // Body: { codeSnippetId, submittedCode, actualOutput, isPassed }
-  Future<int> submitPractice(
+  // Returns { xpEarned, bestScore }
+  Future<({int xpEarned, int bestScore})> submitPractice(
     String snippetId,
     String code,
     String output,
     bool passed,
+    double matchPercent,
   ) async {
     final res = await _post('/code-snippets/practice-submit', {
       'codeSnippetId': snippetId,
       'submittedCode': code,
       'actualOutput': output,
       'isPassed': passed,
+      'matchPercent': matchPercent,
     });
-    return (res?['data']?['xpEarned'] as int?) ?? 0;
+    final data = res?['data'];
+    return (
+      xpEarned: (data?['xpEarned'] as int?) ?? 0,
+      bestScore: (data?['bestScore'] as int?) ?? 0,
+    );
   }
 
   // ── QA ────────────────────────────────────────────────────────────────────

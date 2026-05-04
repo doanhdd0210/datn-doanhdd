@@ -351,17 +351,21 @@ class _SnippetCard extends StatelessWidget {
                           style: const TextStyle(color: AppColors.xpGold, fontSize: 10, fontWeight: FontWeight.w700),
                         ),
                       ),
-                      if (isPassed) ...[
+                      if (snippet.bestScore > 0) ...[
                         const SizedBox(width: 6),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                           decoration: BoxDecoration(
-                            color: AppColors.correct.withValues(alpha: 0.15),
+                            color: (isPassed ? AppColors.correct : AppColors.primary).withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(6),
                           ),
-                          child: const Text(
-                            '✓ Đã hoàn thành',
-                            style: TextStyle(color: AppColors.correct, fontSize: 10, fontWeight: FontWeight.w700),
+                          child: Text(
+                            isPassed ? '✓ ${snippet.bestScore}%' : '🏅 ${snippet.bestScore}%',
+                            style: TextStyle(
+                              color: isPassed ? AppColors.correct : AppColors.primary,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                       ],

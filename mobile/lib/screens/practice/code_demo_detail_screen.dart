@@ -138,18 +138,20 @@ class _CodeDemoDetailScreenState extends State<CodeDemoDetailScreen>
                         ),
                       ),
                     ),
-                    if (_isPassed) ...[
+                    if (widget.snippet.bestScore > 0) ...[
                       const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
-                          color: AppColors.correct.withValues(alpha: 0.15),
+                          color: (_isPassed ? AppColors.correct : AppColors.primary).withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Text(
-                          '✓ Đã hoàn thành',
+                        child: Text(
+                          _isPassed
+                              ? '✓ ${widget.snippet.bestScore}%'
+                              : '🏅 Best ${widget.snippet.bestScore}%',
                           style: TextStyle(
-                            color: AppColors.correct,
+                            color: _isPassed ? AppColors.correct : AppColors.primary,
                             fontWeight: FontWeight.w700,
                             fontSize: 12,
                           ),

@@ -10,6 +10,8 @@ class ApiCodeSnippet {
   final int order;
   final int xpReward;
   final bool isPassed;
+  /// Điểm cao nhất đạt được (0-100), 0 nếu chưa làm
+  final int bestScore;
 
   const ApiCodeSnippet({
     required this.id,
@@ -22,6 +24,7 @@ class ApiCodeSnippet {
     required this.order,
     required this.xpReward,
     this.isPassed = false,
+    this.bestScore = 0,
   });
 
   factory ApiCodeSnippet.fromJson(Map<String, dynamic> json) {
@@ -36,6 +39,7 @@ class ApiCodeSnippet {
       order: json['order'] as int? ?? 0,
       xpReward: json['xpReward'] as int? ?? 10,
       isPassed: json['isPassed'] as bool? ?? false,
+      bestScore: json['bestScore'] as int? ?? 0,
     );
   }
 

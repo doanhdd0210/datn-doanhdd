@@ -164,8 +164,11 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
     final matchPercent = _calculateMatch(code, widget.snippet.code);
 
     int xpEarned = 0;
+    int bestScore = 0;
     try {
-      xpEarned = await _api.submitPractice(widget.snippet.id, code, stdout, passed);
+      final result = await _api.submitPractice(widget.snippet.id, code, stdout, passed, matchPercent);
+      xpEarned = result.xpEarned;
+      bestScore = result.bestScore;
     } catch (_) {}
 
     if (mounted && xpEarned > 0) {
@@ -185,6 +188,7 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
             matchPercent: matchPercent,
             timeSpent: _elapsedSeconds,
             xpEarned: xpEarned,
+            bestScore: bestScore,
           ),
         ),
       );

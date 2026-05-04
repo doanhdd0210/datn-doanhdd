@@ -29,17 +29,27 @@ public class CodeSnippetService
         var snippets = await query.OrderBy(s => s.Order).ToListAsync();
 
         HashSet<string> passedIds = [];
+        Dictionary<string, int> bestScores = [];
         if (userId != null)
         {
-            var passed = await _db.PracticeResults
-                .Where(r => r.UserId == userId && r.IsPassed)
-                .Select(r => r.CodeSnippetId)
-                .Distinct()
+            var results = await _db.PracticeResults
+                .Where(r => r.UserId == userId)
+                .GroupBy(r => r.CodeSnippetId)
+                .Select(g => new { SnippetId = g.Key, BestScore = g.Max(r => r.Score), IsPassed = g.Any(r => r.IsPassed) })
                 .ToListAsync();
-            passedIds = [.. passed];
+
+            foreach (var r in results)
+            {
+                bestScores[r.SnippetId] = r.BestScore;
+                if (r.IsPassed) passedIds.Add(r.SnippetId);
+            }
         }
 
-        return snippets.Select(s => new CodeSnippetDto(s, passedIds.Contains(s.Id))).ToList();
+        return snippets.Select(s => new CodeSnippetDto(
+            s,
+            passedIds.Contains(s.Id),
+            bestScores.TryGetValue(s.Id, out var bs) ? bs : 0
+        )).ToList();
     }
 
     public async Task<CodeSnippet?> GetSnippetAsync(string id)
@@ -112,15 +122,27 @@ public class CodeSnippetService
             .ToListAsync();
     }
 
-    public async Task<PracticeResult> SubmitPracticeAsync(string userId, SubmitPracticeRequest request)
+    public async Task<PracticeSubmitResponse> SubmitPracticeAsync(string userId, SubmitPracticeRequest request)
     {
         var snippet = await GetSnippetAsync(request.CodeSnippetId)
             ?? throw new KeyNotFoundException($"CodeSnippet '{request.CodeSnippetId}' not found");
 
-        // Chỉ award XP lần đầu pass (tránh farm khi làm lại)
-        bool hasPassedBefore = await _db.PracticeResults
-            .AnyAsync(r => r.UserId == userId && r.CodeSnippetId == request.CodeSnippetId && r.IsPassed);
-        int xpEarned = (request.IsPassed && !hasPassedBefore) ? snippet.XpReward : 0;
+        // Lấy điểm cao nhất trước đây (0-100)
+        int bestPreviousScore = await _db.PracticeResults
+            .Where(r => r.UserId == userId && r.CodeSnippetId == request.CodeSnippetId)
+            .MaxAsync(r => (int?)r.Score) ?? 0;
+
+        // Điểm lần này: matchPercent 0-1 → 0-100
+        double matchPercent = Math.Clamp(request.MatchPercent, 0.0, 1.0);
+        int newScore = (int)Math.Round(matchPercent * 100);
+
+        // XP tương ứng với best cũ và score mới
+        int bestPreviousXp = (int)Math.Round(bestPreviousScore / 100.0 * snippet.XpReward);
+        int newXp          = (int)Math.Round(matchPercent * snippet.XpReward);
+        // Chỉ thưởng phần chênh lệch (cải thiện so với lần tốt nhất trước)
+        int xpEarned = Math.Max(0, newXp - bestPreviousXp);
+
+        int bestScore = Math.Max(bestPreviousScore, newScore);
 
         var result = new PracticeResult
         {
@@ -130,7 +152,7 @@ public class CodeSnippetService
             SubmittedCode = request.SubmittedCode,
             ActualOutput = request.ActualOutput,
             IsPassed = request.IsPassed,
-            Score = request.IsPassed ? 100 : 0,
+            Score = newScore,
             XpEarned = xpEarned,
             CompletedAt = DateTime.UtcNow,
         };
@@ -152,7 +174,7 @@ public class CodeSnippetService
             await _achievements.CheckAndGrantAsync(userId);
         }
 
-        return result;
+        return new PracticeSubmitResponse(xpEarned, bestScore);
     }
 
     private Task InvalidateSnippetCacheAsync(string topicId) =>

@@ -14,6 +14,7 @@ class PracticeResultScreen extends StatelessWidget {
   final double matchPercent;
   final int timeSpent;
   final int xpEarned;
+  final int bestScore;
 
   const PracticeResultScreen({
     super.key,
@@ -24,6 +25,7 @@ class PracticeResultScreen extends StatelessWidget {
     required this.matchPercent,
     required this.timeSpent,
     this.xpEarned = 0,
+    this.bestScore = 0,
   });
 
   String _formatTime(int seconds) {
@@ -91,31 +93,58 @@ class PracticeResultScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-            // XP earned
+            // XP earned + best score
             Column(
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: (xpEarned > 0 ? AppColors.xpGold : Colors.grey).withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: (xpEarned > 0 ? AppColors.xpGold : Colors.grey).withValues(alpha: 0.3)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Text('⚡', style: TextStyle(fontSize: 22)),
-                      const SizedBox(width: 8),
-                      Text('+$xpEarned XP',
-                          style: AppTextStyles.heading4.copyWith(
-                            color: xpEarned > 0 ? AppColors.xpGold : Colors.grey,
-                          )),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // XP badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: (xpEarned > 0 ? AppColors.xpGold : Colors.grey).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: (xpEarned > 0 ? AppColors.xpGold : Colors.grey).withValues(alpha: 0.3)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text('⚡', style: TextStyle(fontSize: 20)),
+                          const SizedBox(width: 6),
+                          Text('+$xpEarned XP',
+                              style: AppTextStyles.heading4.copyWith(
+                                color: xpEarned > 0 ? AppColors.xpGold : Colors.grey,
+                              )),
+                        ],
+                      ),
+                    ),
+                    if (bestScore > 0) ...[
+                      const SizedBox(width: 10),
+                      // Best score badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text('🏅', style: TextStyle(fontSize: 18)),
+                            const SizedBox(width: 6),
+                            Text('Best $bestScore%',
+                                style: AppTextStyles.heading4.copyWith(color: AppColors.primary)),
+                          ],
+                        ),
+                      ),
                     ],
-                  ),
+                  ],
                 ),
-                if (xpEarned == 0 && passed) ...[
+                if (xpEarned == 0 && bestScore > 0) ...[
                   const SizedBox(height: 6),
-                  Text('Đã nhận XP ở lần trước',
+                  Text('Không cải thiện so với lần tốt nhất ($bestScore%)',
                       style: AppTextStyles.bodySmall.copyWith(color: Colors.grey)),
                 ],
               ],

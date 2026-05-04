@@ -141,7 +141,8 @@
       "Bash(xargs cat *)",
       "Bash(sed -n '55,75p' /Users/doducdoanh/StudioProjects/datn.doanhdd/mobile/lib/services/auth_service.dart)",
       "Bash(sed -n '60,100p' /Users/doducdoanh/StudioProjects/datn.doanhdd/mobile/lib/screens/settings/settings_screen.dart)",
-      "Bash(sed -n '481,510p' /Users/doducdoanh/StudioProjects/datn.doanhdd/mobile/lib/screens/profile/profile_screen.dart)"
+      "Bash(sed -n '481,510p' /Users/doducdoanh/StudioProjects/datn.doanhdd/mobile/lib/screens/profile/profile_screen.dart)",
+      "WebFetch(domain:pub.dev)"
     ]
   }
 }

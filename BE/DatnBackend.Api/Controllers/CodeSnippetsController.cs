@@ -209,26 +209,26 @@ public class CodeSnippetsController : ControllerBase
         return Ok(ApiResponse<List<string>>.Ok(ids));
     }
 
-    /// <summary>Submit practice result and award XP</summary>
+    /// <summary>Submit practice result and award XP based on best score improvement</summary>
     [HttpPost("practice-submit")]
-    public async Task<ActionResult<ApiResponse<PracticeResult>>> SubmitPractice([FromBody] SubmitPracticeRequest request)
+    public async Task<ActionResult<ApiResponse<PracticeSubmitResponse>>> SubmitPractice([FromBody] SubmitPracticeRequest request)
     {
         var uid = UserId;
-        if (uid == null) return Unauthorized(ApiResponse<PracticeResult>.Fail("Unauthorized"));
+        if (uid == null) return Unauthorized(ApiResponse<PracticeSubmitResponse>.Fail("Unauthorized"));
 
         try
         {
             var result = await _codeSnippetService.SubmitPracticeAsync(uid, request);
-            var msg = result.IsPassed ? $"Practice passed! +{result.XpEarned} XP" : "Practice failed. Try again!";
-            return Ok(ApiResponse<PracticeResult>.Ok(result, msg));
+            var msg = result.XpEarned > 0 ? $"+{result.XpEarned} XP (best score: {result.BestScore})" : $"Best score: {result.BestScore}";
+            return Ok(ApiResponse<PracticeSubmitResponse>.Ok(result, msg));
         }
         catch (KeyNotFoundException ex)
         {
-            return NotFound(ApiResponse<PracticeResult>.Fail(ex.Message));
+            return NotFound(ApiResponse<PracticeSubmitResponse>.Fail(ex.Message));
         }
         catch (Exception ex)
         {
-            return BadRequest(ApiResponse<PracticeResult>.Fail(ex.Message));
+            return BadRequest(ApiResponse<PracticeSubmitResponse>.Fail(ex.Message));
         }
     }
 }

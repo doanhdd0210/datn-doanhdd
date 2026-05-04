@@ -286,7 +286,6 @@ class UserProvider extends ChangeNotifier {
   /// Load toàn bộ achievements từ server (định nghĩa + trạng thái unlock)
   Future<void> loadAchievements() async {
     try {
-      await _api.syncAchievements(); // trigger check dữ liệu lịch sử
       final list = await _api.getMyAchievements();
       if (list.isNotEmpty) {
         _achievements = list.map((json) => Achievement.fromJson(json)).toList();

@@ -1,15 +1,65 @@
 import 'dart:async';
 import 'dart:developer' as dev;
 import 'package:flutter/material.dart';
-import 'package:flutter_highlight/flutter_highlight.dart';
+import 'package:flutter_code_editor/flutter_code_editor.dart';
 import 'package:flutter_highlight/themes/vs2015.dart';
+import 'package:highlight/languages/java.dart';
+import 'package:highlight/languages/python.dart';
+import 'package:highlight/languages/javascript.dart';
+import 'package:highlight/languages/cs.dart';
+import 'package:highlight/languages/cpp.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_text_styles.dart';
 import '../../models/api_code_snippet.dart';
 import '../../services/api_service.dart';
 import '../../services/ai_service.dart';
+import 'package:provider/provider.dart';
+import '../../providers/user_provider.dart';
 import '../../widgets/app_snackbar.dart';
 import 'practice_result_screen.dart';
+
+// Ký tự hay dùng khi gõ code
+const _shortcuts = [
+  ('⇥ Tab', '    '),
+  ('{', '{'),
+  ('}', '}'),
+  ('(', '('),
+  (')', ')'),
+  ('[', '['),
+  (']', ']'),
+  (';', ';'),
+  ('"', '"'),
+  ("'", "'"),
+  ('=', '='),
+  ('==', '=='),
+  ('!=', '!='),
+  ('+', '+'),
+  ('-', '-'),
+  ('*', '*'),
+  ('/', '/'),
+  ('.', '.'),
+  (',', ','),
+  ('<', '<'),
+  ('>', '>'),
+  ('!', '!'),
+  ('#', '#'),
+  ('%', '%'),
+  (':', ':'),
+];
+
+dynamic _resolveLanguage(String lang) {
+  switch (lang.toLowerCase()) {
+    case 'python': return python;
+    case 'javascript':
+    case 'js': return javascript;
+    case 'c#':
+    case 'csharp': return cs;
+    case 'c++':
+    case 'cpp': return cpp;
+    case 'java':
+    default: return java;
+  }
+}
 
 class CodePracticeScreen extends StatefulWidget {
   final ApiCodeSnippet snippet;
@@ -23,12 +73,14 @@ class CodePracticeScreen extends StatefulWidget {
 class _CodePracticeScreenState extends State<CodePracticeScreen> {
   final _api = ApiService();
   final _aiService = AiService();
-  final _controller = TextEditingController();
   final _scrollController = ScrollController();
+  late final CodeController _codeController;
+
   bool _isSubmitting = false;
+  bool _showReference = false;
+  bool _showHint = false;
   Timer? _timer;
   int _elapsedSeconds = 0;
-  bool _showHint = false;
 
   // AI state
   String? _aiExplanation;
@@ -37,6 +89,9 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
   @override
   void initState() {
     super.initState();
+    _codeController = CodeController(
+      language: _resolveLanguage(widget.snippet.language),
+    );
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       setState(() => _elapsedSeconds++);
     });
@@ -44,7 +99,7 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
 
   @override
   void dispose() {
-    _controller.dispose();
+    _codeController.dispose();
     _scrollController.dispose();
     _timer?.cancel();
     super.dispose();
@@ -56,10 +111,23 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
     return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
   }
 
+  void _insertText(String text) {
+    final sel = _codeController.selection;
+    final src = _codeController.text;
+    final start = sel.isValid ? sel.start : src.length;
+    final end = sel.isValid ? sel.end : src.length;
+    final next = src.replaceRange(start, end, text);
+    _codeController.value = TextEditingValue(
+      text: next,
+      selection: TextSelection.collapsed(offset: start + text.length),
+    );
+  }
+
   Future<void> _submit() async {
-    final code = _controller.text.trim();
+    final code = _codeController.text.trim();
     if (code.isEmpty) return;
 
+    FocusScope.of(context).unfocus();
     setState(() => _isSubmitting = true);
 
     String stdout = '';
@@ -82,6 +150,10 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
     try {
       xpEarned = await _api.submitPractice(widget.snippet.id, code, stdout, passed);
     } catch (_) {}
+
+    if (mounted && xpEarned > 0) {
+      context.read<UserProvider>().addXp(xpEarned);
+    }
 
     if (mounted) {
       setState(() => _isSubmitting = false);
@@ -122,7 +194,7 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
   }
 
   Future<void> _askAi() async {
-    final userCode = _controller.text.trim();
+    final userCode = _codeController.text.trim();
     if (userCode.isEmpty) {
       AppSnackBar.warning(context, 'Hãy nhập code trước khi hỏi AI');
       return;
@@ -141,7 +213,8 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: const Color(0xFF1E1E1E),
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         backgroundColor: AppColors.surface,
         foregroundColor: AppColors.textDark,
@@ -149,7 +222,10 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Thực hành: ${widget.snippet.title}', style: AppTextStyles.labelBold),
+            Text(widget.snippet.title,
+                style: AppTextStyles.labelBold,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis),
             Text(_formatTime(_elapsedSeconds),
                 style: const TextStyle(fontSize: 12, color: AppColors.blue, fontWeight: FontWeight.w700)),
           ],
@@ -159,126 +235,90 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
           child: Container(height: 1, color: AppColors.border),
         ),
         actions: [
-          TextButton.icon(
+          IconButton(
+            onPressed: () => setState(() => _showReference = !_showReference),
+            icon: Icon(Icons.remove_red_eye_outlined, size: 20,
+                color: _showReference ? AppColors.primary : AppColors.textGray),
+            tooltip: 'Tham khảo',
+          ),
+          IconButton(
             onPressed: () => setState(() => _showHint = !_showHint),
-            icon: const Icon(Icons.lightbulb_outline, size: 18),
-            label: Text(_showHint ? 'Ẩn' : 'Gợi ý'),
-            style: TextButton.styleFrom(foregroundColor: AppColors.orange),
+            icon: Icon(Icons.lightbulb_outline, size: 20,
+                color: _showHint ? AppColors.orange : AppColors.textGray),
+            tooltip: 'Gợi ý',
           ),
         ],
       ),
       body: Column(
         children: [
-          Expanded(
-            child: Row(
+          // Panel tham khảo – read-only CodeField với syntax highlight
+          AnimatedSize(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeInOut,
+            child: _showReference ? _buildReferencePanel() : const SizedBox.shrink(),
+          ),
+
+          // Panel gợi ý / AI
+          AnimatedSize(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeInOut,
+            child: _showHint ? _buildHint() : const SizedBox.shrink(),
+          ),
+
+          // Editor chiếm toàn bộ không gian còn lại
+          Expanded(child: _buildEditor()),
+
+          // Toolbar phím tắt ký tự đặc biệt
+          _buildShortcutsBar(),
+
+          // Submit bar
+          _buildSubmitBar(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReferencePanel() {
+    final refController = CodeController(
+      text: widget.snippet.code,
+      language: _resolveLanguage(widget.snippet.language),
+    );
+    return Container(
+      constraints: const BoxConstraints(maxHeight: 220),
+      decoration: const BoxDecoration(
+        color: Color(0xFF0C0C16),
+        border: Border(bottom: BorderSide(color: Color(0xFF333355))),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+            color: const Color(0xFF2D2D3F),
+            child: const Row(
               children: [
-                // Original code (reference, read-only)
-                Expanded(
-                  child: Column(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        color: const Color(0xFF2D2D3F),
-                        child: const Row(
-                          children: [
-                            Icon(Icons.remove_red_eye_outlined, size: 14, color: Color(0xFF4FC3F7)),
-                            SizedBox(width: 6),
-                            Text('Tham khảo', style: TextStyle(color: Color(0xFF4FC3F7), fontSize: 11, fontWeight: FontWeight.w600)),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        child: SingleChildScrollView(
-                          child: HighlightView(
-                            widget.snippet.code,
-                            language: widget.snippet.language.toLowerCase() == 'java' ? 'java' : widget.snippet.language.toLowerCase(),
-                            theme: vs2015Theme,
-                            padding: const EdgeInsets.all(12),
-                            textStyle: const TextStyle(
-                              fontFamily: 'monospace',
-                              fontSize: 12,
-                              height: 1.6,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                // Divider
-                Container(width: 1, color: const Color(0xFF333355)),
-                // User input
-                Expanded(
-                  child: Column(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        color: const Color(0xFF2D2D3F),
-                        child: const Row(
-                          children: [
-                            Icon(Icons.edit, size: 14, color: Color(0xFF23A55A)),
-                            SizedBox(width: 6),
-                            Text('Code của bạn', style: TextStyle(color: Color(0xFF23A55A), fontSize: 11, fontWeight: FontWeight.w600)),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        child: Container(
-                          color: const Color(0xFF1E1E1E),
-                          child: TextField(
-                            controller: _controller,
-                            maxLines: null,
-                            expands: true,
-                            style: const TextStyle(
-                              fontFamily: 'monospace',
-                              fontSize: 12,
-                              height: 1.6,
-                              color: Colors.white,
-                            ),
-                            decoration: const InputDecoration(
-                              hintText: 'Nhập code vào đây...',
-                              hintStyle: TextStyle(
-                                color: Color(0xFF555555),
-                                fontFamily: 'monospace',
-                                fontSize: 12,
-                              ),
-                              contentPadding: EdgeInsets.all(12),
-                              border: InputBorder.none,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                Icon(Icons.remove_red_eye_outlined, size: 13, color: Color(0xFF4FC3F7)),
+                SizedBox(width: 6),
+                Text('Code tham khảo',
+                    style: TextStyle(color: Color(0xFF4FC3F7), fontSize: 11, fontWeight: FontWeight.w600)),
               ],
             ),
           ),
-          // Hint panel
-          if (_showHint) _buildHint(),
-          // Submit bar
-          Container(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
-            color: AppColors.surface,
-            child: SafeArea(
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _isSubmitting ? null : _submit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+          Flexible(
+            child: CodeTheme(
+              data: CodeThemeData(styles: vs2015Theme),
+              child: SingleChildScrollView(
+                child: CodeField(
+                  controller: refController,
+                  readOnly: true,
+                  textStyle: const TextStyle(fontFamily: 'monospace', fontSize: 13, height: 1.6),
+                  background: const Color(0xFF0C0C16),
+                  gutterStyle: const GutterStyle(
+                    width: 36,
+                    margin: 6,
+                    textStyle: TextStyle(color: Color(0xFF555577), fontSize: 11, fontFamily: 'monospace'),
                   ),
-                  child: _isSubmitting
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                        )
-                      : const Text('Nộp bài'),
                 ),
               ),
             ),
@@ -288,14 +328,101 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
     );
   }
 
+  Widget _buildEditor() {
+    return CodeTheme(
+      data: CodeThemeData(styles: vs2015Theme),
+      child: SingleChildScrollView(
+        controller: _scrollController,
+        child: CodeField(
+          controller: _codeController,
+          textStyle: const TextStyle(fontFamily: 'monospace', fontSize: 13, height: 1.65),
+          minLines: 30,
+          expands: false,
+          background: const Color(0xFF1E1E1E),
+          gutterStyle: const GutterStyle(
+            width: 44,
+            margin: 8,
+            textStyle: TextStyle(
+              color: Color(0xFF858585),
+              fontSize: 12,
+              fontFamily: 'monospace',
+            ),
+          ),
+          decoration: const BoxDecoration(color: Color(0xFF1E1E1E)),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildShortcutsBar() {
+    return Container(
+      height: 42,
+      color: const Color(0xFF2D2D2D),
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+        itemCount: _shortcuts.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 4),
+        itemBuilder: (_, i) {
+          final (label, value) = _shortcuts[i];
+          return GestureDetector(
+            onTap: () => _insertText(value),
+            child: Container(
+              constraints: const BoxConstraints(minWidth: 36),
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF3C3C3C),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: const Color(0xFF555555)),
+              ),
+              alignment: Alignment.center,
+              child: Text(label,
+                  style: const TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 12,
+                    color: Color(0xFFD4D4D4),
+                    fontWeight: FontWeight.w500,
+                  )),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildSubmitBar() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      color: AppColors.surface,
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: _isSubmitting ? null : _submit,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 13),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+            ),
+            child: _isSubmitting
+                ? const SizedBox(width: 20, height: 20,
+                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                : const Text('Nộp bài'),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildHint() {
-    final userText = _controller.text;
-    final original = widget.snippet.code;
-    final userLines = userText.split('\n');
-    final origLines = original.split('\n');
+    final userLines = _codeController.text.split('\n');
+    final origLines = widget.snippet.code.split('\n');
 
     return Container(
-      constraints: const BoxConstraints(maxHeight: 260),
+      constraints: const BoxConstraints(maxHeight: 240),
       color: const Color(0xFF1A1A2E),
       padding: const EdgeInsets.all(12),
       child: SingleChildScrollView(
@@ -303,11 +430,8 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Static hint — first differing line
-            const Text(
-              'Gợi ý: Điểm khác biệt đầu tiên:',
-              style: TextStyle(color: AppColors.orange, fontSize: 11, fontWeight: FontWeight.w700),
-            ),
+            const Text('Điểm khác biệt đầu tiên:',
+                style: TextStyle(color: AppColors.orange, fontSize: 11, fontWeight: FontWeight.w700)),
             const SizedBox(height: 6),
             ...() {
               for (int i = 0; i < origLines.length; i++) {
@@ -319,18 +443,18 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
                         style: const TextStyle(color: Color(0xFF888888), fontSize: 10)),
                     Text(origLines[i],
                         style: const TextStyle(
-                            color: AppColors.primary, fontFamily: 'monospace', fontSize: 11)),
+                            color: AppColors.primary, fontFamily: 'monospace', fontSize: 12)),
                   ];
                 }
               }
-              return [const Text('Trông tốt lắm!', style: TextStyle(color: AppColors.primary, fontFamily: 'monospace'))];
+              return [const Text('Trông tốt lắm!',
+                  style: TextStyle(color: AppColors.primary, fontFamily: 'monospace'))];
             }(),
 
-            const SizedBox(height: 12),
-            const Divider(color: Color(0xFF2D2D50), height: 1),
             const SizedBox(height: 10),
+            const Divider(color: Color(0xFF2D2D50), height: 1),
+            const SizedBox(height: 8),
 
-            // AI explain button
             if (_aiExplanation == null && !_aiExplaining)
               GestureDetector(
                 onTap: _askAi,
@@ -354,7 +478,6 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
                 ),
               ),
 
-            // AI loading
             if (_aiExplaining)
               const Center(
                 child: Padding(
@@ -362,7 +485,8 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF90CAF9))),
+                      SizedBox(width: 16, height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF90CAF9))),
                       SizedBox(width: 8),
                       Text('AI đang phân tích...', style: TextStyle(color: Color(0xFF90CAF9), fontSize: 12)),
                     ],
@@ -370,7 +494,6 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
                 ),
               ),
 
-            // AI explanation result
             if (_aiExplanation != null) ...[
               Container(
                 width: double.infinity,
@@ -383,24 +506,22 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Row(
-                      children: [
-                        Text('🤖', style: TextStyle(fontSize: 13)),
-                        SizedBox(width: 6),
-                        Text('AI Giải thích', style: TextStyle(color: Color(0xFF90CAF9), fontSize: 11, fontWeight: FontWeight.w700)),
-                      ],
-                    ),
+                    const Row(children: [
+                      Text('🤖', style: TextStyle(fontSize: 13)),
+                      SizedBox(width: 6),
+                      Text('AI Giải thích',
+                          style: TextStyle(color: Color(0xFF90CAF9), fontSize: 11, fontWeight: FontWeight.w700)),
+                    ]),
                     const SizedBox(height: 6),
-                    Text(
-                      _aiExplanation!,
-                      style: const TextStyle(color: Color(0xFFCCDDFF), fontSize: 12, height: 1.5),
-                    ),
+                    Text(_aiExplanation!,
+                        style: const TextStyle(color: Color(0xFFCCDDFF), fontSize: 12, height: 1.5)),
                   ],
                 ),
               ),
               TextButton(
                 onPressed: () => setState(() => _aiExplanation = null),
-                style: TextButton.styleFrom(foregroundColor: const Color(0xFF90CAF9), padding: EdgeInsets.zero),
+                style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFF90CAF9), padding: EdgeInsets.zero),
                 child: const Text('Hỏi lại AI', style: TextStyle(fontSize: 11)),
               ),
             ],

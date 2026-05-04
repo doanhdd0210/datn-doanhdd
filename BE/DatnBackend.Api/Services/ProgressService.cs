@@ -245,7 +245,7 @@ public class ProgressService
         return stats;
     }
 
-    private async Task UpdateDailyProgressAsync(string userId, int lessonsAdded, int xpAdded, int timeAdded)
+    public async Task UpdateDailyProgressAsync(string userId, int lessonsAdded, int xpAdded, int timeAdded)
     {
         try
         {

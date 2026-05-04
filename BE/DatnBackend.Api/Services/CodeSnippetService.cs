@@ -10,13 +10,15 @@ public class CodeSnippetService
     private readonly ICacheService _cache;
     private readonly ILogger<CodeSnippetService> _logger;
     private readonly AchievementsService _achievements;
+    private readonly ProgressService _progress;
 
-    public CodeSnippetService(AppDbContext db, ICacheService cache, ILogger<CodeSnippetService> logger, AchievementsService achievements)
+    public CodeSnippetService(AppDbContext db, ICacheService cache, ILogger<CodeSnippetService> logger, AchievementsService achievements, ProgressService progress)
     {
         _db = db;
         _cache = cache;
         _logger = logger;
         _achievements = achievements;
+        _progress = progress;
     }
 
     public async Task<List<CodeSnippetDto>> ListSnippetsAsync(string? userId = null, string? topicId = null, bool activeOnly = true)
@@ -145,7 +147,10 @@ public class CodeSnippetService
         await _db.SaveChangesAsync();
 
         if (xpEarned > 0)
+        {
+            await _progress.UpdateDailyProgressAsync(userId, 0, xpEarned, 0);
             await _achievements.CheckAndGrantAsync(userId);
+        }
 
         return result;
     }

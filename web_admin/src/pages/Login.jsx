@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { signIn } from '../services/auth'
+import logo from '../assets/logo.png'
 
 const SAVED_EMAIL_KEY = 'admin_saved_email'
 const SAVED_PASS_KEY = 'admin_saved_pass'
@@ -56,10 +57,8 @@ export default function Login() {
       <div style={styles.card}>
         {/* Header */}
         <div style={styles.header}>
-          <div style={styles.iconWrapper}>
-            <span style={styles.icon}>⚙️</span>
-          </div>
-          <h1 style={styles.title}>Admin Panel</h1>
+          <img src={logo} alt="JavaUp" style={styles.logo} />
+          <h1 style={styles.title}>JavaUp</h1>
           <p style={styles.subtitle}>Đăng nhập để quản trị hệ thống</p>
         </div>
 
@@ -145,17 +144,13 @@ const styles = {
     textAlign: 'center',
     marginBottom: '32px',
   },
-  iconWrapper: {
-    width: 64,
-    height: 64,
-    background: '#e8f0fe',
-    borderRadius: '50%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
+  logo: {
+    width: 72,
+    height: 72,
+    borderRadius: '16px',
+    display: 'block',
     margin: '0 auto 16px',
   },
-  icon: { fontSize: 28 },
   title: {
     margin: '0 0 8px',
     fontSize: '24px',

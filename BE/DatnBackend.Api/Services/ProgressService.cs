@@ -120,8 +120,7 @@ public class ProgressService
         await UpdateDailyProgressAsync(userId, 1, actualXp, request.TimeSpentSeconds);
         await UpdateUserStatsAsync(userId, actualXp, 1);
 
-        // Check achievements (fire-and-forget)
-        _ = _achievements.CheckAndGrantAsync(userId);
+        await _achievements.CheckAndGrantAsync(userId);
 
         return existing;
     }
@@ -185,8 +184,7 @@ public class ProgressService
             await UpdateDailyProgressAsync(userId, 0, xpEarned, request.TimeSpentSeconds);
         }
 
-        // Check achievements (fire-and-forget, không block response)
-        _ = _achievements.CheckAndGrantAsync(userId);
+        await _achievements.CheckAndGrantAsync(userId);
 
         return result;
     }
@@ -382,7 +380,7 @@ public class ProgressService
             return new ClaimBonusResult { Success = false, BonusXp = 0, Message = "Bạn đã nhận thưởng hôm nay rồi" };
         }
         await _cache.RemoveAsync($"stats:{userId}", "leaderboard:20", "leaderboard:50", "leaderboard_weekly:20", "leaderboard_weekly:50");
-        _ = _achievements.CheckAndGrantAsync(userId);
+        await _achievements.CheckAndGrantAsync(userId);
 
         return new ClaimBonusResult { Success = true, BonusXp = bonusXp, Message = "Nhận thưởng thành công!" };
     }

@@ -118,7 +118,7 @@ public class FriendsService
         await _db.SaveChangesAsync();
 
         // Check achievements cho người follow (social_1)
-        _ = _achievements.CheckAndGrantAsync(followerId);
+        await _achievements.CheckAndGrantAsync(followerId);
 
         // Push notification qua FCM nếu có token
         try

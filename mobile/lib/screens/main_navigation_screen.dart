@@ -20,7 +20,8 @@ class MainNavigationScreen extends StatefulWidget {
   State<MainNavigationScreen> createState() => _MainNavigationScreenState();
 }
 
-class _MainNavigationScreenState extends State<MainNavigationScreen> {
+class _MainNavigationScreenState extends State<MainNavigationScreen>
+    with WidgetsBindingObserver {
   int _currentIndex = 0;
   StreamSubscription<RemoteMessage>? _fgSub;
   StreamSubscription<String>? _navSub;
@@ -53,6 +54,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     final ns = NotificationService();
 
     _fgSub = ns.foregroundMessages.stream.listen((msg) {
@@ -83,22 +85,34 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     });
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && mounted) {
+      // Refresh stats + poll achievements when user returns to app from background
+      final provider = context.read<UserProvider>();
+      provider.loadStats();
+      provider.pollNewAchievements();
+    }
+  }
+
   void _handleDataRefresh(Map<String, dynamic> data) {
     final type = data['type'] as String?;
     final screen = data['screen'] as String?;
+    final provider = context.read<UserProvider>();
 
     if (type == 'achievement' || screen == 'profile') {
-      context.read<UserProvider>().pollNewAchievements();
+      provider.pollNewAchievements();
+      provider.loadStats();
     }
 
     if (screen == 'qa' || type == 'follow' || screen == 'friends') {
-      // Trigger unread count refresh in NotifBell via a lightweight stats reload
-      context.read<UserProvider>().loadStats();
+      provider.loadStats();
     }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _fgSub?.cancel();
     _navSub?.cancel();
     _dataSub?.cancel();

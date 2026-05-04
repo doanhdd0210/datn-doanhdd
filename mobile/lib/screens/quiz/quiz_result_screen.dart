@@ -60,8 +60,13 @@ class _QuizResultScreenState extends State<QuizResultScreen>
 
     if (widget.isPerfect) {
       _confettiController.play();
-      // Give server time to process quiz + grant achievements, then sync
-      Future.delayed(const Duration(milliseconds: 1500), () {
+      // Poll twice: server processes CheckAndGrantAsync fire-and-forget,
+      // first attempt at 2s, retry at 5s in case server is slow.
+      Future.delayed(const Duration(milliseconds: 2000), () {
+        if (!mounted) return;
+        context.read<UserProvider>().pollNewAchievements();
+      });
+      Future.delayed(const Duration(milliseconds: 5000), () {
         if (!mounted) return;
         context.read<UserProvider>().pollNewAchievements();
       });

@@ -60,22 +60,17 @@ class _QaDetailScreenState extends State<QaDetailScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Chấp nhận câu trả lời?'),
-        content: const Text('Câu trả lời này sẽ được đánh dấu là giải quyết vấn đề của bạn.'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Chấp nhận câu trả lời?', style: AppTextStyles.heading4),
+        content: const Text('Câu trả lời này sẽ được đánh dấu là giải quyết vấn đề của bạn.', style: AppTextStyles.bodyMedium),
         actions: [
-          Row(
-            children: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('Huỷ'),
-              ),
-              const Spacer(),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(ctx, true),
-                style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-                child: const Text('Chấp nhận', style: TextStyle(color: Colors.white)),
-              ),
-            ],
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Huỷ', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Chấp nhận', style: TextStyle(color: AppColors.correct, fontWeight: FontWeight.w700)),
           ),
         ],
       ),

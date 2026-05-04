@@ -77,12 +77,11 @@ class _QaDetailScreenState extends State<QaDetailScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: ElevatedButton(
+                    child: OutlinedButton(
                       onPressed: () => Navigator.pop(ctx, false),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.red,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.red,
+                        side: const BorderSide(color: AppColors.red, width: 1.5),
                         fixedSize: const Size.fromHeight(48),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),

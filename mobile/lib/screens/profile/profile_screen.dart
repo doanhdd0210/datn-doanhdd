@@ -21,29 +21,6 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final provider = context.read<UserProvider>();
-    if (provider.pendingAchievements.isNotEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        _showPendingAchievements(provider);
-      });
-    }
-  }
-
-  void _showPendingAchievements(UserProvider provider) {
-    final pending = provider.pendingAchievements.toList();
-    provider.consumePendingAchievements();
-    for (final achievement in pending) {
-      AppSnackBar.success(
-        context,
-        '${achievement.emoji} ${achievement.title} · +${achievement.xpReward} XP',
-      );
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
 

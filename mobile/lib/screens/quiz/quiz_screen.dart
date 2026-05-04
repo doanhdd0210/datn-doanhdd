@@ -220,11 +220,6 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
       completedAt: DateTime.now(),
     );
 
-    // Mark perfect quiz achievement
-    if (isPerfect) {
-      context.read<UserProvider>().markPerfectQuiz();
-    }
-
     try {
       final serverResult = await _api.submitQuiz(widget.lessonId, _userAnswers, timeSpent);
       result = serverResult;

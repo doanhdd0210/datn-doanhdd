@@ -154,7 +154,45 @@ public class QaService
 
         answer.IsAccepted = true;
         post.IsSolved = true;
+
+        // Notify the answer author (skip if they accepted their own answer)
+        if (answer.UserId != requestingUserId)
+        {
+            _db.UserNotifications.Add(new UserNotification
+            {
+                Id = Guid.NewGuid().ToString(),
+                UserId = answer.UserId,
+                Type = "qa_accepted",
+                Title = "Câu trả lời của bạn được chấp nhận",
+                Body = $"Câu trả lời của bạn cho \"{post.Title}\" đã được chấp nhận ✅",
+                RefId = post.Id,
+                IsRead = false,
+                CreatedAt = DateTime.UtcNow,
+            });
+        }
+
         await _db.SaveChangesAsync();
+
+        if (answer.UserId != requestingUserId)
+        {
+            try
+            {
+                var answerAuthorProfile = await _db.UserProfiles.FirstOrDefaultAsync(p => p.Uid == answer.UserId);
+                if (answerAuthorProfile?.FcmTokens.Count > 0)
+                {
+                    await _notifService.SendToTokensAsync(new SendNotificationRequest
+                    {
+                        Title = "Câu trả lời được chấp nhận ✅",
+                        Body = $"Câu trả lời của bạn cho \"{post.Title}\" đã được chấp nhận",
+                        Data = new Dictionary<string, string> { ["screen"] = "qa", ["postId"] = post.Id },
+                    }, answerAuthorProfile.FcmTokens);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to send push notification for accepted QA answer");
+            }
+        }
     }
 
     public async Task UpvotePostAsync(string postId)

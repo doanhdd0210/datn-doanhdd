@@ -1,11 +1,13 @@
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:percent_indicator/percent_indicator.dart';
+import 'package:provider/provider.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_text_styles.dart';
 import '../../constants/app_theme.dart';
 import '../../models/quiz_result.dart';
 import '../../models/question.dart';
+import '../../providers/user_provider.dart';
 import 'quiz_review_screen.dart';
 import 'quiz_screen.dart';
 
@@ -58,6 +60,11 @@ class _QuizResultScreenState extends State<QuizResultScreen>
 
     if (widget.isPerfect) {
       _confettiController.play();
+      // Give server time to process quiz + grant achievements, then sync
+      Future.delayed(const Duration(milliseconds: 1500), () {
+        if (!mounted) return;
+        context.read<UserProvider>().pollNewAchievements();
+      });
     }
 
     Future.delayed(const Duration(milliseconds: 300), () {

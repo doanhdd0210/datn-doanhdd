@@ -362,14 +362,14 @@ public class ProgressService
             ClaimedAt = DateTime.UtcNow,
         });
 
-        // Award bonus XP to profile + daily progress
+        // Award bonus XP to profile only; DailyGoalBonusClaims is the authoritative store for bonus
+        // (weekly leaderboard sums DailyProgress + DailyGoalBonusClaims separately to avoid double-count)
         var profile = await _db.UserProfiles.FirstOrDefaultAsync(p => p.Uid == userId);
         if (profile != null)
         {
             profile.TotalXp += bonusXp;
             profile.Rank = CalculateRank(profile.TotalXp);
         }
-        todayProgress.XpEarned += bonusXp;
 
         try
         {

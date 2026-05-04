@@ -30,7 +30,6 @@ class UserProvider extends ChangeNotifier {
   // Achievement tracking — server-driven
   List<Achievement> _achievements = [];           // full list từ server
   bool _achievementsLoaded = false;               // đã fetch xong (dù thành hay thất bại)
-  final List<Achievement> _pendingAchievements = []; // mới unlock, chờ hiện popup
 
   /// Danh sách định nghĩa thành tích local — hiển thị khi API không phản hồi
   // Fallback khi server không trả về — phải khớp đúng 10 achievements trong DbSeeder
@@ -87,12 +86,6 @@ class UserProvider extends ChangeNotifier {
   );
   Set<String> get unlockedAchievements =>
       _achievements.where((a) => a.isUnlocked).map((a) => a.id).toSet();
-  List<Achievement> get pendingAchievements => List.unmodifiable(_pendingAchievements);
-
-  void consumePendingAchievements() {
-    _pendingAchievements.clear();
-  }
-
   /// Số topic được mở khoá theo level
   int get unlockedTopicCount {
     switch (_level) {
@@ -221,7 +214,7 @@ class UserProvider extends ChangeNotifier {
       _claimDailyGoalBonus();
     }
 
-    _pollNewAchievements();
+    pollNewAchievements();
     _saveToCache();
     notifyListeners();
   }
@@ -253,29 +246,22 @@ class UserProvider extends ChangeNotifier {
     _completedLessons.add(lessonId);
     _topicProgressMap[topicId] = (_topicProgressMap[topicId] ?? 0) + 1;
     _lessonsCompleted++;
-    _pollNewAchievements();
+    pollNewAchievements();
     notifyListeners();
   }
 
-  void markPerfectQuiz() {
-    // Backend sẽ check, mobile chỉ trigger poll
-    _pollNewAchievements();
-  }
+  void markPerfectQuiz() => pollNewAchievements();
+  void markFollowed() => pollNewAchievements();
 
-  void markFollowed() {
-    // Backend sẽ check, mobile chỉ trigger poll
-    _pollNewAchievements();
-  }
-
-  /// Gọi sau mỗi event có thể unlock achievement — poll server xem có gì mới không
-  Future<void> _pollNewAchievements() async {
+  /// Poll server for newly unlocked achievements and credit their XP to today's total.
+  Future<void> pollNewAchievements() async {
     try {
       final newOnes = await _api.consumeNewAchievements();
       if (newOnes.isEmpty) return;
       bool changed = false;
+      int bonusXpFromAchievements = 0;
       for (final json in newOnes) {
         final achievement = Achievement.fromJson(json);
-        // Cập nhật trong _achievements list
         final idx = _achievements.indexWhere((a) => a.id == achievement.id);
         if (idx >= 0) {
           _achievements[idx] = _achievements[idx].copyWith(
@@ -285,8 +271,13 @@ class UserProvider extends ChangeNotifier {
         } else {
           _achievements.add(achievement);
         }
-        _pendingAchievements.add(achievement);
+        bonusXpFromAchievements += achievement.xpReward;
         changed = true;
+      }
+      if (bonusXpFromAchievements > 0) {
+        _totalXp += bonusXpFromAchievements;
+        _todayXp += bonusXpFromAchievements;
+        _saveToCache();
       }
       if (changed) notifyListeners();
     } catch (_) {}
@@ -409,7 +400,6 @@ class UserProvider extends ChangeNotifier {
     _pendingBonusXp = 0;
     _achievements = [];
     _achievementsLoaded = false;
-    _pendingAchievements.clear();
     _completedLessons.clear();
     _topicProgressMap.clear();
     _lastHeartLostAt = null;

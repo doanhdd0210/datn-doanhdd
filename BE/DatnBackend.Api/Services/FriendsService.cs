@@ -206,24 +206,43 @@ public class FriendsService
 
         var since = DateTime.UtcNow.AddDays(-7).ToString("yyyy-MM-dd");
 
-        // Chỉ lấy DailyProgress của user còn tồn tại trong UserProfiles (loại tk đã xoá)
-        var weeklyXp = await _db.DailyProgresses
+        var weeklyXpList = await _db.DailyProgresses
             .Where(d => string.Compare(d.Date, since) >= 0)
             .Where(d => _db.UserProfiles.Any(p => p.Uid == d.UserId && !p.IsAdmin))
             .GroupBy(d => d.UserId)
-            .Select(g => new { UserId = g.Key, WeeklyXp = g.Sum(d => d.XpEarned) })
-            .OrderByDescending(x => x.WeeklyXp)
-            .Take(limit)
+            .Select(g => new { UserId = g.Key, Xp = g.Sum(d => d.XpEarned) })
             .ToListAsync();
 
-        if (weeklyXp.Count == 0) return [];
+        var weeklyBonusList = await _db.DailyGoalBonusClaims
+            .Where(c => string.Compare(c.Date, since) >= 0)
+            .Where(c => _db.UserProfiles.Any(p => p.Uid == c.UserId && !p.IsAdmin))
+            .GroupBy(c => c.UserId)
+            .Select(g => new { UserId = g.Key, Bonus = g.Sum(c => c.BonusXp) })
+            .ToListAsync();
 
-        var userIds = weeklyXp.Select(x => x.UserId).ToList();
+        var bonusDict = weeklyBonusList.ToDictionary(x => x.UserId, x => x.Bonus);
+
+        var merged = weeklyXpList
+            .Select(x => x.UserId)
+            .Union(bonusDict.Keys)
+            .Select(uid => new
+            {
+                UserId = uid,
+                WeeklyXp = (weeklyXpList.FirstOrDefault(x => x.UserId == uid)?.Xp ?? 0)
+                         + (bonusDict.TryGetValue(uid, out var b) ? b : 0),
+            })
+            .OrderByDescending(x => x.WeeklyXp)
+            .Take(limit)
+            .ToList();
+
+        if (merged.Count == 0) return [];
+
+        var userIds = merged.Select(x => x.UserId).ToList();
         var profiles = await _db.UserProfiles
             .Where(p => userIds.Contains(p.Uid))
             .ToDictionaryAsync(p => p.Uid);
 
-        var entries = weeklyXp
+        var entries = merged
             .Where(x => profiles.ContainsKey(x.UserId))
             .Select((x, i) => new LeaderboardEntry
             {

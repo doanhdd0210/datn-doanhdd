@@ -62,8 +62,12 @@ class _QaDetailScreenState extends State<QaDetailScreen> {
       builder: (ctx) => AlertDialog(
         title: const Text('Chấp nhận câu trả lời?'),
         content: const Text('Câu trả lời này sẽ được đánh dấu là giải quyết vấn đề của bạn.'),
+        actionsAlignment: MainAxisAlignment.spaceBetween,
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Huỷ')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Huỷ'),
+          ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),

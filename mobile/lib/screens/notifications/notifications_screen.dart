@@ -151,6 +151,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final ns = NotificationService();
     switch (type) {
       case 'qa_answer':
+      case 'qa_accepted':
         if (refId != null) {
           try {
             final post = await _api.getQaPost(refId);
@@ -343,6 +344,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         return _NotifConfig(Icons.quiz_rounded, AppColors.correct);
       case 'achievement':
         return _NotifConfig(Icons.emoji_events_rounded, AppColors.xpGold);
+      case 'qa_answer':
+        return _NotifConfig(Icons.forum_rounded, AppColors.blue);
+      case 'qa_accepted':
+        return _NotifConfig(Icons.check_circle_rounded, AppColors.correct);
       default:
         return _NotifConfig(Icons.notifications_rounded, AppColors.blue);
     }

@@ -17,6 +17,7 @@ class UserProvider extends ChangeNotifier {
   int _lessonsCompleted = 0;
   String _rank = '-';
   bool _isLoading = false;
+  bool _statsInitialized = false;
   String? _error;
   String _level = 'beginner';
 
@@ -150,17 +151,20 @@ class UserProvider extends ChangeNotifier {
     _error = null;
     notifyListeners();
 
-    await _loadFromCache();
+    if (!_statsInitialized) {
+      await _loadFromCache();
+    }
 
     try {
       final stats = await _api.getUserStats();
       _totalXp = stats['totalXp'] as int? ?? 0;
+      final newTodayXp = stats['todayXp'] as int? ?? 0;
+      final wasBelow = _todayXp < _dailyGoal;
+      _todayXp = newTodayXp;
       _streak = stats['currentStreak'] as int? ?? stats['streak'] as int? ?? 0;
       _longestStreak = stats['longestStreak'] as int? ?? 0;
       _lessonsCompleted = stats['lessonsCompleted'] as int? ?? 0;
       _rank = stats['rank']?.toString() ?? '-';
-      // Đồng bộ level từ BE — chỉ nhận nếu BE có giá trị khác default
-      // hoặc local đang ở default (tránh BE override level user đã chọn)
       final beLevel = stats['level'] as String?;
       if (beLevel != null && beLevel.isNotEmpty && (beLevel != 'beginner' || _level == 'beginner')) {
         _level = beLevel;
@@ -168,9 +172,17 @@ class UserProvider extends ChangeNotifier {
         final prefs = await SharedPreferences.getInstance();
         if (uid != null) await prefs.setString('user_level_$uid', beLevel);
       }
+      _statsInitialized = true;
+      await _saveToCache();
+      // Trigger daily goal bonus claim if threshold just crossed
+      if (wasBelow && _todayXp >= _dailyGoal) {
+        _claimDailyGoalBonus();
+      }
     } catch (e) {
       _error = e.toString();
-      await _loadFromCache();
+      if (!_statsInitialized) {
+        await _loadFromCache();
+      }
     }
 
     _isLoading = false;
@@ -402,6 +414,7 @@ class UserProvider extends ChangeNotifier {
     _completedLessons.clear();
     _topicProgressMap.clear();
     _lastHeartLostAt = null;
+    _statsInitialized = false;
     notifyListeners();
   }
 

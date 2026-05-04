@@ -100,8 +100,14 @@ public class ProgressService
         }
 
         await _db.SaveChangesAsync();
-        await UpdateDailyProgressAsync(userId, 1, xpReward, request.TimeSpentSeconds);
-        await UpdateUserStatsAsync(userId, xpReward, 1);
+
+        // Skip XP award if quiz already gave XP for this lesson (prevent double-counting)
+        bool xpAlreadyAwarded = await _db.QuizResults
+            .AnyAsync(r => r.UserId == userId && r.LessonId == request.LessonId && r.Score == 100);
+        int actualXp = xpAlreadyAwarded ? 0 : xpReward;
+
+        await UpdateDailyProgressAsync(userId, 1, actualXp, request.TimeSpentSeconds);
+        await UpdateUserStatsAsync(userId, actualXp, 1);
 
         // Check achievements (fire-and-forget)
         _ = _achievements.CheckAndGrantAsync(userId);
@@ -205,6 +211,10 @@ public class ProgressService
 
         await EnsureProfileAsync(userId);
         var profile = await _db.UserProfiles.FirstOrDefaultAsync(p => p.Uid == userId);
+
+        var todayId = $"{userId}:{DateTime.UtcNow:yyyy-MM-dd}";
+        var todayProgress = await _db.DailyProgresses.FirstOrDefaultAsync(d => d.Id == todayId);
+
         var stats = new UserStatsResponse
         {
             TotalXp = profile?.TotalXp ?? 0,
@@ -213,6 +223,7 @@ public class ProgressService
             LongestStreak = profile?.LongestStreak ?? 0,
             Rank = profile?.Rank ?? "Beginner",
             Level = profile?.Level ?? "beginner",
+            TodayXp = todayProgress?.XpEarned ?? 0,
         };
 
         await _cache.SetAsync(cacheKey, stats, TimeSpan.FromMinutes(2));
@@ -373,6 +384,7 @@ public class UserStatsResponse
     public int LongestStreak { get; set; }
     public string Rank { get; set; } = "";
     public string Level { get; set; } = "beginner";
+    public int TodayXp { get; set; }
 }
 
 public class ClaimBonusResult

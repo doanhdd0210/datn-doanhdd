@@ -230,32 +230,18 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
       result = serverResult;
       if (mounted && isPerfect) {
         await _api.completeLesson(widget.lessonId, widget.topicId, timeSpentSeconds: timeSpent);
-      }
-      if (mounted) {
-        if (isPerfect) {
-          context.read<UserProvider>().markLessonCompleted(widget.lessonId, widget.topicId);
-        }
-        if (result.xpEarned > 0) {
-          context.read<UserProvider>().addXp(result.xpEarned);
-        }
+        context.read<UserProvider>().markLessonCompleted(widget.lessonId, widget.topicId);
       }
     } catch (_) {
-      if (mounted) {
-        if (isPerfect) {
-          final provider = context.read<UserProvider>();
-          final alreadyDone = provider.isLessonCompleted(widget.lessonId);
-          provider.markLessonCompleted(widget.lessonId, widget.topicId);
-          _api.completeLesson(widget.lessonId, widget.topicId, timeSpentSeconds: timeSpent).catchError((_) {});
-          // Fallback XP chỉ khi lần đầu hoàn thành (offline)
-          if (!alreadyDone) {
-            provider.addXp(localXp);
-          }
-        }
+      if (mounted && isPerfect) {
+        final provider = context.read<UserProvider>();
+        provider.markLessonCompleted(widget.lessonId, widget.topicId);
+        _api.completeLesson(widget.lessonId, widget.topicId, timeSpentSeconds: timeSpent).catchError((_) {});
       }
     }
 
     if (mounted) {
-      // Refresh streak + stats in background so home screen is up-to-date when user returns
+      // Refresh stats from server — server is source of truth for XP/todayXp
       context.read<UserProvider>().loadStats();
 
       Navigator.pushReplacement(

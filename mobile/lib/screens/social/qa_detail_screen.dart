@@ -59,20 +59,54 @@ class _QaDetailScreenState extends State<QaDetailScreen> {
     // Confirm trước khi accept
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
+      builder: (ctx) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Chấp nhận câu trả lời?', style: AppTextStyles.heading4),
-        content: const Text('Câu trả lời này sẽ được đánh dấu là giải quyết vấn đề của bạn.', style: AppTextStyles.bodyMedium),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Huỷ', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700)),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Chấp nhận câu trả lời?', style: AppTextStyles.heading4),
+              const SizedBox(height: 10),
+              const Text(
+                'Câu trả lời này sẽ được đánh dấu là giải quyết vấn đề của bạn.',
+                style: AppTextStyles.bodyMedium,
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                        side: const BorderSide(color: AppColors.primary),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                      ),
+                      child: const Text('Huỷ', style: TextStyle(fontWeight: FontWeight.w700)),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(ctx, true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.correct,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                      ),
+                      child: const Text('Chấp nhận', style: TextStyle(fontWeight: FontWeight.w700)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Chấp nhận', style: TextStyle(color: AppColors.correct, fontWeight: FontWeight.w700)),
-          ),
-        ],
+        ),
       ),
     );
     if (confirmed != true) return;

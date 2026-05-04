@@ -407,7 +407,7 @@ class _FriendsScreenState extends State<FriendsScreen>
           else ...[
             if (data.length >= 3) _buildPodium(data.take(3).toList()),
             const SizedBox(height: 16),
-            ...data.skip(3).map((e) => _buildLeaderboardRow(e)),
+            ...data.skip(data.length >= 3 ? 3 : 0).map((e) => _buildLeaderboardRow(e)),
           ],
         ],
       ),

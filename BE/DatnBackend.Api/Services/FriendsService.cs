@@ -224,6 +224,7 @@ public class FriendsService
             .ToDictionaryAsync(p => p.Uid);
 
         var entries = weeklyXp
+            .Where(x => profiles.ContainsKey(x.UserId))
             .Select((x, i) => new LeaderboardEntry
             {
                 Rank = i + 1,

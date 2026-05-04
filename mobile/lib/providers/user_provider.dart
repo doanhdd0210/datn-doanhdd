@@ -356,7 +356,7 @@ class UserProvider extends ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       final p = _uidPrefix();
-      _totalXp = prefs.getInt('${p}user_xp') ?? 0;
+      // _totalXp intentionally not cached — always authoritative from server
       _streak = prefs.getInt('${p}user_streak') ?? 0;
       _longestStreak = prefs.getInt('${p}user_longest_streak') ?? 0;
       _lessonsCompleted = prefs.getInt('${p}user_lessons_completed') ?? 0;
@@ -376,7 +376,6 @@ class UserProvider extends ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       final p = _uidPrefix();
-      await prefs.setInt('${p}user_xp', _totalXp);
       await prefs.setInt('${p}user_streak', _streak);
       await prefs.setInt('${p}user_longest_streak', _longestStreak);
       await prefs.setInt('${p}user_lessons_completed', _lessonsCompleted);

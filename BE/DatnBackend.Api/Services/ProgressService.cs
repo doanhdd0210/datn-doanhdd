@@ -25,25 +25,36 @@ public class ProgressService
     /// <summary>Tạo UserProfile từ Firebase nếu chưa tồn tại trong DB.</summary>
     private async Task EnsureProfileAsync(string userId)
     {
-        var exists = await _db.UserProfiles.AnyAsync(p => p.Uid == userId);
-        if (exists) return;
+        var profile = await _db.UserProfiles.FirstOrDefaultAsync(p => p.Uid == userId);
         try
         {
             var firebaseUser = await FirebaseAuth.DefaultInstance.GetUserAsync(userId);
-            var profile = new UserProfile
+            var name = firebaseUser.DisplayName ?? firebaseUser.Email?.Split('@')[0] ?? "User";
+
+            if (profile == null)
             {
-                Uid = userId,
-                DisplayName = firebaseUser.DisplayName ?? firebaseUser.Email?.Split('@')[0] ?? "User",
-                PhotoUrl = firebaseUser.PhotoUrl,
-                TotalXp = 0,
-                CurrentStreak = 0,
-                LongestStreak = 0,
-                LessonsCompleted = 0,
-                Rank = "Beginner",
-                FcmTokens = [],
-            };
-            _db.UserProfiles.Add(profile);
-            await _db.SaveChangesAsync();
+                profile = new UserProfile
+                {
+                    Uid = userId,
+                    DisplayName = name,
+                    PhotoUrl = firebaseUser.PhotoUrl,
+                    TotalXp = 0,
+                    CurrentStreak = 0,
+                    LongestStreak = 0,
+                    LessonsCompleted = 0,
+                    Rank = "Beginner",
+                    FcmTokens = [],
+                };
+                _db.UserProfiles.Add(profile);
+                await _db.SaveChangesAsync();
+            }
+            else if (string.IsNullOrEmpty(profile.DisplayName))
+            {
+                profile.DisplayName = name;
+                if (profile.PhotoUrl == null && firebaseUser.PhotoUrl != null)
+                    profile.PhotoUrl = firebaseUser.PhotoUrl;
+                await _db.SaveChangesAsync();
+            }
         }
         catch (Exception ex)
         {
@@ -212,7 +223,7 @@ public class ProgressService
         await EnsureProfileAsync(userId);
         var profile = await _db.UserProfiles.FirstOrDefaultAsync(p => p.Uid == userId);
 
-        var todayId = $"{userId}:{DateTime.UtcNow:yyyy-MM-dd}";
+        var todayId = $"{userId}_{DateTime.UtcNow:yyyy-MM-dd}";
         var todayProgress = await _db.DailyProgresses.FirstOrDefaultAsync(d => d.Id == todayId);
 
         var stats = new UserStatsResponse

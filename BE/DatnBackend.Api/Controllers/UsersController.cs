@@ -38,27 +38,47 @@ public class UsersController : ControllerBase
         if (profile == null)
         {
             // Profile chưa tồn tại — tạo mới với level đã chọn
-            try
+            // Ưu tiên dùng displayName/photoUrl từ client (luôn có từ Firebase client SDK)
+            // Fallback: gọi Firebase Admin SDK nếu client không gửi
+            string displayName = request.DisplayName ?? "";
+            string? photoUrl = request.PhotoUrl;
+
+            if (string.IsNullOrEmpty(displayName))
             {
-                var firebaseUser = await FirebaseAdmin.Auth.FirebaseAuth.DefaultInstance.GetUserAsync(uid);
-                profile = new UserProfile
+                try
                 {
-                    Uid = uid,
-                    DisplayName = firebaseUser.DisplayName ?? firebaseUser.Email?.Split('@')[0] ?? "User",
-                    PhotoUrl = firebaseUser.PhotoUrl,
-                    Level = request.Level,
-                    FcmTokens = [],
-                };
-                _db.UserProfiles.Add(profile);
+                    var firebaseUser = await FirebaseAdmin.Auth.FirebaseAuth.DefaultInstance.GetUserAsync(uid);
+                    displayName = firebaseUser.DisplayName
+                        ?? firebaseUser.ProviderData?.FirstOrDefault()?.DisplayName
+                        ?? firebaseUser.Email?.Split('@')[0]
+                        ?? "User";
+                    photoUrl ??= firebaseUser.PhotoUrl
+                        ?? firebaseUser.ProviderData?.FirstOrDefault()?.PhotoUrl;
+                }
+                catch
+                {
+                    displayName = "User";
+                }
             }
-            catch
+
+            profile = new UserProfile
             {
-                return StatusCode(503, ApiResponse<object>.Fail("Không thể tạo profile"));
-            }
+                Uid = uid,
+                DisplayName = displayName,
+                PhotoUrl = photoUrl,
+                Level = request.Level,
+                FcmTokens = [],
+            };
+            _db.UserProfiles.Add(profile);
         }
         else
         {
             profile.Level = request.Level;
+            // Cập nhật displayName/photoUrl nếu trước đó bị thiếu
+            if (!string.IsNullOrEmpty(request.DisplayName) && string.IsNullOrEmpty(profile.DisplayName))
+                profile.DisplayName = request.DisplayName;
+            if (request.PhotoUrl != null && profile.PhotoUrl == null)
+                profile.PhotoUrl = request.PhotoUrl;
         }
 
         await _db.SaveChangesAsync();

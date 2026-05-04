@@ -462,7 +462,12 @@ class ApiService {
   }
 
   Future<void> setMyLevel(String level) async {
-    await _put('/users/me/level', {'level': level});
+    final user = FirebaseAuth.instance.currentUser;
+    await _put('/users/me/level', {
+      'level': level,
+      if (user?.displayName != null) 'displayName': user!.displayName,
+      if (user?.photoURL != null) 'photoUrl': user!.photoURL,
+    });
   }
 
   Future<void> followUser(String userId, String name, String avatar) async {

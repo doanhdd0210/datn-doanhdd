@@ -13,6 +13,7 @@ import '../../constants/app_text_styles.dart';
 import '../../models/api_code_snippet.dart';
 import '../../services/api_service.dart';
 import '../../services/ai_service.dart';
+import '../../services/compiler_service.dart';
 import 'package:provider/provider.dart';
 import '../../providers/user_provider.dart';
 import '../../widgets/app_snackbar.dart';
@@ -72,13 +73,16 @@ class CodePracticeScreen extends StatefulWidget {
 
 class _CodePracticeScreenState extends State<CodePracticeScreen> {
   final _api = ApiService();
+  final _compiler = CompilerService();
   final _aiService = AiService();
   final _scrollController = ScrollController();
   late final CodeController _codeController;
 
   bool _isSubmitting = false;
+  bool _isRunning = false;
   bool _showReference = false;
   bool _showHint = false;
+  CompileResult? _runResult;
   Timer? _timer;
   int _elapsedSeconds = 0;
 
@@ -121,6 +125,19 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
       text: next,
       selection: TextSelection.collapsed(offset: start + text.length),
     );
+  }
+
+  Future<void> _runCode() async {
+    final code = _codeController.text.trim();
+    if (code.isEmpty) return;
+    FocusScope.of(context).unfocus();
+    setState(() { _isRunning = true; _runResult = null; });
+    final result = await _compiler.run(
+      language: widget.snippet.language,
+      version: '*',
+      code: code,
+    );
+    if (mounted) setState(() { _isRunning = false; _runResult = result; });
   }
 
   Future<void> _submit() async {
@@ -268,11 +285,20 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
           // Editor chiếm toàn bộ không gian còn lại
           Expanded(child: _buildEditor()),
 
+          // Output panel sau khi chạy
+          AnimatedSize(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeInOut,
+            child: _runResult != null || _isRunning
+                ? _buildOutputPanel()
+                : const SizedBox.shrink(),
+          ),
+
           // Toolbar phím tắt ký tự đặc biệt
           _buildShortcutsBar(),
 
-          // Submit bar
-          _buildSubmitBar(),
+          // Action bar: Chạy + Nộp bài
+          _buildActionBar(),
         ],
       ),
     );
@@ -390,28 +416,144 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
     );
   }
 
-  Widget _buildSubmitBar() {
+  Widget _buildOutputPanel() {
+    final expected = _normalize(widget.snippet.expectedOutput);
+    final actual = _runResult != null ? _normalize(_runResult!.stdout) : '';
+    final isPassed = _runResult != null && actual == expected;
+    final hasError = _runResult != null && _runResult!.stderr.isNotEmpty && _runResult!.stdout.isEmpty;
+
+    return Container(
+      constraints: const BoxConstraints(maxHeight: 220),
+      decoration: const BoxDecoration(
+        color: Color(0xFF0C0C0C),
+        border: Border(top: BorderSide(color: Color(0xFF333333))),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            color: const Color(0xFF1A1A1A),
+            child: Row(
+              children: [
+                if (_isRunning) ...[
+                  const SizedBox(
+                    width: 12, height: 12,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF23A55A)),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text('Đang chạy...', style: TextStyle(color: Color(0xFFBBBBBB), fontSize: 11)),
+                ] else ...[
+                  Icon(
+                    isPassed ? Icons.check_circle : (hasError ? Icons.error_outline : Icons.cancel_outlined),
+                    size: 14,
+                    color: isPassed ? const Color(0xFF23A55A) : (hasError ? AppColors.orange : AppColors.wrong),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    isPassed ? 'Kết quả đúng!' : (hasError ? 'Lỗi biên dịch' : 'Kết quả sai'),
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: isPassed ? const Color(0xFF23A55A) : (hasError ? AppColors.orange : AppColors.wrong),
+                    ),
+                  ),
+                ],
+                const Spacer(),
+                GestureDetector(
+                  onTap: () => setState(() => _runResult = null),
+                  child: const Icon(Icons.close, size: 16, color: Color(0xFF666666)),
+                ),
+              ],
+            ),
+          ),
+          // Output content
+          if (!_isRunning && _runResult != null)
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Stdout hoặc stderr
+                    if (_runResult!.stdout.isNotEmpty) ...[
+                      const Text('Output:', style: TextStyle(color: Color(0xFF4FC3F7), fontSize: 10, fontWeight: FontWeight.w700)),
+                      const SizedBox(height: 4),
+                      Text(_runResult!.stdout.trim(),
+                          style: const TextStyle(color: Colors.white, fontFamily: 'monospace', fontSize: 12, height: 1.5)),
+                    ],
+                    if (hasError) ...[
+                      const Text('Lỗi:', style: TextStyle(color: AppColors.orange, fontSize: 10, fontWeight: FontWeight.w700)),
+                      const SizedBox(height: 4),
+                      Text(_runResult!.stderr.trim(),
+                          style: const TextStyle(color: Color(0xFFFFAB40), fontFamily: 'monospace', fontSize: 12, height: 1.5)),
+                    ],
+                    // So sánh expected nếu có stdout và không pass
+                    if (!isPassed && !hasError && widget.snippet.expectedOutput.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      const Divider(color: Color(0xFF333333), height: 1),
+                      const SizedBox(height: 8),
+                      const Text('Kết quả mong đợi:', style: TextStyle(color: Color(0xFF23A55A), fontSize: 10, fontWeight: FontWeight.w700)),
+                      const SizedBox(height: 4),
+                      Text(widget.snippet.expectedOutput.trim(),
+                          style: const TextStyle(color: Color(0xFF4EC9B0), fontFamily: 'monospace', fontSize: 12, height: 1.5)),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionBar() {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
       color: AppColors.surface,
       child: SafeArea(
         top: false,
-        child: SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: _isSubmitting ? null : _submit,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 13),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+        child: Row(
+          children: [
+            // Nút Chạy
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: (_isRunning || _isSubmitting) ? null : _runCode,
+                icon: _isRunning
+                    ? const SizedBox(width: 14, height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary))
+                    : const Icon(Icons.play_arrow_rounded, size: 20),
+                label: Text(_isRunning ? 'Đang chạy...' : 'Chạy'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.primary,
+                  side: const BorderSide(color: AppColors.primary),
+                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                ),
+              ),
             ),
-            child: _isSubmitting
-                ? const SizedBox(width: 20, height: 20,
-                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                : const Text('Nộp bài'),
-          ),
+            const SizedBox(width: 10),
+            // Nút Nộp bài
+            Expanded(
+              flex: 2,
+              child: ElevatedButton(
+                onPressed: (_isSubmitting || _isRunning) ? null : _submit,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                ),
+                child: _isSubmitting
+                    ? const SizedBox(width: 20, height: 20,
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : const Text('Nộp bài'),
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -460,19 +460,19 @@ class _PlacementTestScreenState extends State<PlacementTestScreen>
                 Text(
                   r.resultTitle,
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.w900,
-                    color: r.shadowColor,
+                    color: Colors.white,
                   ),
                 ),
                 const SizedBox(height: 12),
                 Text(
                   r.resultSubtitle,
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 15,
-                    color: r.shadowColor.withValues(alpha: 0.8),
+                    color: Colors.white,
                     height: 1.5,
                   ),
                 ),

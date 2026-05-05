@@ -21,11 +21,11 @@ public class CodeSnippetsController : ControllerBase
     private bool IsAdmin => HttpContext.Items.TryGetValue("FirebaseIsAdmin", out var v) && v is true;
     private string? UserId => HttpContext.Items["FirebaseUid"]?.ToString();
 
-    /// <summary>List all active code snippets (optional topicId filter), includes isPassed for authenticated users</summary>
+    /// <summary>List code snippets — admin sees all, users see active only</summary>
     [HttpGet]
     public async Task<ActionResult<ApiResponse<List<CodeSnippetDto>>>> List([FromQuery] string? topicId = null)
     {
-        var snippets = await _codeSnippetService.ListSnippetsAsync(userId: UserId, topicId: topicId, activeOnly: true);
+        var snippets = await _codeSnippetService.ListSnippetsAsync(userId: UserId, topicId: topicId, activeOnly: !IsAdmin);
         return Ok(ApiResponse<List<CodeSnippetDto>>.Ok(snippets, $"{snippets.Count} snippets"));
     }
 

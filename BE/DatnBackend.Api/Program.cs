@@ -198,6 +198,7 @@ using (var scope = app.Services.CreateScope())
         ALTER TABLE ""UserProfiles"" ADD COLUMN IF NOT EXISTS ""Level"" text NOT NULL DEFAULT 'beginner';
         ALTER TABLE ""UserProfiles"" ADD COLUMN IF NOT EXISTS ""IsAdmin"" boolean NOT NULL DEFAULT false;
         ALTER TABLE ""UserProfiles"" ADD COLUMN IF NOT EXISTS ""LastSeenQaAt"" timestamp with time zone;
+        ALTER TABLE ""UserProfiles"" ADD COLUMN IF NOT EXISTS ""DailyGoalTarget"" integer NOT NULL DEFAULT 20;
     ");
 
     // Tạo bảng DailyGoalBonusClaims nếu chưa có

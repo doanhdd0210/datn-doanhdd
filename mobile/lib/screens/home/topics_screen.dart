@@ -286,6 +286,16 @@ class _TopicsScreenState extends State<TopicsScreen> {
     return Consumer<UserProvider>(
       builder: (context, provider, _) {
         final reached = provider.isDailyGoalReached;
+        final claimed = provider.dailyGoalBonusClaimedToday;
+        String headerText;
+        if (claimed) {
+          headerText = '🎯 Đã nhận thưởng hôm nay!';
+        } else if (reached) {
+          headerText = '🎯 Mục tiêu hôm nay đạt rồi!';
+        } else {
+          headerText = '🎯 Mục tiêu hôm nay';
+        }
+        final headerColor = (reached || claimed) ? AppColors.correct : AppColors.textDark;
         return Container(
           margin: const EdgeInsets.fromLTRB(20, 0, 20, 16),
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
@@ -293,7 +303,7 @@ class _TopicsScreenState extends State<TopicsScreen> {
             color: context.surfaceColor,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: reached ? AppColors.correct.withValues(alpha: 0.4) : context.borderColor,
+              color: (reached || claimed) ? AppColors.correct.withValues(alpha: 0.4) : context.borderColor,
             ),
           ),
           child: Column(
@@ -302,9 +312,8 @@ class _TopicsScreenState extends State<TopicsScreen> {
               Row(
                 children: [
                   Text(
-                    reached ? '🎯 Mục tiêu hôm nay đạt rồi!' : '🎯 Mục tiêu hôm nay',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13,
-                        color: reached ? AppColors.correct : AppColors.textDark),
+                    headerText,
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: headerColor),
                   ),
                   const Spacer(),
                   GestureDetector(
@@ -312,7 +321,7 @@ class _TopicsScreenState extends State<TopicsScreen> {
                     child: Text(
                       '${provider.todayXp} / ${provider.dailyGoal} XP',
                       style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13,
-                          color: reached ? AppColors.correct : AppColors.xpGold),
+                          color: (reached || claimed) ? AppColors.correct : AppColors.xpGold),
                     ),
                   ),
                 ],
@@ -324,7 +333,9 @@ class _TopicsScreenState extends State<TopicsScreen> {
                   value: provider.dailyGoalProgress,
                   minHeight: 8,
                   backgroundColor: context.borderColor,
-                  valueColor: AlwaysStoppedAnimation(reached ? AppColors.correct : AppColors.primary),
+                  valueColor: AlwaysStoppedAnimation(
+                    (reached || claimed) ? AppColors.correct : AppColors.primary,
+                  ),
                 ),
               ),
             ],
@@ -347,9 +358,15 @@ class _TopicsScreenState extends State<TopicsScreen> {
           children: [
             const Text('Chọn mục tiêu hằng ngày',
                 style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppColors.textDark)),
+            if (provider.dailyGoalBonusClaimedToday) ...[
+              const SizedBox(height: 6),
+              const Text('Bạn đã nhận thưởng hôm nay. Thưởng tiếp theo vào ngày mai.',
+                  style: TextStyle(fontSize: 12, color: AppColors.textGray)),
+            ],
             const SizedBox(height: 16),
             ...UserProvider.dailyGoalOptions.map((g) {
               final isSelected = provider.dailyGoal == g;
+              final bonus = provider.bonusForGoal(g);
               return GestureDetector(
                 onTap: () { provider.setDailyGoal(g); Navigator.pop(context); },
                 child: Container(
@@ -363,9 +380,17 @@ class _TopicsScreenState extends State<TopicsScreen> {
                   ),
                   child: Row(
                     children: [
-                      Text('⚡ $g XP / ngày',
-                          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14,
-                              color: isSelected ? AppColors.primary : AppColors.textDark)),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('⚡ $g XP / ngày',
+                              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14,
+                                  color: isSelected ? AppColors.primary : AppColors.textDark)),
+                          if (bonus > 0)
+                            Text('Thưởng khi đạt: +$bonus XP',
+                                style: const TextStyle(fontSize: 11, color: AppColors.xpGold)),
+                        ],
+                      ),
                       const Spacer(),
                       if (isSelected) const Icon(Icons.check_circle_rounded, color: AppColors.primary, size: 20),
                     ],

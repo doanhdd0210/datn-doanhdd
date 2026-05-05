@@ -232,6 +232,10 @@ public class ProgressService
             .Join(_db.Achievements, ua => ua.AchievementId, a => a.Id, (ua, a) => a.XpReward)
             .SumAsync();
 
+        var today = DateTime.UtcNow.ToString("yyyy-MM-dd");
+        var bonusClaimedToday = await _db.DailyGoalBonusClaims
+            .AnyAsync(c => c.UserId == userId && c.Date == today);
+
         var stats = new UserStatsResponse
         {
             TotalXp = profile?.TotalXp ?? 0,
@@ -241,6 +245,8 @@ public class ProgressService
             Rank = profile?.Rank ?? "Beginner",
             Level = profile?.Level ?? "beginner",
             TodayXp = (todayProgress?.XpEarned ?? 0) + todayAchievementXp,
+            DailyGoalTarget = profile?.DailyGoalTarget ?? 20,
+            DailyGoalBonusClaimedToday = bonusClaimedToday,
         };
 
         await _cache.SetAsync(cacheKey, stats, TimeSpan.FromMinutes(2));
@@ -297,6 +303,97 @@ public class ProgressService
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to update daily progress for user {UserId}", userId);
+            return;
+        }
+
+        // Fire-and-forget: check if daily goal bonus should be awarded
+        if (xpAdded > 0)
+            _ = CheckAndAwardDailyGoalBonusAsync(userId);
+    }
+
+    public async Task SetDailyGoalAsync(string userId, int goalTarget)
+    {
+        var profile = await _db.UserProfiles.FirstOrDefaultAsync(p => p.Uid == userId);
+        if (profile == null) return;
+        profile.DailyGoalTarget = goalTarget;
+        await _db.SaveChangesAsync();
+        await _cache.RemoveAsync($"stats:{userId}");
+    }
+
+    private async Task CheckAndAwardDailyGoalBonusAsync(string userId)
+    {
+        try
+        {
+            var today = DateTime.UtcNow.ToString("yyyy-MM-dd");
+
+            var alreadyClaimed = await _db.DailyGoalBonusClaims
+                .AnyAsync(c => c.UserId == userId && c.Date == today);
+            if (alreadyClaimed) return;
+
+            var profile = await _db.UserProfiles.FirstOrDefaultAsync(p => p.Uid == userId);
+            if (profile == null) return;
+
+            var dailyId = $"{userId}_{today}";
+            var todayProgress = await _db.DailyProgresses.FirstOrDefaultAsync(d => d.Id == dailyId);
+            if (todayProgress == null || todayProgress.XpEarned < profile.DailyGoalTarget) return;
+
+            var bonusXp = await _settingsService.GetBonusForGoalAsync(profile.DailyGoalTarget);
+            if (bonusXp <= 0) return;
+
+            _db.DailyGoalBonusClaims.Add(new DailyGoalBonusClaim
+            {
+                Id = Guid.NewGuid().ToString(),
+                UserId = userId,
+                Date = today,
+                GoalTarget = profile.DailyGoalTarget,
+                BonusXp = bonusXp,
+                ClaimedAt = DateTime.UtcNow,
+            });
+
+            profile.TotalXp += bonusXp;
+            profile.Rank = CalculateRank(profile.TotalXp);
+
+            try { await _db.SaveChangesAsync(); }
+            catch (Exception ex) when (ex.InnerException?.Message.Contains("duplicate") == true
+                                    || ex.InnerException?.Message.Contains("unique") == true)
+            {
+                return; // Race condition — another request already claimed
+            }
+
+            await _cache.RemoveAsync($"stats:{userId}", "leaderboard:20", "leaderboard:50", "leaderboard_weekly:20", "leaderboard_weekly:50");
+
+            // In-app notification
+            _db.UserNotifications.Add(new UserNotification
+            {
+                Id = Guid.NewGuid().ToString(),
+                UserId = userId,
+                Type = "daily_goal",
+                Title = "Hoàn thành mục tiêu hôm nay! 🎯",
+                Body = $"Bạn đã đạt mục tiêu {profile.DailyGoalTarget} XP và nhận thưởng +{bonusXp} XP",
+                IsRead = false,
+                CreatedAt = DateTime.UtcNow,
+            });
+            await _db.SaveChangesAsync();
+
+            // Push notification
+            if (profile.FcmTokens.Count > 0)
+            {
+                await _notifService.SendToTokensAsync(new SendNotificationRequest
+                {
+                    Title = "Hoàn thành mục tiêu hôm nay! 🎯",
+                    Body = $"Xuất sắc! Bạn nhận được +{bonusXp} XP thưởng",
+                    Data = new Dictionary<string, string>
+                    {
+                        ["type"] = "daily_goal",
+                        ["bonusXp"] = bonusXp.ToString(),
+                        ["screen"] = "home",
+                    },
+                }, profile.FcmTokens);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "CheckAndAwardDailyGoalBonus failed for {UserId}", userId);
         }
     }
 
@@ -434,6 +531,8 @@ public class UserStatsResponse
     public string Rank { get; set; } = "";
     public string Level { get; set; } = "beginner";
     public int TodayXp { get; set; }
+    public int DailyGoalTarget { get; set; } = 20;
+    public bool DailyGoalBonusClaimedToday { get; set; }
 }
 
 public class ClaimBonusResult

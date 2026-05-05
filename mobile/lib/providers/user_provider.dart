@@ -26,6 +26,9 @@ class UserProvider extends ChangeNotifier {
   int _dailyGoal = 20;
   bool _dailyGoalJustReached = false;
   int _pendingBonusXp = 0;
+  bool _dailyGoalBonusClaimedToday = false;
+  List<Map<String, dynamic>> _dailyGoalBonusConfigs = [];
+  bool _bonusConfigsLoaded = false;
 
   // Achievement tracking — server-driven
   List<Achievement> _achievements = [];           // full list từ server
@@ -79,6 +82,15 @@ class UserProvider extends ChangeNotifier {
   double get dailyGoalProgress => _dailyGoal > 0 ? (_todayXp / _dailyGoal).clamp(0.0, 1.0) : 0.0;
   bool get dailyGoalJustReached => _dailyGoalJustReached;
   int get pendingBonusXp => _pendingBonusXp;
+  bool get dailyGoalBonusClaimedToday => _dailyGoalBonusClaimedToday;
+
+  int bonusForGoal(int goal) {
+    for (final config in _dailyGoalBonusConfigs) {
+      if (config['goalXp'] == goal) return config['bonusXp'] as int? ?? 0;
+    }
+    const defaults = {20: 5, 50: 15, 100: 35};
+    return defaults[goal] ?? 0;
+  }
 
   bool get achievementsLoaded => _achievementsLoaded;
   List<Achievement> get achievements => List.unmodifiable(
@@ -130,6 +142,8 @@ class UserProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('${_uidPrefix()}daily_goal', goal);
     notifyListeners();
+    // Sync to BE (fire-and-forget)
+    _api.setDailyGoal(goal).catchError((_) {});
   }
 
   final _api = ApiService();
@@ -151,9 +165,7 @@ class UserProvider extends ChangeNotifier {
     try {
       final stats = await _api.getUserStats();
       _totalXp = stats['totalXp'] as int? ?? 0;
-      final newTodayXp = stats['todayXp'] as int? ?? 0;
-      final wasBelow = _todayXp < _dailyGoal;
-      _todayXp = newTodayXp;
+      _todayXp = stats['todayXp'] as int? ?? 0;
       _streak = stats['currentStreak'] as int? ?? stats['streak'] as int? ?? 0;
       _longestStreak = stats['longestStreak'] as int? ?? 0;
       _lessonsCompleted = stats['lessonsCompleted'] as int? ?? 0;
@@ -165,12 +177,24 @@ class UserProvider extends ChangeNotifier {
         final prefs = await SharedPreferences.getInstance();
         if (uid != null) await prefs.setString('user_level_$uid', beLevel);
       }
+      // Sync daily goal target from BE (source of truth)
+      final beGoal = stats['dailyGoalTarget'] as int?;
+      if (beGoal != null && beGoal > 0) {
+        _dailyGoal = beGoal;
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setInt('${_uidPrefix()}daily_goal', beGoal);
+      }
+      // Sync claimed-today state from BE
+      final beClaimedToday = stats['dailyGoalBonusClaimedToday'] as bool? ?? false;
+      if (beClaimedToday && !_dailyGoalBonusClaimedToday) {
+        _dailyGoalBonusClaimedToday = true;
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('${_uidPrefix()}daily_goal_claimed_date', _todayKey());
+      }
       _statsInitialized = true;
       await _saveToCache();
-      // Trigger daily goal bonus claim if threshold just crossed
-      if (wasBelow && _todayXp >= _dailyGoal) {
-        _claimDailyGoalBonus();
-      }
+      // Load bonus configs once per session
+      if (!_bonusConfigsLoaded) _loadBonusConfigs();
     } catch (e) {
       _error = e.toString();
       if (!_statsInitialized) {
@@ -204,17 +228,12 @@ class UserProvider extends ChangeNotifier {
   }
 
 
-  Future<void> _claimDailyGoalBonus() async {
+  Future<void> _loadBonusConfigs() async {
+    _bonusConfigsLoaded = true;
     try {
-      final result = await _api.claimDailyGoalBonus(_dailyGoal);
-      final success = result['success'] == true;
-      final bonusXp = result['bonusXp'] as int? ?? 0;
-      if (success && bonusXp > 0) {
-        _totalXp += bonusXp;
-        _todayXp += bonusXp;
-        _pendingBonusXp = bonusXp;
-        _dailyGoalJustReached = true;
-        _saveToCache();
+      final configs = await _api.getDailyGoalBonusConfigs();
+      if (configs.isNotEmpty) {
+        _dailyGoalBonusConfigs = configs;
         notifyListeners();
       }
     } catch (_) {}
@@ -223,6 +242,19 @@ class UserProvider extends ChangeNotifier {
   void consumeDailyGoalReached() {
     _dailyGoalJustReached = false;
     _pendingBonusXp = 0;
+  }
+
+  /// Called when push notification for daily_goal is received.
+  void handleDailyGoalBonusReceived(int bonusXp) {
+    if (_dailyGoalBonusClaimedToday) return;
+    _dailyGoalBonusClaimedToday = true;
+    _pendingBonusXp = bonusXp;
+    _dailyGoalJustReached = true;
+    notifyListeners();
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.setString('${_uidPrefix()}daily_goal_claimed_date', _todayKey());
+    });
+    loadStats();
   }
 
   void markLessonCompleted(String lessonId, String topicId) {
@@ -340,6 +372,8 @@ class UserProvider extends ChangeNotifier {
 
       // Load todayXp — reset if stored date differs from today
       final today = _todayKey();
+      final claimedDate = prefs.getString('${p}daily_goal_claimed_date') ?? '';
+      _dailyGoalBonusClaimedToday = claimedDate == today;
       final storedDate = prefs.getString('${p}today_xp_date') ?? '';
       _todayXp = storedDate == today ? (prefs.getInt('${p}today_xp') ?? 0) : 0;
 
@@ -355,6 +389,7 @@ class UserProvider extends ChangeNotifier {
       await prefs.setInt('${p}user_longest_streak', _longestStreak);
       await prefs.setInt('${p}user_lessons_completed', _lessonsCompleted);
       await prefs.setInt('${p}user_hearts', _hearts);
+      await prefs.setInt('${p}daily_goal', _dailyGoal);
       await prefs.setInt('${p}today_xp', _todayXp);
       await prefs.setString('${p}today_xp_date', _todayKey());
     } catch (_) {}
@@ -382,6 +417,9 @@ class UserProvider extends ChangeNotifier {
     _dailyGoal = 20;
     _dailyGoalJustReached = false;
     _pendingBonusXp = 0;
+    _dailyGoalBonusClaimedToday = false;
+    _dailyGoalBonusConfigs = [];
+    _bonusConfigsLoaded = false;
     _achievements = [];
     _achievementsLoaded = false;
     _completedLessons.clear();

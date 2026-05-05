@@ -144,6 +144,19 @@ public class ProgressController : ControllerBase
         return Ok(ApiResponse<UserStatsResponse>.Ok(stats));
     }
 
+    /// <summary>Set user daily goal target</summary>
+    [HttpPut("daily-goal")]
+    public async Task<ActionResult<ApiResponse<object>>> SetDailyGoal([FromBody] SetDailyGoalRequest request)
+    {
+        var uid = UserId;
+        if (uid == null) return Unauthorized(ApiResponse<object>.Fail("Unauthorized"));
+        if (request.GoalTarget <= 0)
+            return BadRequest(ApiResponse<object>.Fail("Invalid goal target"));
+
+        await _progressService.SetDailyGoalAsync(uid, request.GoalTarget);
+        return Ok(ApiResponse<object>.Ok(null, "Daily goal updated"));
+    }
+
     /// <summary>Claim daily goal bonus XP (once per day)</summary>
     [HttpPost("claim-daily-goal-bonus")]
     public async Task<ActionResult<ApiResponse<ClaimBonusResult>>> ClaimDailyGoalBonus([FromBody] ClaimBonusRequest request)
@@ -160,6 +173,11 @@ public class ProgressController : ControllerBase
 }
 
 public class ClaimBonusRequest
+{
+    public int GoalTarget { get; set; }
+}
+
+public class SetDailyGoalRequest
 {
     public int GoalTarget { get; set; }
 }

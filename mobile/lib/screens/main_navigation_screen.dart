@@ -100,6 +100,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
     final screen = data['screen'] as String?;
     final provider = context.read<UserProvider>();
 
+    if (type == 'daily_goal') {
+      final bonusXp = int.tryParse(data['bonusXp']?.toString() ?? '') ?? 0;
+      provider.handleDailyGoalBonusReceived(bonusXp);
+      return;
+    }
+
     if (type == 'achievement' || screen == 'profile') {
       provider.pollNewAchievements();
       provider.loadStats();

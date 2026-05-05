@@ -287,6 +287,12 @@ class ApiService {
     }
   }
 
+  Future<void> setDailyGoal(int goalTarget) async {
+    try {
+      await _put('/progress/daily-goal', {'goalTarget': goalTarget});
+    } catch (_) {}
+  }
+
   Future<List<Map<String, dynamic>>> getDailyGoalBonusConfigs() async {
     try {
       final data = await _get('/settings/daily-goal-bonuses');

@@ -12,14 +12,16 @@ public class ProgressService
     private readonly ILogger<ProgressService> _logger;
     private readonly SettingsService _settingsService;
     private readonly AchievementsService _achievements;
+    private readonly INotificationService _notifService;
 
-    public ProgressService(AppDbContext db, ICacheService cache, ILogger<ProgressService> logger, SettingsService settingsService, AchievementsService achievements)
+    public ProgressService(AppDbContext db, ICacheService cache, ILogger<ProgressService> logger, SettingsService settingsService, AchievementsService achievements, INotificationService notifService)
     {
         _db = db;
         _cache = cache;
         _logger = logger;
         _settingsService = settingsService;
         _achievements = achievements;
+        _notifService = notifService;
     }
 
     /// <summary>Tạo UserProfile từ Firebase nếu chưa tồn tại trong DB.</summary>
@@ -386,6 +388,38 @@ public class ProgressService
         }
         await _cache.RemoveAsync($"stats:{userId}", "leaderboard:20", "leaderboard:50", "leaderboard_weekly:20", "leaderboard_weekly:50");
         await _achievements.CheckAndGrantAsync(userId);
+
+        // In-app notification
+        _db.UserNotifications.Add(new UserNotification
+        {
+            Id = Guid.NewGuid().ToString(),
+            UserId = userId,
+            Type = "daily_goal",
+            Title = "Hoàn thành mục tiêu hôm nay! 🎯",
+            Body = $"Bạn đã đạt mục tiêu {goalTarget} XP và nhận thưởng +{bonusXp} XP",
+            IsRead = false,
+            CreatedAt = DateTime.UtcNow,
+        });
+        await _db.SaveChangesAsync();
+
+        // Push notification
+        try
+        {
+            var profile2 = await _db.UserProfiles.FirstOrDefaultAsync(p => p.Uid == userId);
+            if (profile2?.FcmTokens.Count > 0)
+            {
+                await _notifService.SendToTokensAsync(new SendNotificationRequest
+                {
+                    Title = "Hoàn thành mục tiêu hôm nay! 🎯",
+                    Body = $"Xuất sắc! Bạn nhận được +{bonusXp} XP thưởng",
+                    Data = new Dictionary<string, string> { ["screen"] = "home" },
+                }, profile2.FcmTokens);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to send push notification for daily goal bonus");
+        }
 
         return new ClaimBonusResult { Success = true, BonusXp = bonusXp, Message = "Nhận thưởng thành công!" };
     }

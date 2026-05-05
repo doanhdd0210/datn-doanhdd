@@ -178,13 +178,11 @@ function OverviewCards({ setActiveNav }) {
 
   const cards = [
     { label: 'Tổng người dùng',  value: loading ? '…' : stats.totalUsers,    icon: '👥', color: '#e8f0fe' },
-    { label: 'Đang hoạt động',   value: loading ? '…' : stats.activeUsers,   icon: '✅', color: '#e6f4ea' },
     { label: 'Chủ đề',           value: loading ? '…' : stats.totalTopics,   icon: '📚', color: '#fef9c3' },
     { label: 'Bài học',          value: loading ? '…' : stats.totalLessons,  icon: '📖', color: '#f3e8ff' },
     { label: 'Câu hỏi Quiz',     value: loading ? '…' : stats.totalQuestions,icon: '❓', color: '#ecfdf5' },
     { label: 'Demo Code',        value: loading ? '…' : stats.totalSnippets, icon: '💻', color: '#fffbeb' },
     { label: 'Tài khoản Admin',  value: loading ? '…' : stats.admins,        icon: '🛡️', color: '#ede9fe' },
-    { label: 'Bị khoá',          value: loading ? '…' : stats.disabled,      icon: '🔒', color: '#fce8e6' },
   ]
 
   return (

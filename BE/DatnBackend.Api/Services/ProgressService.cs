@@ -245,7 +245,7 @@ public class ProgressService
         return stats;
     }
 
-    public async Task UpdateDailyProgressAsync(string userId, int lessonsAdded, int xpAdded, int timeAdded)
+    public async Task UpdateDailyProgressAsync(string userId, int lessonsAdded, int xpAdded, int timeAdded, bool forceCreate = false)
     {
         try
         {
@@ -262,8 +262,7 @@ public class ProgressService
             }
             else
             {
-                // Chỉ tạo record và tính streak khi ngày đó kiếm được XP
-                if (xpAdded <= 0) return;
+                if (xpAdded <= 0 && lessonsAdded <= 0 && !forceCreate) return;
 
                 var yesterday = DateTime.UtcNow.AddDays(-1).ToString("yyyy-MM-dd");
                 var yesterdayId = $"{userId}_{yesterday}";

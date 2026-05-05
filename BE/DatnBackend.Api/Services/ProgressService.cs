@@ -119,8 +119,8 @@ public class ProgressService
             .AnyAsync(r => r.UserId == userId && r.LessonId == request.LessonId && r.Score == 100);
         int actualXp = xpAlreadyAwarded ? 0 : xpReward;
 
-        await UpdateDailyProgressAsync(userId, 1, actualXp, request.TimeSpentSeconds);
         await UpdateUserStatsAsync(userId, actualXp, 1);
+        await UpdateDailyProgressAsync(userId, 1, actualXp, request.TimeSpentSeconds);
 
         await _achievements.CheckAndGrantAsync(userId);
 
@@ -253,7 +253,7 @@ public class ProgressService
 
         // Auto-claim bonus if goal reached but not yet claimed (covers missed XP events)
         if (!bonusClaimedToday && stats.TodayXp >= stats.DailyGoalTarget)
-            _ = CheckAndAwardDailyGoalBonusAsync(userId);
+            await CheckAndAwardDailyGoalBonusAsync(userId);
 
         return stats;
     }
@@ -311,9 +311,8 @@ public class ProgressService
             return;
         }
 
-        // Fire-and-forget: check if daily goal bonus should be awarded
         if (xpAdded > 0)
-            _ = CheckAndAwardDailyGoalBonusAsync(userId);
+            await CheckAndAwardDailyGoalBonusAsync(userId);
     }
 
     public async Task SetDailyGoalAsync(string userId, int goalTarget)

@@ -160,12 +160,11 @@ public class CodeSnippetService
         _db.PracticeResults.Add(result);
         await _db.SaveChangesAsync();
 
+        if (xpEarned > 0)
+            await _progress.UpdateUserStatsAsync(userId, xpEarned, 0);
         await _progress.UpdateDailyProgressAsync(userId, 0, xpEarned, 0, forceCreate: true);
         if (xpEarned > 0)
-        {
-            await _progress.UpdateUserStatsAsync(userId, xpEarned, 0);
             await _achievements.CheckAndGrantAsync(userId);
-        }
 
         return new PracticeSubmitResponse(xpEarned, bestScore);
     }

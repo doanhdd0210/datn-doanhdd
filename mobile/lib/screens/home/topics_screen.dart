@@ -317,7 +317,7 @@ class _TopicsScreenState extends State<TopicsScreen> {
                   ),
                   const Spacer(),
                   GestureDetector(
-                    onTap: () => _showGoalPicker(context, provider),
+                    onTap: claimed ? null : () => _showGoalPicker(context, provider),
                     child: Text(
                       '${provider.todayXp} / ${provider.dailyGoal} XP',
                       style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13,
@@ -367,9 +367,12 @@ class _TopicsScreenState extends State<TopicsScreen> {
             ...UserProvider.dailyGoalOptions.map((g) {
               final isSelected = provider.dailyGoal == g;
               final bonus = provider.bonusForGoal(g);
+              final disabled = provider.dailyGoalBonusClaimedToday;
               return GestureDetector(
-                onTap: () { provider.setDailyGoal(g); Navigator.pop(context); },
-                child: Container(
+                onTap: disabled ? null : () { provider.setDailyGoal(g); Navigator.pop(context); },
+                child: Opacity(
+                  opacity: disabled ? 0.45 : 1.0,
+                  child: Container(
                   width: double.infinity,
                   margin: const EdgeInsets.only(bottom: 10),
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -396,6 +399,7 @@ class _TopicsScreenState extends State<TopicsScreen> {
                       if (isSelected) const Icon(Icons.check_circle_rounded, color: AppColors.primary, size: 20),
                     ],
                   ),
+                ),
                 ),
               );
             }),

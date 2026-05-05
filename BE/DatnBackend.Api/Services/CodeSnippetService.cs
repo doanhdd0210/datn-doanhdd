@@ -158,19 +158,14 @@ public class CodeSnippetService
         };
 
         _db.PracticeResults.Add(result);
-
-        if (xpEarned > 0)
-        {
-            await _db.UserProfiles
-                .Where(p => p.Uid == userId)
-                .ExecuteUpdateAsync(s => s.SetProperty(p => p.TotalXp, p => p.TotalXp + xpEarned));
-        }
-
         await _db.SaveChangesAsync();
 
         await _progress.UpdateDailyProgressAsync(userId, 0, xpEarned, 0, forceCreate: true);
         if (xpEarned > 0)
+        {
+            await _progress.UpdateUserStatsAsync(userId, xpEarned, 0);
             await _achievements.CheckAndGrantAsync(userId);
+        }
 
         return new PracticeSubmitResponse(xpEarned, bestScore);
     }

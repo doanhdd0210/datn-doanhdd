@@ -298,7 +298,7 @@ public class ProgressService
         }
     }
 
-    private async Task UpdateUserStatsAsync(string userId, int xpDelta, int lessonsDelta)
+    public async Task UpdateUserStatsAsync(string userId, int xpDelta, int lessonsDelta)
     {
         try
         {

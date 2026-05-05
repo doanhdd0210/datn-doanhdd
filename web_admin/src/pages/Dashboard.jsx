@@ -232,11 +232,13 @@ const styles = {
   layout: { display: 'flex', height: '100vh', fontFamily: 'system-ui, sans-serif' },
   sidebar: {
     width: 240,
+    height: '100vh',
     background: '#1e293b',
     color: '#fff',
     display: 'flex',
     flexDirection: 'column',
     flexShrink: 0,
+    overflow: 'hidden',
   },
   sidebarHeader: {
     padding: '24px 20px',
@@ -248,7 +250,7 @@ const styles = {
   sidebarIcon: { fontSize: 24 },
   sidebarTitle: { fontWeight: 700, fontSize: 18 },
   version: { textAlign: 'center', fontSize: 11, color: '#475569', padding: '8px 0' },
-  nav: { flex: 1, padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: 4 },
+  nav: { flex: 1, padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: 4, overflowY: 'auto' },
   navItem: {
     display: 'flex',
     alignItems: 'center',

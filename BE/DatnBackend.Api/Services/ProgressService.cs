@@ -249,12 +249,19 @@ public class ProgressService
             DailyGoalBonusClaimedToday = bonusClaimedToday,
         };
 
-        await _cache.SetAsync(cacheKey, stats, TimeSpan.FromMinutes(2));
-
-        // Auto-claim bonus if goal reached but not yet claimed (covers missed XP events)
+        // Auto-claim bonus BEFORE caching so the response reflects the correct claimed state
         if (!bonusClaimedToday && stats.TodayXp >= stats.DailyGoalTarget)
+        {
             await CheckAndAwardDailyGoalBonusAsync(userId);
+            var bonusXp = await _settingsService.GetBonusForGoalAsync(stats.DailyGoalTarget);
+            if (bonusXp > 0)
+            {
+                stats.DailyGoalBonusClaimedToday = true;
+                stats.TotalXp += bonusXp;
+            }
+        }
 
+        await _cache.SetAsync(cacheKey, stats, TimeSpan.FromMinutes(2));
         return stats;
     }
 
@@ -454,10 +461,16 @@ public class ProgressService
         if (alreadyClaimed)
             return new ClaimBonusResult { Success = false, BonusXp = 0, Message = "Bạn đã nhận thưởng hôm nay rồi" };
 
-        // Verify XP earned today >= goalTarget
+        // Verify XP earned today >= goalTarget (include achievement XP same as GetUserStats)
         var todayProgress = await _db.DailyProgresses
             .FirstOrDefaultAsync(d => d.UserId == userId && d.Date == today);
-        if (todayProgress == null || todayProgress.XpEarned < goalTarget)
+        var todayStart = DateTime.UtcNow.Date;
+        var todayAchievementXp = await _db.UserAchievements
+            .Where(ua => ua.UserId == userId && ua.UnlockedAt >= todayStart)
+            .Join(_db.Achievements, ua => ua.AchievementId, a => a.Id, (ua, a) => a.XpReward)
+            .SumAsync();
+        var todayXp = (todayProgress?.XpEarned ?? 0) + todayAchievementXp;
+        if (todayXp < goalTarget)
             return new ClaimBonusResult { Success = false, BonusXp = 0, Message = "Chưa đạt mục tiêu hôm nay" };
 
         // Get configured bonus

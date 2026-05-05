@@ -14,20 +14,25 @@ import QaManagementPage from './QaManagementPage'
 import LeaderboardPage from './LeaderboardPage'
 import AnalyticsPage from './AnalyticsPage'
 import AchievementsPage from './AchievementsPage'
+import {
+  LayoutDashboard, BarChart2, Users, Library, BookOpen,
+  ClipboardList, Code2, MessagesSquare, Trophy, Star,
+  Bell, Settings, LogOut,
+} from 'lucide-react'
 
 const NAV_ITEMS = [
-  { id: 'overview',      label: 'Tổng quan',     icon: '📊' },
-  { id: 'analytics',     label: 'Phân tích',     icon: '📈' },
-  { id: 'users',         label: 'Người dùng',    icon: '👥' },
-  { id: 'topics',        label: 'Chủ đề',        icon: '📚' },
-  { id: 'lessons',       label: 'Bài học',       icon: '📖' },
-  { id: 'questions',     label: 'Câu hỏi Quiz',  icon: '📝' },
-  { id: 'snippets',      label: 'Demo Code',     icon: '💻' },
-  { id: 'qa',            label: 'QA Cộng đồng',  icon: '💬' },
-  { id: 'leaderboard',   label: 'Bảng xếp hạng', icon: '🏆' },
-  { id: 'achievements',  label: 'Thành tích',    icon: '⭐' },
-  { id: 'notifications', label: 'Thông báo',     icon: '🔔' },
-  { id: 'settings',      label: 'Cài đặt',       icon: '⚙️' },
+  { id: 'overview',      label: 'Tổng quan',     Icon: LayoutDashboard },
+  { id: 'analytics',     label: 'Phân tích',     Icon: BarChart2 },
+  { id: 'users',         label: 'Người dùng',    Icon: Users },
+  { id: 'topics',        label: 'Chủ đề',        Icon: Library },
+  { id: 'lessons',       label: 'Bài học',       Icon: BookOpen },
+  { id: 'questions',     label: 'Câu hỏi Quiz',  Icon: ClipboardList },
+  { id: 'snippets',      label: 'Demo Code',     Icon: Code2 },
+  { id: 'qa',            label: 'QA Cộng đồng',  Icon: MessagesSquare },
+  { id: 'leaderboard',   label: 'Bảng xếp hạng', Icon: Trophy },
+  { id: 'achievements',  label: 'Thành tích',    Icon: Star },
+  { id: 'notifications', label: 'Thông báo',     Icon: Bell },
+  { id: 'settings',      label: 'Cài đặt',       Icon: Settings },
 ]
 
 export default function Dashboard() {
@@ -60,7 +65,7 @@ export default function Dashboard() {
                 ...(activeNav === item.id ? styles.navItemActive : {}),
               }}
             >
-              <span>{item.icon}</span>
+              <item.Icon size={16} strokeWidth={1.75} />
               <span>{item.label}</span>
             </button>
           ))}
@@ -81,7 +86,7 @@ export default function Dashboard() {
             style={styles.logoutBtn}
             title="Đăng xuất"
           >
-            🚪
+            <LogOut size={16} strokeWidth={1.75} />
           </button>
         </div>
         <div style={styles.version}>v1.0.1</div>
@@ -91,7 +96,7 @@ export default function Dashboard() {
       <main style={styles.main}>
         <header style={styles.topbar}>
           <h2 style={styles.pageTitle}>
-            {NAV_ITEMS.find((n) => n.id === activeNav)?.icon}{' '}
+            {(() => { const I = NAV_ITEMS.find((n) => n.id === activeNav)?.Icon; return I ? <I size={20} strokeWidth={1.75} style={{ marginRight: 8, verticalAlign: 'middle' }} /> : null })()}
             {NAV_ITEMS.find((n) => n.id === activeNav)?.label}
           </h2>
         </header>

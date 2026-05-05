@@ -86,7 +86,7 @@ export default function Dashboard() {
             style={styles.logoutBtn}
             title="Đăng xuất"
           >
-            <LogOut size={16} strokeWidth={1.75} />
+            <LogOut size={16} strokeWidth={1.75} color="white"/>
           </button>
         </div>
         <div style={styles.version}>v1.0.1</div>

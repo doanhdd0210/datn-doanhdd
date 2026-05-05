@@ -297,7 +297,9 @@ class _TopicsScreenState extends State<TopicsScreen> {
           headerText = '🎯 Mục tiêu hôm nay';
         }
         final headerColor = (reached || claimed) ? AppColors.correct : AppColors.textDark;
-        return Container(
+        return GestureDetector(
+          onTap: () => _showGoalPicker(context, provider),
+          child: Container(
           margin: const EdgeInsets.fromLTRB(20, 0, 20, 16),
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
           decoration: BoxDecoration(
@@ -317,13 +319,10 @@ class _TopicsScreenState extends State<TopicsScreen> {
                     style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: headerColor),
                   ),
                   const Spacer(),
-                  GestureDetector(
-                    onTap: claimed ? null : () => _showGoalPicker(context, provider),
-                    child: Text(
-                      '${provider.todayXp} / ${provider.dailyGoal} XP',
-                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13,
-                          color: (reached || claimed) ? AppColors.correct : AppColors.xpGold),
-                    ),
+                  Text(
+                    '${provider.todayXp} / ${provider.dailyGoal} XP',
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13,
+                        color: (reached || claimed) ? AppColors.correct : AppColors.xpGold),
                   ),
                 ],
               ),
@@ -348,6 +347,7 @@ class _TopicsScreenState extends State<TopicsScreen> {
               ],
             ],
           ),
+        ),
         );
       },
     );
@@ -366,28 +366,36 @@ class _TopicsScreenState extends State<TopicsScreen> {
           children: [
             const Text('Chọn mục tiêu hằng ngày',
                 style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppColors.textDark)),
-            if (provider.dailyGoalBonusClaimedToday) ...[
+            if (provider.isDailyGoalReached || provider.dailyGoalBonusClaimedToday) ...[
               const SizedBox(height: 6),
-              const Text('Bạn đã nhận thưởng hôm nay. Thưởng tiếp theo vào ngày mai.',
-                  style: TextStyle(fontSize: 12, color: AppColors.textGray)),
+              Text(
+                provider.dailyGoalBonusClaimedToday
+                    ? 'Bạn đã nhận thưởng hôm nay. Thưởng tiếp theo vào ngày mai.'
+                    : 'Bạn đã đạt mục tiêu hôm nay. Có thể đổi mục tiêu từ ngày mai.',
+                style: const TextStyle(fontSize: 12, color: AppColors.textGray),
+              ),
             ],
             const SizedBox(height: 16),
             ...UserProvider.dailyGoalOptions.map((g) {
               final isSelected = provider.dailyGoal == g;
               final bonus = provider.bonusForGoal(g);
-              final disabled = provider.dailyGoalBonusClaimedToday;
+              final disabled = provider.isDailyGoalReached || provider.dailyGoalBonusClaimedToday;
               return GestureDetector(
                 onTap: disabled ? null : () { provider.setDailyGoal(g); Navigator.pop(context); },
-                child: Opacity(
-                  opacity: disabled ? 0.45 : 1.0,
-                  child: Container(
+                child: Container(
                   width: double.infinity,
                   margin: const EdgeInsets.only(bottom: 10),
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   decoration: BoxDecoration(
-                    color: isSelected ? AppColors.primary.withValues(alpha: 0.1) : context.surfaceElevatedColor,
+                    color: disabled
+                        ? context.surfaceElevatedColor.withValues(alpha: 0.5)
+                        : isSelected ? AppColors.primary.withValues(alpha: 0.1) : context.surfaceElevatedColor,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: isSelected ? AppColors.primary : context.borderColor),
+                    border: Border.all(
+                      color: disabled
+                          ? context.borderColor.withValues(alpha: 0.4)
+                          : isSelected ? AppColors.primary : context.borderColor,
+                    ),
                   ),
                   child: Row(
                     children: [
@@ -397,17 +405,22 @@ class _TopicsScreenState extends State<TopicsScreen> {
                           children: [
                             Text('⚡ $g XP / ngày',
                                 style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14,
-                                    color: isSelected ? AppColors.primary : AppColors.textDark)),
+                                    color: disabled
+                                        ? AppColors.textGray
+                                        : isSelected ? AppColors.primary : AppColors.textDark)),
                             if (bonus > 0)
                               Text('Thưởng khi đạt: +$bonus XP',
-                                  style: const TextStyle(fontSize: 11, color: AppColors.xpGold)),
+                                  style: TextStyle(fontSize: 11,
+                                      color: disabled ? AppColors.textGray : AppColors.xpGold)),
                           ],
                         ),
                       ),
-                      if (isSelected) const Icon(Icons.check_circle_rounded, color: AppColors.primary, size: 20),
+                      if (isSelected && !disabled)
+                        const Icon(Icons.check_circle_rounded, color: AppColors.primary, size: 20),
+                      if (isSelected && disabled)
+                        const Icon(Icons.check_circle_rounded, color: AppColors.textGray, size: 20),
                     ],
                   ),
-                ),
                 ),
               );
             }),

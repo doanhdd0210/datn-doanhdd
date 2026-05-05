@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -10,6 +11,9 @@ import '../../services/api_service.dart';
 import 'qa_detail_screen.dart';
 import 'create_qa_screen.dart';
 import '../../widgets/app_loading.dart';
+
+/// Số bài QA chưa đọc – bottom nav lắng nghe để hiện badge
+final qaUnreadNotifier = ValueNotifier<int>(0);
 
 class QaScreen extends StatefulWidget {
   const QaScreen({super.key});
@@ -31,9 +35,16 @@ class _QaScreenState extends State<QaScreen> {
   final ScrollController _scrollController = ScrollController();
   Set<String> _upvotedPostIds = {};
 
+  // Seen tracking
+  Set<String> _seenPostIds = {};
+  Map<String, int> _seenAnswerCounts = {}; // postId → answerCount khi lần cuối xem
+  String? _currentUserId;
+
   @override
   void initState() {
     super.initState();
+    _currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    _loadSeenData();
     _loadUpvotedIds();
     _loadPosts();
     _scrollController.addListener(_onScroll);
@@ -54,6 +65,41 @@ class _QaScreenState extends State<QaScreen> {
     final prefs = await SharedPreferences.getInstance();
     final ids = prefs.getStringList('upvoted_posts') ?? [];
     if (mounted) setState(() => _upvotedPostIds = ids.toSet());
+  }
+
+  Future<void> _loadSeenData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final seen = prefs.getStringList('qa_seen_ids') ?? [];
+    final counts = <String, int>{};
+    for (final key in prefs.getKeys()) {
+      if (key.startsWith('qa_ans_')) {
+        final postId = key.substring('qa_ans_'.length);
+        counts[postId] = prefs.getInt(key) ?? 0;
+      }
+    }
+    if (mounted) setState(() { _seenPostIds = seen.toSet(); _seenAnswerCounts = counts; });
+  }
+
+  /// Đánh dấu post đã xem, lưu baseline answer count
+  Future<void> _markSeen(QaPost post) async {
+    if (_seenPostIds.contains(post.id)) {
+      // Chỉ cập nhật answer count nếu có answer mới
+      final seenAns = _seenAnswerCounts[post.id] ?? 0;
+      if (post.answerCount <= seenAns) return;
+    }
+    final prefs = await SharedPreferences.getInstance();
+    _seenPostIds.add(post.id);
+    _seenAnswerCounts[post.id] = post.answerCount;
+    await prefs.setStringList('qa_seen_ids', _seenPostIds.toList());
+    await prefs.setInt('qa_ans_${post.id}', post.answerCount);
+    _updateUnreadNotifier();
+  }
+
+  void _updateUnreadNotifier() {
+    final unread = _posts.where((p) =>
+      p.authorId != _currentUserId && !_seenPostIds.contains(p.id)
+    ).length;
+    qaUnreadNotifier.value = unread;
   }
 
   void _onUpvoteChanged(String postId, bool upvoted) {
@@ -80,13 +126,14 @@ class _QaScreenState extends State<QaScreen> {
       if (mounted) {
         setState(() {
           if (reset || _page == 1) {
-            _posts = data;
+            _posts = _sortPosts(data);
           } else {
             _posts.addAll(data);
           }
           _hasMore = data.length >= 20;
           _isLoading = false;
         });
+        _updateUnreadNotifier();
       }
     } catch (_) {
       if (mounted) {
@@ -96,6 +143,13 @@ class _QaScreenState extends State<QaScreen> {
         });
       }
     }
+  }
+
+  /// Unseen non-mine posts lên đầu, còn lại giữ nguyên thứ tự (createdAt DESC từ BE)
+  List<QaPost> _sortPosts(List<QaPost> posts) {
+    final unseen = posts.where((p) => p.authorId != _currentUserId && !_seenPostIds.contains(p.id)).toList();
+    final rest   = posts.where((p) => !(p.authorId != _currentUserId && !_seenPostIds.contains(p.id))).toList();
+    return [...unseen, ...rest];
   }
 
   Future<void> _loadMore() async {
@@ -149,14 +203,12 @@ class _QaScreenState extends State<QaScreen> {
   List<QaPost> get _filteredPosts {
     var result = _posts;
 
-    // Apply tab filter
     if (_filter == 'unanswered') {
       result = result.where((p) => p.answerCount == 0).toList();
     } else if (_filter == 'solved') {
       result = result.where((p) => p.isSolved).toList();
     }
 
-    // Apply search
     if (_searchQuery.isNotEmpty) {
       result = result.where((p) {
         final titleMatch = p.title.toLowerCase().contains(_searchQuery);
@@ -167,6 +219,14 @@ class _QaScreenState extends State<QaScreen> {
     }
 
     return result;
+  }
+
+  bool _isPostNew(QaPost p) =>
+      p.authorId != _currentUserId && !_seenPostIds.contains(p.id);
+
+  int _newAnswerCount(QaPost p) {
+    final seen = _seenAnswerCounts[p.id] ?? 0;
+    return (p.answerCount - seen).clamp(0, 999);
   }
 
   @override
@@ -203,7 +263,12 @@ class _QaScreenState extends State<QaScreen> {
                                   post: post,
                                   initialUpvoted: _upvotedPostIds.contains(post.id),
                                   onUpvoteChanged: (v) => _onUpvoteChanged(post.id, v),
+                                  isNew: _isPostNew(post),
+                                  newAnswerCount: _newAnswerCount(post),
                                   onTap: () async {
+                                    await _markSeen(post);
+                                    if (!mounted) return;
+                                    setState(() {}); // cập nhật badge ngay
                                     await Navigator.push(
                                       context,
                                       MaterialPageRoute(
@@ -392,12 +457,16 @@ class _QaPostCard extends StatefulWidget {
   final VoidCallback onTap;
   final bool initialUpvoted;
   final ValueChanged<bool> onUpvoteChanged;
+  final bool isNew;
+  final int newAnswerCount;
 
   const _QaPostCard({
     required this.post,
     required this.onTap,
     required this.initialUpvoted,
     required this.onUpvoteChanged,
+    this.isNew = false,
+    this.newAnswerCount = 0,
   });
 
   @override
@@ -464,6 +533,8 @@ class _QaPostCardState extends State<_QaPostCard> {
   @override
   Widget build(BuildContext context) {
     final post = widget.post;
+    final isNew = widget.isNew;
+    final newAns = widget.newAnswerCount;
     return GestureDetector(
       onTap: widget.onTap,
       child: Container(
@@ -472,7 +543,10 @@ class _QaPostCardState extends State<_QaPostCard> {
         decoration: BoxDecoration(
           color: context.surfaceColor,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: context.borderColor),
+          border: Border.all(
+            color: isNew ? AppColors.primary.withValues(alpha: 0.5) : context.borderColor,
+            width: isNew ? 1.5 : 1.0,
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -489,7 +563,18 @@ class _QaPostCardState extends State<_QaPostCard> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                if (post.isSolved)
+                // Badge Mới
+                if (isNew)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Text('Mới',
+                        style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800)),
+                  ),
+                if (!isNew && post.isSolved) ...[
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                     decoration: BoxDecoration(
@@ -499,6 +584,19 @@ class _QaPostCardState extends State<_QaPostCard> {
                     child: const Text('✓ Giải quyết',
                         style: TextStyle(color: AppColors.correct, fontSize: 10, fontWeight: FontWeight.w700)),
                   ),
+                ],
+                if (isNew && post.isSolved) ...[
+                  const SizedBox(width: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: AppColors.correct.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Text('✓',
+                        style: TextStyle(color: AppColors.correct, fontSize: 10, fontWeight: FontWeight.w700)),
+                  ),
+                ],
               ],
             ),
             const SizedBox(height: 8),
@@ -526,10 +624,27 @@ class _QaPostCardState extends State<_QaPostCard> {
                 const Text(' · ', style: TextStyle(color: AppColors.textGray, fontSize: 12)),
                 Text(_timeAgo(post.createdAt), style: AppTextStyles.bodySmall),
                 const Spacer(),
-                // Answer count
-                const Icon(Icons.chat_bubble_outline, size: 14, color: AppColors.textGray),
+                // Answer count với badge khi có answer mới
+                Icon(Icons.chat_bubble_outline, size: 14,
+                    color: newAns > 0 ? AppColors.primary : AppColors.textGray),
                 const SizedBox(width: 3),
-                Text('${post.answerCount}', style: AppTextStyles.bodySmall),
+                Text('${post.answerCount}',
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: newAns > 0 ? AppColors.primary : null,
+                      fontWeight: newAns > 0 ? FontWeight.w700 : null,
+                    )),
+                if (newAns > 0) ...[
+                  const SizedBox(width: 3),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text('+$newAns',
+                        style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w800)),
+                  ),
+                ],
               ],
             ),
           ],

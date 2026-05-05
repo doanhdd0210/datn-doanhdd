@@ -60,7 +60,7 @@ export default function QaManagementPage() {
 
   const filtered = posts.filter(p => {
     const q = search.toLowerCase()
-    const matchSearch = !q || p.title?.toLowerCase().includes(q) || p.authorName?.toLowerCase().includes(q) || p.authorEmail?.toLowerCase().includes(q)
+    const matchSearch = !q || p.title?.toLowerCase().includes(q) || p.userName?.toLowerCase().includes(q)
     const matchStatus = statusFilter === 'all' || (statusFilter === 'solved' ? p.isSolved : !p.isSolved)
     return matchSearch && matchStatus
   })
@@ -145,8 +145,7 @@ export default function QaManagementPage() {
                     onMouseLeave={e => e.currentTarget.style.background = idx % 2 === 0 ? '#fff' : '#f9f9f9'}
                     onClick={() => openView(p)}>
                     <td style={s.td}>
-                      <div style={{ fontWeight: 600, fontSize: 13, color: '#1e293b' }}>{p.authorName || p.authorEmail || '—'}</div>
-                      {p.authorEmail && p.authorName && <div style={{ fontSize: 11, color: '#94a3b8' }}>{p.authorEmail}</div>}
+                      <div style={{ fontWeight: 600, fontSize: 13, color: '#1e293b' }}>{p.userName || '—'}</div>
                     </td>
                     <td style={{ ...s.td, maxWidth: 240 }}>
                       <span style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', fontWeight: 500 }}>
@@ -204,7 +203,7 @@ export default function QaManagementPage() {
             </div>
             <div style={s.modalBody}>
               <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
-                <span style={s.badge}>👤 {modal.item.authorName || modal.item.authorEmail || '—'}</span>
+                <span style={s.badge}>👤 {modal.item.userName || '—'}</span>
                 <span style={{ ...s.badge, background: modal.item.isSolved ? '#dcfce7' : '#fff7ed', color: modal.item.isSolved ? '#16a34a' : '#c2410c' }}>
                   {modal.item.isSolved ? '✓ Đã giải' : '○ Chưa giải'}
                 </span>
@@ -225,7 +224,7 @@ export default function QaManagementPage() {
                     {modal.item.answers.map((ans, i) => (
                       <div key={i} style={{ background: ans.isAccepted ? '#f0fdf4' : '#f8fafc', border: ans.isAccepted ? '1px solid #86efac' : '1px solid #e2e8f0', borderRadius: 8, padding: '12px 14px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                          <span style={{ fontWeight: 600, fontSize: 13, color: '#374151' }}>{ans.authorName || ans.authorEmail || '—'}</span>
+                          <span style={{ fontWeight: 600, fontSize: 13, color: '#374151' }}>{ans.userName || '—'}</span>
                           {ans.isAccepted && <span style={{ ...s.badge, background: '#dcfce7', color: '#16a34a' }}>✓ Đáp án được chọn</span>}
                         </div>
                         <div style={{ color: '#475569', fontSize: 14, lineHeight: 1.5 }}>{ans.body || ans.content || '—'}</div>

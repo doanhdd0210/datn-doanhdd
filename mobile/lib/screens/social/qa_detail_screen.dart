@@ -7,10 +7,12 @@ import '../../constants/app_text_styles.dart';
 import '../../constants/app_theme.dart';
 import '../../models/qa_post.dart';
 import '../../models/qa_answer.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/api_service.dart';
 import '../../services/ai_service.dart';
 import '../../widgets/app_loading.dart';
 import '../../widgets/app_snackbar.dart';
+import 'qa_screen.dart' show qaUnreadNotifier;
 
 class QaDetailScreen extends StatefulWidget {
   final QaPost post;
@@ -50,9 +52,21 @@ class _QaDetailScreenState extends State<QaDetailScreen> {
     try {
       final answers = await _api.getQaAnswers(widget.post.id);
       if (mounted) setState(() { _answers = answers; _isLoadingAnswers = false; });
+      // Đánh dấu đã xem post này và cập nhật baseline answer count
+      _saveSeenState(answers.length);
     } catch (_) {
       if (mounted) setState(() { _answers = []; _isLoadingAnswers = false; });
     }
+  }
+
+  Future<void> _saveSeenState(int answerCount) async {
+    final prefs = await SharedPreferences.getInstance();
+    final seenIds = (prefs.getStringList('qa_seen_ids') ?? []).toSet();
+    seenIds.add(widget.post.id);
+    await prefs.setStringList('qa_seen_ids', seenIds.toList());
+    await prefs.setInt('qa_ans_${widget.post.id}', answerCount);
+    // Cập nhật badge ngay lập tức (giảm unread nếu post này đang là unread)
+    if (qaUnreadNotifier.value > 0) qaUnreadNotifier.value--;
   }
 
   Future<void> _acceptAnswer(String answerId) async {

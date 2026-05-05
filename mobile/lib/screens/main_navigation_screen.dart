@@ -127,10 +127,14 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
         index: _currentIndex,
         children: _screens,
       ),
-      bottomNavigationBar: _QuizzoBottomNav(
-        currentIndex: _currentIndex,
-        items: _navItems,
-        onTap: (index) => setState(() => _currentIndex = index),
+      bottomNavigationBar: ValueListenableBuilder<int>(
+        valueListenable: qaUnreadNotifier,
+        builder: (context, unreadCount, _) => _QuizzoBottomNav(
+          currentIndex: _currentIndex,
+          items: _navItems,
+          badgeCounts: {2: unreadCount},
+          onTap: (index) => setState(() => _currentIndex = index),
+        ),
       ),
     );
   }
@@ -146,11 +150,13 @@ class _QuizzoBottomNav extends StatelessWidget {
   final int currentIndex;
   final List<_NavItem> items;
   final ValueChanged<int> onTap;
+  final Map<int, int> badgeCounts;
 
   const _QuizzoBottomNav({
     required this.currentIndex,
     required this.items,
     required this.onTap,
+    this.badgeCounts = const {},
   });
 
   @override
@@ -187,6 +193,7 @@ class _QuizzoBottomNav extends StatelessWidget {
                     icon: items[i].icon,
                     label: items[i].label,
                     isActive: isActive,
+                    badgeCount: badgeCounts[i] ?? 0,
                   ),
                 ),
               );
@@ -202,11 +209,13 @@ class _NavTabItem extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool isActive;
+  final int badgeCount;
 
   const _NavTabItem({
     required this.icon,
     required this.label,
     required this.isActive,
+    this.badgeCount = 0,
   });
 
   @override
@@ -214,35 +223,64 @@ class _NavTabItem extends StatelessWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
-          curve: Curves.easeOutCubic,
-          width: isActive ? 52 : 40,
-          height: isActive ? 36 : 32,
-          decoration: isActive
-              ? BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(18),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.4),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                )
-              : null,
-          child: Center(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
-              child: Icon(
-                icon,
-                key: ValueKey(isActive),
-                size: isActive ? 22 : 22,
-                color: isActive ? Colors.white : AppColors.navInactive,
+        Stack(
+          clipBehavior: Clip.none,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeOutCubic,
+              width: isActive ? 52 : 40,
+              height: isActive ? 36 : 32,
+              decoration: isActive
+                  ? BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(18),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: 0.4),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    )
+                  : null,
+              child: Center(
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  child: Icon(
+                    icon,
+                    key: ValueKey(isActive),
+                    size: 22,
+                    color: isActive ? Colors.white : AppColors.navInactive,
+                  ),
+                ),
               ),
             ),
-          ),
+            if (badgeCount > 0)
+              Positioned(
+                top: -4,
+                right: -4,
+                child: Container(
+                  constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFE53935),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Text(
+                      badgeCount > 99 ? '99+' : '$badgeCount',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
         const SizedBox(height: 3),
         AnimatedDefaultTextStyle(

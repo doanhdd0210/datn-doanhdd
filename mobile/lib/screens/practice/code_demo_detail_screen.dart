@@ -8,6 +8,7 @@ import '../../constants/app_text_styles.dart';
 import '../../models/api_code_snippet.dart';
 import '../../services/compiler_service.dart';
 
+import '../../constants/code_editor_style.dart';
 import 'code_practice_screen.dart';
 import '../../widgets/app_snackbar.dart';
 
@@ -231,21 +232,11 @@ class _CodeDemoDetailScreenState extends State<CodeDemoDetailScreen>
                   data: CodeThemeData(styles: vs2015Theme),
                   child: CodeField(
                     controller: _codeController,
-                    textStyle: const TextStyle(
-                      fontFamily: 'monospace',
-                      fontSize: 13,
-                      height: 1.65,
-                    ),
+                    textStyle: CodeEditorStyle.codeTextStyle,
                     expands: true,
-                    background: const Color(0xFF1E1E1E),
-                    gutterStyle: const GutterStyle(
-                      showErrors: false,
-                      showFoldingHandles: false,
-                      width: 120,
-                      margin: 4,
-                      textStyle: TextStyle(color: Color(0xFF858585)),
-                    ),
-                    decoration: const BoxDecoration(color: Color(0xFF1E1E1E)),
+                    background: CodeEditorStyle.bgEditor,
+                    gutterStyle: CodeEditorStyle.gutterStyle,
+                    decoration: CodeEditorStyle.fieldDecoration,
                   ),
                 ),
                 // Output terminal

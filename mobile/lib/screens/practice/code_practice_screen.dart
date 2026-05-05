@@ -16,6 +16,7 @@ import '../../services/ai_service.dart';
 import '../../services/compiler_service.dart';
 import 'package:provider/provider.dart';
 import '../../providers/user_provider.dart';
+import '../../constants/code_editor_style.dart';
 import '../../widgets/app_snackbar.dart';
 import 'practice_result_screen.dart';
 
@@ -382,17 +383,11 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
       data: CodeThemeData(styles: vs2015Theme),
       child: CodeField(
         controller: _codeController,
-        textStyle: const TextStyle(fontFamily: 'monospace', fontSize: 13, height: 1.65),
+        textStyle: CodeEditorStyle.codeTextStyle,
         expands: true,
-        background: const Color(0xFF1E1E1E),
-        gutterStyle: const GutterStyle(
-          showErrors: false,
-          showFoldingHandles: false,
-          width: 120,
-          margin: 4,
-          textStyle: TextStyle(color: Color(0xFF858585)),
-        ),
-        decoration: const BoxDecoration(color: Color(0xFF1E1E1E)),
+        background: CodeEditorStyle.bgEditor,
+        gutterStyle: CodeEditorStyle.gutterStyle,
+        decoration: CodeEditorStyle.fieldDecoration,
       ),
     );
   }
@@ -707,32 +702,32 @@ class _CodeLineRow extends StatelessWidget {
         children: [
           // Số dòng
           Container(
-            width: 52,
-            color: const Color(0xFF252526),
+            width: CodeEditorStyle.gutterWidth - CodeEditorStyle.gutterMargin * 2,
+            color: CodeEditorStyle.bgGutter,
             alignment: Alignment.centerRight,
             padding: const EdgeInsets.only(right: 10),
             child: Text(
               '$lineNumber',
               style: const TextStyle(
-                color: Color(0xFF858585),
-                fontFamily: 'monospace',
-                fontSize: 12,
-                height: 1.65,
+                color: CodeEditorStyle.textGutter,
+                fontFamily: CodeEditorStyle.fontFamily,
+                fontSize: CodeEditorStyle.gutterFontSize,
+                height: CodeEditorStyle.lineHeight,
               ),
             ),
           ),
           // Code
           Expanded(
             child: Container(
-              color: const Color(0xFF1E1E1E),
+              color: CodeEditorStyle.bgEditor,
               padding: const EdgeInsets.only(left: 12),
               child: Text(
                 code.isEmpty ? ' ' : code,
                 style: const TextStyle(
-                  color: Color(0xFFD4D4D4),
-                  fontFamily: 'monospace',
-                  fontSize: 13,
-                  height: 1.65,
+                  color: CodeEditorStyle.textCode,
+                  fontFamily: CodeEditorStyle.fontFamily,
+                  fontSize: CodeEditorStyle.fontSize,
+                  height: CodeEditorStyle.lineHeight,
                 ),
               ),
             ),

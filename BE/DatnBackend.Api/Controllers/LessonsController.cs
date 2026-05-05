@@ -22,11 +22,11 @@ public class LessonsController : ControllerBase
 
     private bool IsAdmin => HttpContext.Items.TryGetValue("FirebaseIsAdmin", out var v) && v is true;
 
-    /// <summary>List all lessons (optional topicId filter)</summary>
+    /// <summary>List lessons — admin sees all, users see active only</summary>
     [HttpGet]
     public async Task<ActionResult<ApiResponse<List<Lesson>>>> List([FromQuery] string? topicId = null)
     {
-        var lessons = await _lessonService.ListLessonsAsync(topicId: topicId, activeOnly: true);
+        var lessons = await _lessonService.ListLessonsAsync(topicId: topicId, activeOnly: !IsAdmin);
         return Ok(ApiResponse<List<Lesson>>.Ok(lessons, $"{lessons.Count} lessons"));
     }
 

@@ -160,7 +160,6 @@ export default function LessonsPage() {
       <div style={s.statsRow}>
         <span style={s.stat}>Tổng: <strong>{lessons.length}</strong></span>
         <span style={s.stat}>Hiển thị: <strong>{filtered.length}</strong></span>
-        <span style={s.stat}>Đang hoạt động: <strong>{lessons.filter(l => l.isActive).length}</strong></span>
       </div>
 
       {loading ? (

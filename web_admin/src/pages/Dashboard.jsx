@@ -21,11 +21,11 @@ const NAV_ITEMS = [
   { id: 'users',         label: 'Người dùng',    icon: '👥' },
   { id: 'topics',        label: 'Chủ đề',        icon: '📚' },
   { id: 'lessons',       label: 'Bài học',       icon: '📖' },
-  { id: 'questions',     label: 'Câu hỏi Quiz',  icon: '❓' },
+  { id: 'questions',     label: 'Câu hỏi Quiz',  icon: '📝' },
   { id: 'snippets',      label: 'Demo Code',     icon: '💻' },
   { id: 'qa',            label: 'QA Cộng đồng',  icon: '💬' },
   { id: 'leaderboard',   label: 'Bảng xếp hạng', icon: '🏆' },
-  { id: 'achievements',  label: 'Achievements',  icon: '🏅' },
+  { id: 'achievements',  label: 'Thành tích',    icon: '⭐' },
   { id: 'notifications', label: 'Thông báo',     icon: '🔔' },
   { id: 'settings',      label: 'Cài đặt',       icon: '⚙️' },
 ]
@@ -180,7 +180,7 @@ function OverviewCards({ setActiveNav }) {
     { label: 'Tổng người dùng',  value: loading ? '…' : stats.totalUsers,    icon: '👥', color: '#e8f0fe' },
     { label: 'Chủ đề',           value: loading ? '…' : stats.totalTopics,   icon: '📚', color: '#fef9c3' },
     { label: 'Bài học',          value: loading ? '…' : stats.totalLessons,  icon: '📖', color: '#f3e8ff' },
-    { label: 'Câu hỏi Quiz',     value: loading ? '…' : stats.totalQuestions,icon: '❓', color: '#ecfdf5' },
+    { label: 'Câu hỏi Quiz',     value: loading ? '…' : stats.totalQuestions,icon: '📝', color: '#ecfdf5' },
     { label: 'Demo Code',        value: loading ? '…' : stats.totalSnippets, icon: '💻', color: '#fffbeb' },
     { label: 'Tài khoản Admin',  value: loading ? '…' : stats.admins,        icon: '🛡️', color: '#ede9fe' },
   ]
@@ -203,7 +203,7 @@ function OverviewCards({ setActiveNav }) {
           <QuickBtn label="Quản lý người dùng" icon="👥" desc="Thêm, sửa, xoá, khoá tài khoản" color="#e8f0fe" onClick={() => setActiveNav('users')} />
           <QuickBtn label="Chủ đề"             icon="📚" desc="Quản lý chủ đề học tập"          color="#fef9c3" onClick={() => setActiveNav('topics')} />
           <QuickBtn label="Bài học"            icon="📖" desc="Quản lý bài học theo chủ đề"     color="#f3e8ff" onClick={() => setActiveNav('lessons')} />
-          <QuickBtn label="Câu hỏi Quiz"       icon="❓" desc="Quiz theo từng bài học"           color="#ecfdf5" onClick={() => setActiveNav('questions')} />
+          <QuickBtn label="Câu hỏi Quiz"       icon="📝" desc="Quiz theo từng bài học"           color="#ecfdf5" onClick={() => setActiveNav('questions')} />
           <QuickBtn label="Gửi thông báo"      icon="🔔" desc="Push notification đến người dùng" color="#fff7ed" onClick={() => setActiveNav('notifications')} />
         </div>
       </div>

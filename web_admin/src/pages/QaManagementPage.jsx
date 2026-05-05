@@ -132,7 +132,6 @@ export default function QaManagementPage() {
                   <th style={s.th}>Tiêu đề</th>
                   <th style={s.th}>Tags</th>
                   <th style={s.th}>Trả lời</th>
-                  <th style={s.th}>Upvotes</th>
                   <th style={s.th}>Trạng thái</th>
                   <th style={s.th}>Ngày tạo</th>
                   <th style={s.th}>Hành động</th>
@@ -161,9 +160,6 @@ export default function QaManagementPage() {
                     </td>
                     <td style={{ ...s.td, textAlign: 'center' }}>
                       <span style={s.badge}>{p.answerCount ?? p.answers?.length ?? 0}</span>
-                    </td>
-                    <td style={{ ...s.td, textAlign: 'center' }}>
-                      <span style={{ ...s.badge, background: '#fef9c3', color: '#854d0e' }}>👍 {p.upvotes ?? p.upvoteCount ?? 0}</span>
                     </td>
                     <td style={s.td}>
                       <span style={{ ...s.statusBadge, background: p.isSolved ? '#dcfce7' : '#fff7ed', color: p.isSolved ? '#16a34a' : '#c2410c' }}>

@@ -75,7 +75,6 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
   final _api = ApiService();
   final _compiler = CompilerService();
   final _aiService = AiService();
-  final _scrollController = ScrollController();
   late final CodeController _codeController;
 
   bool _isSubmitting = false;
@@ -103,7 +102,6 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
   @override
   void dispose() {
     _codeController.dispose();
-    _scrollController.dispose();
     _timer?.cancel();
     super.dispose();
   }
@@ -382,25 +380,19 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
   Widget _buildEditor() {
     return CodeTheme(
       data: CodeThemeData(styles: vs2015Theme),
-      child: SingleChildScrollView(
-        controller: _scrollController,
-        child: CodeField(
-          controller: _codeController,
-          textStyle: const TextStyle(fontFamily: 'monospace', fontSize: 13, height: 1.65),
-          minLines: 30,
-          expands: false,
-          background: const Color(0xFF1E1E1E),
-          gutterStyle: const GutterStyle(
-            width: 72,
-            margin: 8,
-            textStyle: TextStyle(
-              color: Color(0xFF858585),
-              fontSize: 12,
-              fontFamily: 'monospace',
-            ),
-          ),
-          decoration: const BoxDecoration(color: Color(0xFF1E1E1E)),
+      child: CodeField(
+        controller: _codeController,
+        textStyle: const TextStyle(fontFamily: 'monospace', fontSize: 13, height: 1.65),
+        expands: true,
+        background: const Color(0xFF1E1E1E),
+        gutterStyle: const GutterStyle(
+          showErrors: false,
+          showFoldingHandles: false,
+          width: 120,
+          margin: 4,
+          textStyle: TextStyle(color: Color(0xFF858585)),
         ),
+        decoration: const BoxDecoration(color: Color(0xFF1E1E1E)),
       ),
     );
   }

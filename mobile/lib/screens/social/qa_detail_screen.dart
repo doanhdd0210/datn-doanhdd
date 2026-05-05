@@ -53,19 +53,18 @@ class _QaDetailScreenState extends State<QaDetailScreen> {
       final answers = await _api.getQaAnswers(widget.post.id);
       if (mounted) setState(() { _answers = answers; _isLoadingAnswers = false; });
       // Đánh dấu đã xem post này và cập nhật baseline answer count
-      _saveSeenState(answers.length);
+      _saveSeenState();
     } catch (_) {
       if (mounted) setState(() { _answers = []; _isLoadingAnswers = false; });
     }
   }
 
-  Future<void> _saveSeenState(int answerCount) async {
+  Future<void> _saveSeenState() async {
     final prefs = await SharedPreferences.getInstance();
     final seenIds = (prefs.getStringList('qa_seen_ids') ?? []).toSet();
+    if (seenIds.contains(widget.post.id)) return;
     seenIds.add(widget.post.id);
     await prefs.setStringList('qa_seen_ids', seenIds.toList());
-    await prefs.setInt('qa_ans_${widget.post.id}', answerCount);
-    // Cập nhật badge ngay lập tức (giảm unread nếu post này đang là unread)
     if (qaUnreadNotifier.value > 0) qaUnreadNotifier.value--;
   }
 

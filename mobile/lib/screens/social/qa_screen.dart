@@ -37,7 +37,6 @@ class _QaScreenState extends State<QaScreen> {
 
   // Seen tracking
   Set<String> _seenPostIds = {};
-  Map<String, int> _seenAnswerCounts = {}; // postId → answerCount khi lần cuối xem
   String? _currentUserId;
 
   @override
@@ -70,28 +69,15 @@ class _QaScreenState extends State<QaScreen> {
   Future<void> _loadSeenData() async {
     final prefs = await SharedPreferences.getInstance();
     final seen = prefs.getStringList('qa_seen_ids') ?? [];
-    final counts = <String, int>{};
-    for (final key in prefs.getKeys()) {
-      if (key.startsWith('qa_ans_')) {
-        final postId = key.substring('qa_ans_'.length);
-        counts[postId] = prefs.getInt(key) ?? 0;
-      }
-    }
-    if (mounted) setState(() { _seenPostIds = seen.toSet(); _seenAnswerCounts = counts; });
+    if (mounted) setState(() { _seenPostIds = seen.toSet(); });
   }
 
-  /// Đánh dấu post đã xem, lưu baseline answer count
+  /// Đánh dấu post đã xem
   Future<void> _markSeen(QaPost post) async {
-    if (_seenPostIds.contains(post.id)) {
-      // Chỉ cập nhật answer count nếu có answer mới
-      final seenAns = _seenAnswerCounts[post.id] ?? 0;
-      if (post.answerCount <= seenAns) return;
-    }
+    if (_seenPostIds.contains(post.id)) return;
     final prefs = await SharedPreferences.getInstance();
     _seenPostIds.add(post.id);
-    _seenAnswerCounts[post.id] = post.answerCount;
     await prefs.setStringList('qa_seen_ids', _seenPostIds.toList());
-    await prefs.setInt('qa_ans_${post.id}', post.answerCount);
     _updateUnreadNotifier();
   }
 
@@ -224,10 +210,6 @@ class _QaScreenState extends State<QaScreen> {
   bool _isPostNew(QaPost p) =>
       p.authorId != _currentUserId && !_seenPostIds.contains(p.id);
 
-  int _newAnswerCount(QaPost p) {
-    final seen = _seenAnswerCounts[p.id] ?? 0;
-    return (p.answerCount - seen).clamp(0, 999);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -264,7 +246,6 @@ class _QaScreenState extends State<QaScreen> {
                                   initialUpvoted: _upvotedPostIds.contains(post.id),
                                   onUpvoteChanged: (v) => _onUpvoteChanged(post.id, v),
                                   isNew: _isPostNew(post),
-                                  newAnswerCount: _newAnswerCount(post),
                                   onTap: () async {
                                     await _markSeen(post);
                                     if (!mounted) return;
@@ -458,7 +439,6 @@ class _QaPostCard extends StatefulWidget {
   final bool initialUpvoted;
   final ValueChanged<bool> onUpvoteChanged;
   final bool isNew;
-  final int newAnswerCount;
 
   const _QaPostCard({
     required this.post,
@@ -466,7 +446,6 @@ class _QaPostCard extends StatefulWidget {
     required this.initialUpvoted,
     required this.onUpvoteChanged,
     this.isNew = false,
-    this.newAnswerCount = 0,
   });
 
   @override
@@ -534,7 +513,6 @@ class _QaPostCardState extends State<_QaPostCard> {
   Widget build(BuildContext context) {
     final post = widget.post;
     final isNew = widget.isNew;
-    final newAns = widget.newAnswerCount;
     return GestureDetector(
       onTap: widget.onTap,
       child: Container(
@@ -624,27 +602,9 @@ class _QaPostCardState extends State<_QaPostCard> {
                 const Text(' · ', style: TextStyle(color: AppColors.textGray, fontSize: 12)),
                 Text(_timeAgo(post.createdAt), style: AppTextStyles.bodySmall),
                 const Spacer(),
-                // Answer count với badge khi có answer mới
-                Icon(Icons.chat_bubble_outline, size: 14,
-                    color: newAns > 0 ? AppColors.primary : AppColors.textGray),
+                Icon(Icons.chat_bubble_outline, size: 14, color: AppColors.textGray),
                 const SizedBox(width: 3),
-                Text('${post.answerCount}',
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: newAns > 0 ? AppColors.primary : null,
-                      fontWeight: newAns > 0 ? FontWeight.w700 : null,
-                    )),
-                if (newAns > 0) ...[
-                  const SizedBox(width: 3),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text('+$newAns',
-                        style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w800)),
-                  ),
-                ],
+                Text('${post.answerCount}', style: AppTextStyles.bodySmall),
               ],
             ),
           ],

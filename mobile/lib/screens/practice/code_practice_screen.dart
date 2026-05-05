@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:developer' as dev;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_code_editor/flutter_code_editor.dart';
 import 'package:flutter_highlight/themes/vs2015.dart';
 import 'package:highlight/languages/java.dart';
@@ -302,10 +301,7 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
   }
 
   void _showReferenceSheet() {
-    final refController = CodeController(
-      text: widget.snippet.code,
-      language: _resolveLanguage(widget.snippet.language),
-    );
+    final lines = widget.snippet.code.split('\n');
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -317,7 +313,7 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
         expand: false,
         builder: (_, scrollController) => Container(
           decoration: const BoxDecoration(
-            color: Color(0xFF1E1E2E),
+            color: Color(0xFF1E1E1E),
             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           ),
           child: Column(
@@ -328,67 +324,50 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF555577),
+                  color: const Color(0xFF555566),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              // Header
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 8, 12),
-                child: Row(
-                  children: [
-                    const Icon(Icons.remove_red_eye_outlined, size: 16, color: Color(0xFF4FC3F7)),
-                    const SizedBox(width: 8),
-                    const Expanded(
-                      child: Text(
-                        'Code tham khảo',
-                        style: TextStyle(
-                          color: Color(0xFF4FC3F7),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
+              // Header – bấm vào để đóng sheet
+              GestureDetector(
+                onTap: () => Navigator.pop(context),
+                behavior: HitTestBehavior.opaque,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.keyboard_arrow_down_rounded, size: 20, color: Color(0xFF4FC3F7)),
+                      const SizedBox(width: 8),
+                      const Expanded(
+                        child: Text(
+                          'Code tham khảo',
+                          style: TextStyle(
+                            color: Color(0xFF4FC3F7),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
-                    ),
-                    // Copy button
-                    TextButton.icon(
-                      onPressed: () {
-                        Clipboard.setData(ClipboardData(text: widget.snippet.code));
-                        Navigator.pop(context);
-                        AppSnackBar.success(context, 'Đã sao chép code tham khảo!');
-                      },
-                      icon: const Icon(Icons.copy_outlined, size: 14),
-                      label: const Text('Sao chép', style: TextStyle(fontSize: 12)),
-                      style: TextButton.styleFrom(foregroundColor: const Color(0xFF4FC3F7)),
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.close, size: 18, color: Color(0xFF888888)),
-                      padding: EdgeInsets.zero,
-                    ),
-                  ],
+                      const Text(
+                        'Chạm để đóng',
+                        style: TextStyle(color: Color(0xFF555577), fontSize: 11),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              const Divider(color: Color(0xFF333355), height: 1),
-              // Code viewer
+              const Divider(color: Color(0xFF333344), height: 1),
+              // Code viewer – dùng ListView thay vì CodeField để tránh GlobalKey conflict
               Expanded(
-                child: CodeTheme(
-                  data: CodeThemeData(styles: vs2015Theme),
-                  child: SingleChildScrollView(
+                child: Container(
+                  color: const Color(0xFF1E1E1E),
+                  child: ListView.builder(
                     controller: scrollController,
-                    child: CodeField(
-                      controller: refController,
-                      readOnly: true,
-                      textStyle: const TextStyle(fontFamily: 'monospace', fontSize: 13, height: 1.65),
-                      background: const Color(0xFF1E1E1E),
-                      gutterStyle: const GutterStyle(
-                        width: 56,
-                        margin: 8,
-                        textStyle: TextStyle(
-                          color: Color(0xFF555577),
-                          fontSize: 12,
-                          fontFamily: 'monospace',
-                        ),
-                      ),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    itemCount: lines.length,
+                    itemBuilder: (_, i) => _CodeLineRow(
+                      lineNumber: i + 1,
+                      code: lines[i],
                     ),
                   ),
                 ),
@@ -397,7 +376,7 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
           ),
         ),
       ),
-    ).whenComplete(() => refController.dispose());
+    );
   }
 
   Widget _buildEditor() {
@@ -412,7 +391,7 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
           expands: false,
           background: const Color(0xFF1E1E1E),
           gutterStyle: const GutterStyle(
-            width: 56,
+            width: 72,
             margin: 8,
             textStyle: TextStyle(
               color: Color(0xFF858585),
@@ -715,6 +694,58 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
             ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Widget render 1 dòng code + số thứ tự trong reference sheet.
+/// Dùng Text thuần để tránh GlobalKey conflict với CodeField ở editor.
+class _CodeLineRow extends StatelessWidget {
+  final int lineNumber;
+  final String code;
+
+  const _CodeLineRow({required this.lineNumber, required this.code});
+
+  @override
+  Widget build(BuildContext context) {
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Số dòng
+          Container(
+            width: 52,
+            color: const Color(0xFF252526),
+            alignment: Alignment.centerRight,
+            padding: const EdgeInsets.only(right: 10),
+            child: Text(
+              '$lineNumber',
+              style: const TextStyle(
+                color: Color(0xFF858585),
+                fontFamily: 'monospace',
+                fontSize: 12,
+                height: 1.65,
+              ),
+            ),
+          ),
+          // Code
+          Expanded(
+            child: Container(
+              color: const Color(0xFF1E1E1E),
+              padding: const EdgeInsets.only(left: 12),
+              child: Text(
+                code.isEmpty ? ' ' : code,
+                style: const TextStyle(
+                  color: Color(0xFFD4D4D4),
+                  fontFamily: 'monospace',
+                  fontSize: 13,
+                  height: 1.65,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

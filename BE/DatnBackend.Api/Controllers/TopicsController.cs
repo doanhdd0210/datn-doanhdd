@@ -21,11 +21,11 @@ public class TopicsController : ControllerBase
     private bool IsAdmin => HttpContext.Items.TryGetValue("FirebaseIsAdmin", out var v) && v is true;
     private string? UserId => HttpContext.Items["FirebaseUid"]?.ToString();
 
-    /// <summary>List all active topics</summary>
+    /// <summary>List topics — admin sees all, users see active only</summary>
     [HttpGet]
     public async Task<ActionResult<ApiResponse<List<Topic>>>> List()
     {
-        var topics = await _topicService.ListTopicsAsync(activeOnly: true);
+        var topics = await _topicService.ListTopicsAsync(activeOnly: !IsAdmin);
         return Ok(ApiResponse<List<Topic>>.Ok(topics, $"{topics.Count} topics"));
     }
 

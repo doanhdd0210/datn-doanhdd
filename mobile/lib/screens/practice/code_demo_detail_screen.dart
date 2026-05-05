@@ -229,27 +229,23 @@ class _CodeDemoDetailScreenState extends State<CodeDemoDetailScreen>
                 // Code editor
                 CodeTheme(
                   data: CodeThemeData(styles: vs2015Theme),
-                  child: SingleChildScrollView(
-                    child: CodeField(
-                      controller: _codeController,
-                      textStyle: const TextStyle(
-                        fontFamily: 'monospace',
-                        fontSize: 13,
-                        height: 1.55,
-                      ),
-                      minLines: 20,
-                      expands: false,
-                      background: const Color(0xFF1E1E1E),
-                      gutterStyle: const GutterStyle(
-                        width: 56,
-                        margin: 8,
-                        textStyle: TextStyle(
-                          color: Color(0xFF858585),
-                          fontSize: 12,
-                          fontFamily: 'monospace',
-                        ),
-                      ),
+                  child: CodeField(
+                    controller: _codeController,
+                    textStyle: const TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 13,
+                      height: 1.65,
                     ),
+                    expands: true,
+                    background: const Color(0xFF1E1E1E),
+                    gutterStyle: const GutterStyle(
+                      showErrors: false,
+                      showFoldingHandles: false,
+                      width: 120,
+                      margin: 4,
+                      textStyle: TextStyle(color: Color(0xFF858585)),
+                    ),
+                    decoration: const BoxDecoration(color: Color(0xFF1E1E1E)),
                   ),
                 ),
                 // Output terminal

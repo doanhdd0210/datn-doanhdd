@@ -287,6 +287,7 @@ class _TopicsScreenState extends State<TopicsScreen> {
       builder: (context, provider, _) {
         final reached = provider.isDailyGoalReached;
         final claimed = provider.dailyGoalBonusClaimedToday;
+        final bonus = provider.bonusForGoal(provider.dailyGoal);
         String headerText;
         if (claimed) {
           headerText = '🎯 Đã nhận thưởng hôm nay!';
@@ -338,6 +339,13 @@ class _TopicsScreenState extends State<TopicsScreen> {
                   ),
                 ),
               ),
+              if ((reached || claimed) && bonus > 0) ...[
+                const SizedBox(height: 6),
+                Text(
+                  claimed ? '⚡ +$bonus XP thưởng đã nhận' : '⚡ +$bonus XP thưởng',
+                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.xpGold),
+                ),
+              ],
             ],
           ),
         );

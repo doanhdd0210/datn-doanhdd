@@ -193,7 +193,7 @@ export default function TopicsPage() {
                     </span>
                   </td>
                   <td style={{ ...s.td, textAlign: 'center' }}>
-                    <span style={s.badge}>{t.lessonCount ?? t.lessonsCount ?? 0}</span>
+                    <span style={s.badge}>{t.totalLessons ?? t.lessonsCount ?? 0}</span>
                   </td>
                   <td style={s.td}>
                     <span style={{ ...s.statusBadge, background: t.isActive ? '#dcfce7' : '#f1f5f9', color: t.isActive ? '#16a34a' : '#64748b' }}>

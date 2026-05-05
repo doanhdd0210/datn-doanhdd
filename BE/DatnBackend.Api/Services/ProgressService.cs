@@ -250,6 +250,11 @@ public class ProgressService
         };
 
         await _cache.SetAsync(cacheKey, stats, TimeSpan.FromMinutes(2));
+
+        // Auto-claim bonus if goal reached but not yet claimed (covers missed XP events)
+        if (!bonusClaimedToday && stats.TodayXp >= stats.DailyGoalTarget)
+            _ = CheckAndAwardDailyGoalBonusAsync(userId);
+
         return stats;
     }
 

@@ -452,6 +452,10 @@ class ApiService {
     await _post('/qa/answers/$answerId/accept', {});
   }
 
+  Future<void> markQaSeen() async {
+    try { await _post('/qa/mark-seen', {}); } catch (_) {}
+  }
+
   // ── Friends / Leaderboard ─────────────────────────────────────────────────
   // Backend route: /api/friends/... (không phải /social/...)
 

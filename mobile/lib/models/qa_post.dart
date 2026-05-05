@@ -11,6 +11,7 @@ class QaPost {
   final int upvotes;
   final bool isSolved;
   final DateTime createdAt;
+  final bool isNew;
 
   const QaPost({
     required this.id,
@@ -25,6 +26,7 @@ class QaPost {
     required this.upvotes,
     required this.isSolved,
     required this.createdAt,
+    this.isNew = false,
   });
 
   factory QaPost.fromJson(Map<String, dynamic> json) {
@@ -55,6 +57,7 @@ class QaPost {
       createdAt: json['createdAt'] != null
           ? DateTime.tryParse(json['createdAt'].toString()) ?? DateTime.now()
           : DateTime.now(),
+      isNew: json['isNew'] as bool? ?? false,
     );
   }
 }

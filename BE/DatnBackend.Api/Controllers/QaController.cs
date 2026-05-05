@@ -23,12 +23,22 @@ public class QaController : ControllerBase
 
     /// <summary>List QA posts (optional lessonId and page filters)</summary>
     [HttpGet]
-    public async Task<ActionResult<ApiResponse<List<QaPost>>>> List(
+    public async Task<ActionResult<ApiResponse<List<QaPostDto>>>> List(
         [FromQuery] string? lessonId = null,
         [FromQuery] int page = 1)
     {
-        var posts = await _qaService.ListPostsAsync(lessonId: lessonId, page: page);
-        return Ok(ApiResponse<List<QaPost>>.Ok(posts, $"{posts.Count} posts"));
+        var posts = await _qaService.ListPostsAsync(viewerUserId: UserId, lessonId: lessonId, page: page);
+        return Ok(ApiResponse<List<QaPostDto>>.Ok(posts, $"{posts.Count} posts"));
+    }
+
+    /// <summary>Mark all QA posts as seen (updates LastSeenQaAt)</summary>
+    [HttpPost("mark-seen")]
+    public async Task<ActionResult<ApiResponse<object>>> MarkSeen()
+    {
+        var uid = UserId;
+        if (uid == null) return Unauthorized(ApiResponse<object>.Fail("Unauthorized"));
+        await _qaService.MarkSeenAsync(uid);
+        return Ok(ApiResponse<object>.Ok(null, "Marked as seen"));
     }
 
     /// <summary>Get QA post detail with answers</summary>

@@ -13,4 +13,5 @@ public class UserProfile
     public string Level { get; set; } = "beginner";  // beginner | intermediate | advanced
     public bool IsAdmin { get; set; }
     public List<string> FcmTokens { get; set; } = new();
+    public DateTime? LastSeenQaAt { get; set; }
 }

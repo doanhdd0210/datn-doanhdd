@@ -17,16 +17,32 @@ public class QaService
         _notifService = notifService;
     }
 
-    public async Task<List<QaPost>> ListPostsAsync(string? lessonId = null, int page = 1, int pageSize = 20)
+    public async Task<List<QaPostDto>> ListPostsAsync(string? viewerUserId = null, string? lessonId = null, int page = 1, int pageSize = 20)
     {
         var query = _db.QaPosts.AsQueryable();
         if (lessonId != null) query = query.Where(p => p.LessonId == lessonId);
 
-        return await query
+        var posts = await query
             .OrderByDescending(p => p.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
+
+        DateTime? lastSeenAt = null;
+        if (viewerUserId != null)
+        {
+            var profile = await _db.UserProfiles.FirstOrDefaultAsync(p => p.Uid == viewerUserId);
+            lastSeenAt = profile?.LastSeenQaAt;
+        }
+
+        return posts.Select(p => new QaPostDto(p, viewerUserId, lastSeenAt)).ToList();
+    }
+
+    public async Task MarkSeenAsync(string userId)
+    {
+        await _db.UserProfiles
+            .Where(p => p.Uid == userId)
+            .ExecuteUpdateAsync(s => s.SetProperty(p => p.LastSeenQaAt, DateTime.UtcNow));
     }
 
     public async Task<QaPost?> GetPostAsync(string id)

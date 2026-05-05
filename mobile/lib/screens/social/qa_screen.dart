@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -35,15 +34,9 @@ class _QaScreenState extends State<QaScreen> {
   final ScrollController _scrollController = ScrollController();
   Set<String> _upvotedPostIds = {};
 
-  // Seen tracking
-  Set<String> _seenPostIds = {};
-  String? _currentUserId;
-
   @override
   void initState() {
     super.initState();
-    _currentUserId = FirebaseAuth.instance.currentUser?.uid;
-    _loadSeenData();
     _loadUpvotedIds();
     _loadPosts();
     _scrollController.addListener(_onScroll);
@@ -66,26 +59,8 @@ class _QaScreenState extends State<QaScreen> {
     if (mounted) setState(() => _upvotedPostIds = ids.toSet());
   }
 
-  Future<void> _loadSeenData() async {
-    final prefs = await SharedPreferences.getInstance();
-    final seen = prefs.getStringList('qa_seen_ids') ?? [];
-    if (mounted) setState(() { _seenPostIds = seen.toSet(); });
-  }
-
-  /// Đánh dấu post đã xem
-  Future<void> _markSeen(QaPost post) async {
-    if (_seenPostIds.contains(post.id)) return;
-    final prefs = await SharedPreferences.getInstance();
-    _seenPostIds.add(post.id);
-    await prefs.setStringList('qa_seen_ids', _seenPostIds.toList());
-    _updateUnreadNotifier();
-  }
-
   void _updateUnreadNotifier() {
-    final unread = _posts.where((p) =>
-      p.authorId != _currentUserId && !_seenPostIds.contains(p.id)
-    ).length;
-    qaUnreadNotifier.value = unread;
+    qaUnreadNotifier.value = _posts.where((p) => p.isNew).length;
   }
 
   void _onUpvoteChanged(String postId, bool upvoted) {
@@ -120,6 +95,7 @@ class _QaScreenState extends State<QaScreen> {
           _isLoading = false;
         });
         _updateUnreadNotifier();
+        _api.markQaSeen();
       }
     } catch (_) {
       if (mounted) {
@@ -131,11 +107,11 @@ class _QaScreenState extends State<QaScreen> {
     }
   }
 
-  /// Unseen non-mine posts lên đầu, còn lại giữ nguyên thứ tự (createdAt DESC từ BE)
+  /// New posts lên đầu, còn lại giữ nguyên thứ tự (createdAt DESC từ BE)
   List<QaPost> _sortPosts(List<QaPost> posts) {
-    final unseen = posts.where((p) => p.authorId != _currentUserId && !_seenPostIds.contains(p.id)).toList();
-    final rest   = posts.where((p) => !(p.authorId != _currentUserId && !_seenPostIds.contains(p.id))).toList();
-    return [...unseen, ...rest];
+    final newPosts = posts.where((p) => p.isNew).toList();
+    final rest     = posts.where((p) => !p.isNew).toList();
+    return [...newPosts, ...rest];
   }
 
   Future<void> _loadMore() async {
@@ -207,8 +183,7 @@ class _QaScreenState extends State<QaScreen> {
     return result;
   }
 
-  bool _isPostNew(QaPost p) =>
-      p.authorId != _currentUserId && !_seenPostIds.contains(p.id);
+  bool _isPostNew(QaPost p) => p.isNew;
 
 
   @override
@@ -247,9 +222,7 @@ class _QaScreenState extends State<QaScreen> {
                                   onUpvoteChanged: (v) => _onUpvoteChanged(post.id, v),
                                   isNew: _isPostNew(post),
                                   onTap: () async {
-                                    await _markSeen(post);
                                     if (!mounted) return;
-                                    setState(() {}); // cập nhật badge ngay
                                     await Navigator.push(
                                       context,
                                       MaterialPageRoute(

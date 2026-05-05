@@ -526,7 +526,9 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
       color: AppColors.surface,
       child: SafeArea(
         top: false,
-        child: Row(
+        child: IntrinsicHeight(
+          child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Nút Chạy
             Expanded(
@@ -566,6 +568,7 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
               ),
             ),
           ],
+        ),
         ),
       ),
     );

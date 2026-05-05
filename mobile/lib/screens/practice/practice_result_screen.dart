@@ -237,10 +237,7 @@ class PracticeResultScreen extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: OutlinedButton(
-                onPressed: () {
-                  context.read<UserProvider>().loadStats();
-                  Navigator.pop(context);
-                },
+                onPressed: () => Navigator.pop(context),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.primary,
                   side: const BorderSide(color: AppColors.primary),

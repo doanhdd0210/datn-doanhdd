@@ -77,8 +77,6 @@ export default function AnalyticsPage() {
         <h3 style={s.sectionTitle}>👥 Thống kê người dùng</h3>
         <div style={s.cardRow}>
           <StatCard icon="👥" label="Tổng người dùng" value={data.users.length} color="#e8f0fe" />
-          <StatCard icon="✅" label="Đang hoạt động" value={data.activeUsers.length} color="#e6f4ea" />
-          <StatCard icon="🔒" label="Bị khoá" value={data.disabledUsers.length} color="#fce8e6" />
           <StatCard icon="🛡️" label="Admin" value={data.adminUsers.length} color="#ede9fe" />
         </div>
       </section>

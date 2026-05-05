@@ -367,10 +367,10 @@ class ApiService {
       'isPassed': passed,
       'matchPercent': matchPercent,
     });
-    final data = res?['data'];
+    // _post đã unwrap 'data' rồi, res chính là { xpEarned, bestScore }
     return (
-      xpEarned: (data?['xpEarned'] as int?) ?? 0,
-      bestScore: (data?['bestScore'] as int?) ?? 0,
+      xpEarned: (res?['xpEarned'] as int?) ?? 0,
+      bestScore: (res?['bestScore'] as int?) ?? 0,
     );
   }
 

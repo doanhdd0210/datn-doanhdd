@@ -158,7 +158,6 @@ export default function UsersPage() {
         <button onClick={loadUsers} style={s.btnSecondary} title="Làm mới">⟳ Làm mới</button>
         <button onClick={runCleanup} style={{ ...s.btnSecondary, color: '#b45309' }} title="Xoá dữ liệu DB của tài khoản đã bị xoá">🧹 Dọn dữ liệu thừa</button>
         <button onClick={() => runDeleteAll(loadUsers)} style={{ ...s.btnSecondary, color: '#dc2626', borderColor: '#fca5a5' }} title="Xoá toàn bộ người dùng (trừ admin)">🗑️ Xoá tất cả user</button>
-        <button onClick={openCreate} style={s.btnPrimary}>+ Thêm người dùng</button>
       </div>
 
       {error && <div style={s.errorBox}>{error}</div>}
@@ -238,7 +237,6 @@ export default function UsersPage() {
                   <td style={s.td}>
                     <div style={s.actions}>
                       <button onClick={() => openStats(u)} style={s.btnStats} title="Xem thống kê">📊</button>
-                      <button onClick={() => openEdit(u)} style={s.btnEdit} title="Sửa">✏️</button>
                       <button onClick={() => openDelete(u)} style={s.btnDelete} title="Xoá">🗑️</button>
                     </div>
                   </td>

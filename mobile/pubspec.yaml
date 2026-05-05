@@ -19,7 +19,7 @@ dependencies:
   google_sign_in: ^6.2.1
 
   # Code editor
-  flutter_code_editor: ^0.3.2
+  flutter_code_editor: ^0.3.5
   highlight: ^0.7.0
   flutter_highlight: ^0.7.0
 

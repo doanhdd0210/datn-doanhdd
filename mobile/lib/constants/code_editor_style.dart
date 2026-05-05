@@ -15,9 +15,9 @@ abstract final class CodeEditorStyle {
   static const String fontFamily = 'monospace';
 
   // ── Gutter ───────────────────────────────────────────────────────────────
-  static const double gutterWidth  = 120;
+  static const double gutterWidth  = 60;
   static const double gutterMargin = 4;
-  static const double gutterFontSize = 12;
+  static const double gutterFontSize = 10;
 
   // ── Shared TextStyle for code text ───────────────────────────────────────
   static const TextStyle codeTextStyle = TextStyle(

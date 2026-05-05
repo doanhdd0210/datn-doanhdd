@@ -225,7 +225,7 @@ export default function QuestionsPage() {
                   onMouseEnter={e => e.currentTarget.style.background = '#f0f9eb'}
                   onMouseLeave={e => e.currentTarget.style.background = idx % 2 === 0 ? '#fff' : '#f9f9f9'}>
                   <td style={{ ...s.td, color: '#94a3b8', fontSize: 12 }}>{idx + 1}</td>
-                  <td style={{ ...s.td, maxWidth: 200 }}>
+                  <td style={{ ...s.td, maxWidth: 180 }}>
                     <span style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                       {q.questionText}
                     </span>

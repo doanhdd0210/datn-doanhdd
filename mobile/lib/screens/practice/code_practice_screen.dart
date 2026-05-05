@@ -169,8 +169,8 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
       bestScore = result.bestScore;
     } catch (_) {}
 
-    if (mounted && xpEarned > 0) {
-      context.read<UserProvider>().addXp(xpEarned);
+    if (mounted) {
+      context.read<UserProvider>().loadStats();
     }
 
     if (mounted) {

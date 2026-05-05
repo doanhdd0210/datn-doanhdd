@@ -203,21 +203,6 @@ class UserProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void addXp(int xp) {
-    final wasBelow = _todayXp < _dailyGoal;
-    _totalXp += xp;
-    _todayXp += xp;
-    final nowReached = _todayXp >= _dailyGoal;
-
-    // Detect first time crossing the goal today
-    if (wasBelow && nowReached) {
-      _claimDailyGoalBonus();
-    }
-
-    pollNewAchievements();
-    _saveToCache();
-    notifyListeners();
-  }
 
   Future<void> _claimDailyGoalBonus() async {
     try {

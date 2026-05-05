@@ -549,8 +549,8 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
             const SizedBox(width: 10),
             // Nút Nộp bài
             Expanded(
-              flex: 2,
               child: ElevatedButton(
+
                 onPressed: (_isSubmitting || _isRunning) ? null : _submit,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,

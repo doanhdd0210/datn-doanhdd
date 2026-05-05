@@ -150,7 +150,6 @@ export default function TopicsPage() {
       <div style={s.statsRow}>
         <span style={s.stat}>Tổng: <strong>{topics.length}</strong></span>
         <span style={s.stat}>Hiển thị: <strong>{filtered.length}</strong></span>
-        <span style={s.stat}>Đang hoạt động: <strong>{topics.filter(t => t.isActive).length}</strong></span>
       </div>
 
       {loading ? (

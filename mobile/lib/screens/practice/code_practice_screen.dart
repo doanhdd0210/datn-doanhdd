@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:developer' as dev;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_code_editor/flutter_code_editor.dart';
 import 'package:flutter_highlight/themes/vs2015.dart';
 import 'package:highlight/languages/java.dart';
@@ -80,7 +81,6 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
 
   bool _isSubmitting = false;
   bool _isRunning = false;
-  bool _showReference = false;
   bool _showHint = false;
   CompileResult? _runResult;
   Timer? _timer;
@@ -257,9 +257,9 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
         ),
         actions: [
           IconButton(
-            onPressed: () => setState(() => _showReference = !_showReference),
-            icon: Icon(Icons.remove_red_eye_outlined, size: 20,
-                color: _showReference ? AppColors.primary : AppColors.textGray),
+            onPressed: _showReferenceSheet,
+            icon: const Icon(Icons.remove_red_eye_outlined, size: 20,
+                color: AppColors.textGray),
             tooltip: 'Tham khảo',
           ),
           IconButton(
@@ -272,13 +272,6 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
       ),
       body: Column(
         children: [
-          // Panel tham khảo – read-only CodeField với syntax highlight
-          AnimatedSize(
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeInOut,
-            child: _showReference ? _buildReferencePanel() : const SizedBox.shrink(),
-          ),
-
           // Panel gợi ý / AI
           AnimatedSize(
             duration: const Duration(milliseconds: 200),
@@ -308,54 +301,103 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
     );
   }
 
-  Widget _buildReferencePanel() {
+  void _showReferenceSheet() {
     final refController = CodeController(
       text: widget.snippet.code,
       language: _resolveLanguage(widget.snippet.language),
     );
-    return Container(
-      constraints: const BoxConstraints(maxHeight: 220),
-      decoration: const BoxDecoration(
-        color: Color(0xFF0C0C16),
-        border: Border(bottom: BorderSide(color: Color(0xFF333355))),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-            color: const Color(0xFF2D2D3F),
-            child: const Row(
-              children: [
-                Icon(Icons.remove_red_eye_outlined, size: 13, color: Color(0xFF4FC3F7)),
-                SizedBox(width: 6),
-                Text('Code tham khảo',
-                    style: TextStyle(color: Color(0xFF4FC3F7), fontSize: 11, fontWeight: FontWeight.w600)),
-              ],
-            ),
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => DraggableScrollableSheet(
+        initialChildSize: 0.75,
+        minChildSize: 0.4,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (_, scrollController) => Container(
+          decoration: const BoxDecoration(
+            color: Color(0xFF1E1E2E),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           ),
-          Flexible(
-            child: CodeTheme(
-              data: CodeThemeData(styles: vs2015Theme),
-              child: SingleChildScrollView(
-                child: CodeField(
-                  controller: refController,
-                  readOnly: true,
-                  textStyle: const TextStyle(fontFamily: 'monospace', fontSize: 13, height: 1.6),
-                  background: const Color(0xFF0C0C16),
-                  gutterStyle: const GutterStyle(
-                    width: 48,
-                    margin: 6,
-                    textStyle: TextStyle(color: Color(0xFF555577), fontSize: 11, fontFamily: 'monospace'),
+          child: Column(
+            children: [
+              // Handle bar
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 10),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF555577),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              // Header
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 8, 12),
+                child: Row(
+                  children: [
+                    const Icon(Icons.remove_red_eye_outlined, size: 16, color: Color(0xFF4FC3F7)),
+                    const SizedBox(width: 8),
+                    const Expanded(
+                      child: Text(
+                        'Code tham khảo',
+                        style: TextStyle(
+                          color: Color(0xFF4FC3F7),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    // Copy button
+                    TextButton.icon(
+                      onPressed: () {
+                        Clipboard.setData(ClipboardData(text: widget.snippet.code));
+                        Navigator.pop(context);
+                        AppSnackBar.success(context, 'Đã sao chép code tham khảo!');
+                      },
+                      icon: const Icon(Icons.copy_outlined, size: 14),
+                      label: const Text('Sao chép', style: TextStyle(fontSize: 12)),
+                      style: TextButton.styleFrom(foregroundColor: const Color(0xFF4FC3F7)),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close, size: 18, color: Color(0xFF888888)),
+                      padding: EdgeInsets.zero,
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(color: Color(0xFF333355), height: 1),
+              // Code viewer
+              Expanded(
+                child: CodeTheme(
+                  data: CodeThemeData(styles: vs2015Theme),
+                  child: SingleChildScrollView(
+                    controller: scrollController,
+                    child: CodeField(
+                      controller: refController,
+                      readOnly: true,
+                      textStyle: const TextStyle(fontFamily: 'monospace', fontSize: 13, height: 1.65),
+                      background: const Color(0xFF1E1E1E),
+                      gutterStyle: const GutterStyle(
+                        width: 56,
+                        margin: 8,
+                        textStyle: TextStyle(
+                          color: Color(0xFF555577),
+                          fontSize: 12,
+                          fontFamily: 'monospace',
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
-    );
+    ).whenComplete(() => refController.dispose());
   }
 
   Widget _buildEditor() {

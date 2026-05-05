@@ -339,7 +339,15 @@ public class ProgressService
 
             var dailyId = $"{userId}_{today}";
             var todayProgress = await _db.DailyProgresses.FirstOrDefaultAsync(d => d.Id == dailyId);
-            if (todayProgress == null || todayProgress.XpEarned < profile.DailyGoalTarget) return;
+
+            var todayStart = DateTime.UtcNow.Date;
+            var todayAchievementXp = await _db.UserAchievements
+                .Where(ua => ua.UserId == userId && ua.UnlockedAt >= todayStart)
+                .Join(_db.Achievements, ua => ua.AchievementId, a => a.Id, (ua, a) => a.XpReward)
+                .SumAsync();
+
+            var todayXp = (todayProgress?.XpEarned ?? 0) + todayAchievementXp;
+            if (todayXp < profile.DailyGoalTarget) return;
 
             var bonusXp = await _settingsService.GetBonusForGoalAsync(profile.DailyGoalTarget);
             if (bonusXp <= 0) return;

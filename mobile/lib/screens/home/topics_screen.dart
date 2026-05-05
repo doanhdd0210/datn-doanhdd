@@ -380,18 +380,19 @@ class _TopicsScreenState extends State<TopicsScreen> {
                   ),
                   child: Row(
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('⚡ $g XP / ngày',
-                              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14,
-                                  color: isSelected ? AppColors.primary : AppColors.textDark)),
-                          if (bonus > 0)
-                            Text('Thưởng khi đạt: +$bonus XP',
-                                style: const TextStyle(fontSize: 11, color: AppColors.xpGold)),
-                        ],
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('⚡ $g XP / ngày',
+                                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14,
+                                    color: isSelected ? AppColors.primary : AppColors.textDark)),
+                            if (bonus > 0)
+                              Text('Thưởng khi đạt: +$bonus XP',
+                                  style: const TextStyle(fontSize: 11, color: AppColors.xpGold)),
+                          ],
+                        ),
                       ),
-                      const Spacer(),
                       if (isSelected) const Icon(Icons.check_circle_rounded, color: AppColors.primary, size: 20),
                     ],
                   ),

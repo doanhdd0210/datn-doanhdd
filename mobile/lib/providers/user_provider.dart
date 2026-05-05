@@ -195,6 +195,11 @@ class UserProvider extends ChangeNotifier {
       await _saveToCache();
       // Load bonus configs once per session
       if (!_bonusConfigsLoaded) _loadBonusConfigs();
+      // Fallback: if goal reached but bonus not yet claimed, trigger via manual endpoint
+      // (covers cases where BE push notification was missed or XP was earned before new BE code)
+      if (_todayXp >= _dailyGoal && !_dailyGoalBonusClaimedToday) {
+        _triggerDailyGoalClaimFallback();
+      }
     } catch (e) {
       _error = e.toString();
       if (!_statsInitialized) {
@@ -227,6 +232,17 @@ class UserProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+
+  Future<void> _triggerDailyGoalClaimFallback() async {
+    try {
+      final result = await _api.claimDailyGoalBonus(_dailyGoal);
+      final success = result['success'] == true;
+      final bonusXp = result['bonusXp'] as int? ?? 0;
+      if (success && bonusXp > 0) {
+        handleDailyGoalBonusReceived(bonusXp);
+      }
+    } catch (_) {}
+  }
 
   Future<void> _loadBonusConfigs() async {
     _bonusConfigsLoaded = true;

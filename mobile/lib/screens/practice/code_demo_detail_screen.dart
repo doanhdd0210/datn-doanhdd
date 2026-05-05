@@ -241,7 +241,7 @@ class _CodeDemoDetailScreenState extends State<CodeDemoDetailScreen>
                       expands: false,
                       background: const Color(0xFF1E1E1E),
                       gutterStyle: const GutterStyle(
-                        width: 44,
+                        width: 56,
                         margin: 8,
                         textStyle: TextStyle(
                           color: Color(0xFF858585),

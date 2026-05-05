@@ -345,7 +345,7 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
                   textStyle: const TextStyle(fontFamily: 'monospace', fontSize: 13, height: 1.6),
                   background: const Color(0xFF0C0C16),
                   gutterStyle: const GutterStyle(
-                    width: 36,
+                    width: 48,
                     margin: 6,
                     textStyle: TextStyle(color: Color(0xFF555577), fontSize: 11, fontFamily: 'monospace'),
                   ),
@@ -370,7 +370,7 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
           expands: false,
           background: const Color(0xFF1E1E1E),
           gutterStyle: const GutterStyle(
-            width: 44,
+            width: 56,
             margin: 8,
             textStyle: TextStyle(
               color: Color(0xFF858585),

@@ -143,6 +143,7 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
     if (code.isEmpty) return;
 
     FocusScope.of(context).unfocus();
+    _timer?.cancel();
     setState(() => _isSubmitting = true);
 
     String stdout = '';

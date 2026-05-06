@@ -8,7 +8,7 @@ import '../services/api_service.dart';
 
 class UserProvider extends ChangeNotifier {
   static const int maxHearts = 3;
-  static const List<int> dailyGoalOptions = [20, 50, 100];
+  static const List<int> _defaultDailyGoalOptions = [20, 50, 100];
 
   int _totalXp = 0;
   int _streak = 0;
@@ -83,6 +83,16 @@ class UserProvider extends ChangeNotifier {
   bool get dailyGoalJustReached => _dailyGoalJustReached;
   int get pendingBonusXp => _pendingBonusXp;
   bool get dailyGoalBonusClaimedToday => _dailyGoalBonusClaimedToday;
+
+  List<int> get dailyGoalOptions {
+    if (_dailyGoalBonusConfigs.isEmpty) return _defaultDailyGoalOptions;
+    final goals = _dailyGoalBonusConfigs
+        .map((c) => c['goalXp'] as int? ?? 0)
+        .where((g) => g > 0)
+        .toList()
+      ..sort();
+    return goals.isEmpty ? _defaultDailyGoalOptions : goals;
+  }
 
   int bonusForGoal(int goal) {
     for (final config in _dailyGoalBonusConfigs) {

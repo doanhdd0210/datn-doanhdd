@@ -376,7 +376,7 @@ class _TopicsScreenState extends State<TopicsScreen> {
               ),
             ],
             const SizedBox(height: 16),
-            ...UserProvider.dailyGoalOptions.map((g) {
+            ...provider.dailyGoalOptions.map((g) {
               final isSelected = provider.dailyGoal == g;
               final bonus = provider.bonusForGoal(g);
               final disabled = provider.isDailyGoalReached || provider.dailyGoalBonusClaimedToday;

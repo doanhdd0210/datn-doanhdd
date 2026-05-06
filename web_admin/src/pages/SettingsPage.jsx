@@ -126,39 +126,50 @@ export default function SettingsPage() {
           <p style={{ color: '#94a3b8', fontSize: 13 }}>Đang tải...</p>
         ) : (
           <>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
               {bonusConfigs.map((cfg, i) => {
-                const labels = ['Cơ bản', 'Trung bình', 'Thách thức']
+                const tiers = [
+                  { label: 'Cơ bản',     color: '#22c55e', bg: '#f0fdf4', border: '#bbf7d0' },
+                  { label: 'Trung bình', color: '#3b82f6', bg: '#eff6ff', border: '#bfdbfe' },
+                  { label: 'Thách thức', color: '#f59e0b', bg: '#fffbeb', border: '#fde68a' },
+                ]
+                const tier = tiers[i] ?? { label: `Cấp ${i + 1}`, color: '#94a3b8', bg: '#f8fafc', border: '#e2e8f0' }
                 return (
-                  <div key={i} style={s.bonusRow}>
-                    <div style={s.goalBadge}>
-                      <span style={{ fontSize: 18 }}>🎯</span>
+                  <div key={i} style={{ display: 'grid', gridTemplateColumns: '180px 1fr 1fr 44px', alignItems: 'center', gap: 0, background: '#fff', borderRadius: 12, border: `1.5px solid ${tier.border}`, overflow: 'hidden' }}>
+                    {/* Tier badge */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', background: tier.bg, borderRight: `1.5px solid ${tier.border}` }}>
+                      <div style={{ width: 36, height: 36, borderRadius: 10, background: tier.color + '22', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <span style={{ fontSize: 18 }}>🎯</span>
+                      </div>
                       <div>
-                        <div style={{ fontWeight: 700, fontSize: 14, color: '#1e293b' }}>Mục tiêu</div>
-                        <div style={{ fontSize: 12, color: '#64748b' }}>{labels[i] ?? `Cấp ${i + 1}`}</div>
+                        <div style={{ fontWeight: 700, fontSize: 13, color: '#1e293b' }}>Mục tiêu</div>
+                        <div style={{ fontSize: 11, fontWeight: 600, color: tier.color, marginTop: 1 }}>{tier.label}</div>
                       </div>
                     </div>
-                    <div style={s.bonusInput}>
-                      <span style={{ fontSize: 13, color: '#475569', whiteSpace: 'nowrap' }}>Mục tiêu:</span>
+                    {/* Goal XP */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '14px 16px', borderRight: `1px solid #f1f5f9` }}>
+                      <span style={{ fontSize: 12, color: '#94a3b8', whiteSpace: 'nowrap' }}>Mục tiêu</span>
                       <input type="number" min={1} max={9999} value={cfg.goalXp}
                         onChange={e => { const val = Math.max(1, parseInt(e.target.value) || 1); setBonusConfigs(prev => prev.map((c, j) => j === i ? { ...c, goalXp: val } : c)) }}
-                        style={s.numberInput} />
-                      <span style={{ fontSize: 13, color: '#64748b', fontWeight: 600 }}>XP</span>
+                        style={{ width: 68, padding: '6px 10px', border: '1.5px solid #e2e8f0', borderRadius: 8, fontSize: 15, fontWeight: 700, textAlign: 'center', outline: 'none', color: '#1e293b', background: '#f8fafc' }} />
+                      <span style={{ fontSize: 12, fontWeight: 700, color: '#475569' }}>XP</span>
                     </div>
-                    <div style={s.bonusInput}>
-                      <span style={{ fontSize: 13, color: '#475569', whiteSpace: 'nowrap' }}>Thưởng:</span>
+                    {/* Bonus XP */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '14px 16px' }}>
+                      <span style={{ fontSize: 12, color: '#94a3b8', whiteSpace: 'nowrap' }}>Thưởng</span>
                       <input type="number" min={0} max={500} value={cfg.bonusXp}
                         onChange={e => { const val = Math.max(0, parseInt(e.target.value) || 0); setBonusConfigs(prev => prev.map((c, j) => j === i ? { ...c, bonusXp: val } : c)) }}
-                        style={s.numberInput} />
-                      <span style={{ fontSize: 13, color: '#f59e0b', fontWeight: 700 }}>⚡ XP</span>
+                        style={{ width: 68, padding: '6px 10px', border: '1.5px solid #fde68a', borderRadius: 8, fontSize: 15, fontWeight: 700, textAlign: 'center', outline: 'none', color: '#d97706', background: '#fffbeb' }} />
+                      <span style={{ fontSize: 12, fontWeight: 700, color: '#f59e0b' }}>⚡ XP</span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'center' }}>
+                    {/* Action */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '14px 8px', borderLeft: `1px solid #f1f5f9` }}>
                       {bonusConfigs.length > 1 && (
                         cfg.usersCount === 0
                           ? <button onClick={() => setBonusConfigs(prev => prev.filter((_, j) => j !== i))}
-                              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#dc2626', fontSize: 18, padding: '0 4px', lineHeight: 1 }}
+                              style={{ width: 28, height: 28, borderRadius: 7, background: '#fee2e2', border: 'none', cursor: 'pointer', color: '#dc2626', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                               title="Xoá mục tiêu này">✕</button>
-                          : <span style={{ fontSize: 11, color: '#64748b', whiteSpace: 'nowrap' }}>{cfg.usersCount} người dùng</span>
+                          : <span style={{ fontSize: 11, color: '#94a3b8', textAlign: 'center', lineHeight: 1.3 }}>{cfg.usersCount}<br/>users</span>
                       )}
                     </div>
                   </div>
@@ -166,12 +177,12 @@ export default function SettingsPage() {
               })}
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
               {bonusConfigs.length < 5 && (
                 <button
                   onClick={() => setBonusConfigs(prev => [...prev, { goalXp: (prev[prev.length - 1]?.goalXp ?? 0) + 10, bonusXp: 10, usersCount: 0 }])}
-                  style={{ padding: '6px 14px', borderRadius: 8, border: '1.5px dashed #cbd5e1', background: 'none', cursor: 'pointer', fontSize: 13, color: '#475569', fontWeight: 500 }}>
-                  + Thêm mục tiêu
+                  style={{ padding: '7px 16px', borderRadius: 8, border: '1.5px dashed #cbd5e1', background: 'none', cursor: 'pointer', fontSize: 13, color: '#64748b', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 16, lineHeight: 1 }}>+</span> Thêm mục tiêu
                 </button>
               )}
               <span style={{ fontSize: 12, color: '#94a3b8' }}>{bonusConfigs.length}/5 mục tiêu</span>
@@ -226,8 +237,4 @@ const s = {
   statusBox: { marginTop: 14, padding: '10px 14px', borderRadius: 8, border: '1px solid', fontSize: 14 },
   infoGrid: { display: 'flex', flexDirection: 'column' },
   link: { display: 'inline-block', color: '#1a73e8', fontSize: 14, fontWeight: 500, marginTop: 4 },
-  bonusRow: { display: 'grid', gridTemplateColumns: '160px 1fr 1fr 40px', alignItems: 'center', gap: 12, padding: '12px 16px', background: '#f8fafc', borderRadius: 10, border: '1px solid #e2e8f0' },
-  goalBadge: { display: 'flex', alignItems: 'center', gap: 10 },
-  bonusInput: { display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center' },
-  numberInput: { width: 72, padding: '6px 10px', border: '1.5px solid #e2e8f0', borderRadius: 8, fontSize: 15, fontWeight: 700, textAlign: 'center', outline: 'none', color: '#1e293b' },
 }

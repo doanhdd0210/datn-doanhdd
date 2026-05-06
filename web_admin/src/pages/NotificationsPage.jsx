@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Send, ClipboardList, RefreshCw, Check, X } from 'lucide-react'
+import { Send, ClipboardList, RefreshCw, Check, X, ChevronDown } from 'lucide-react'
 import { notificationsApi, usersApi } from '../services/api'
 
 const TARGET_OPTS = [
@@ -94,31 +94,37 @@ export default function NotificationsPage() {
           <form onSubmit={handleSend}>
             {/* Target */}
             <label style={s.label}>Đối tượng nhận</label>
-            <select
-              value={form.targetType}
-              onChange={(e) => setForm({ ...form, targetType: e.target.value, targetValue: '' })}
-              style={s.select}
-            >
-              {TARGET_OPTS.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </select>
+            <div style={s.selectWrap}>
+              <select
+                value={form.targetType}
+                onChange={(e) => setForm({ ...form, targetType: e.target.value, targetValue: '' })}
+                style={s.select}
+              >
+                {TARGET_OPTS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+              <ChevronDown size={16} style={s.selectArrow} />
+            </div>
 
             {form.targetType === 'uid' && (
               <>
                 <label style={s.label}>Chọn người dùng</label>
-                <select
-                  value={form.targetValue}
-                  onChange={(e) => setForm({ ...form, targetValue: e.target.value })}
-                  style={s.select}
-                >
-                  <option value="">-- Chọn người dùng --</option>
-                  {users.map((u) => (
-                    <option key={u.uid} value={u.uid}>
-                      {u.displayName || u.email} ({u.uid.slice(0, 8)}…)
-                    </option>
-                  ))}
-                </select>
+                <div style={s.selectWrap}>
+                  <select
+                    value={form.targetValue}
+                    onChange={(e) => setForm({ ...form, targetValue: e.target.value })}
+                    style={s.select}
+                  >
+                    <option value="">-- Chọn người dùng --</option>
+                    {users.map((u) => (
+                      <option key={u.uid} value={u.uid}>
+                        {u.displayName || u.email} ({u.uid.slice(0, 8)}…)
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown size={16} style={s.selectArrow} />
+                </div>
               </>
             )}
 
@@ -249,7 +255,9 @@ const s = {
   cardTitle: { margin: '0 0 20px', fontSize: 18, fontWeight: 700, color: '#1e293b' },
   label: { display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6, marginTop: 16 },
   input: { width: '100%', padding: '9px 12px', border: '1.5px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none', boxSizing: 'border-box' },
-  select: { width: '100%', padding: '9px 36px 9px 12px', border: '1.5px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none', background: '#fff' },
+  selectWrap: { position: 'relative', display: 'inline-flex', alignItems: 'center', width: '100%' },
+  select: { width: '100%', padding: '9px 36px 9px 12px', border: '1.5px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none', background: '#fff', appearance: 'none', WebkitAppearance: 'none', cursor: 'pointer' },
+  selectArrow: { position: 'absolute', right: 12, pointerEvents: 'none', color: '#64748b' },
   preview: { marginTop: 20, padding: 16, background: '#f8fafc', borderRadius: 10, border: '1px dashed #cbd5e1' },
   previewLabel: { fontSize: 11, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', marginBottom: 10 },
   previewCard: { background: '#fff', borderRadius: 8, padding: '12px 14px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' },

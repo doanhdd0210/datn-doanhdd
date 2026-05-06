@@ -327,10 +327,13 @@ export default function LessonsPage() {
             </div>
             <div style={s.modalBody}>
               <label style={s.label}>Chủ đề *</label>
-              <select style={s.input} value={form.topicId ?? ''} onChange={e => setForm({ ...form, topicId: e.target.value })}>
-                <option value="">-- Chọn chủ đề --</option>
-                {topics.map(t => <option key={t.id} value={t.id}>{t.icon} {t.title}</option>)}
-              </select>
+              <div style={s.selectWrap}>
+                <select style={s.selectInput} value={form.topicId ?? ''} onChange={e => setForm({ ...form, topicId: e.target.value })}>
+                  <option value="">-- Chọn chủ đề --</option>
+                  {topics.map(t => <option key={t.id} value={t.id}>{t.icon} {t.title}</option>)}
+                </select>
+                <ChevronDown size={16} style={s.selectArrow} />
+              </div>
 
               <label style={s.label}>Tiêu đề *</label>
               <input style={s.input} value={form.title ?? ''} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="Tên bài học..." />
@@ -524,6 +527,9 @@ const s = {
   modalClose: { background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: '#94a3b8', padding: '2px 4px', lineHeight: 1, borderRadius: 4 },
   label: { display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 4, marginTop: 12 },
   input: { width: '100%', padding: '9px 12px', border: '1.5px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none', boxSizing: 'border-box' },
+  selectWrap: { position: 'relative', display: 'inline-flex', alignItems: 'center', width: '100%' },
+  selectInput: { width: '100%', padding: '9px 36px 9px 12px', border: '1.5px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none', boxSizing: 'border-box', appearance: 'none', WebkitAppearance: 'none', background: '#fff', cursor: 'pointer' },
+  selectArrow: { position: 'absolute', right: 12, pointerEvents: 'none', color: '#64748b' },
   checkboxRow: { display: 'flex', alignItems: 'center', marginTop: 16, fontSize: 14, cursor: 'pointer' },
   cancelBtn: { padding: '9px 20px', border: '1.5px solid #e2e8f0', borderRadius: 8, background: '#fff', cursor: 'pointer', fontWeight: 500 },
 }

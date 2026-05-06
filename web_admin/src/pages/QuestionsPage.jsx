@@ -272,10 +272,13 @@ export default function QuestionsPage() {
             </div>
             <div style={s.modalBody}>
               <label style={s.label}>Bài học</label>
-              <select style={s.input} value={form.lessonId ?? ''} onChange={e => setForm({ ...form, lessonId: e.target.value })}>
-                <option value="">-- Chọn bài học --</option>
-                {lessons.map(l => <option key={l.id} value={l.id}>{l.title}</option>)}
-              </select>
+              <div style={{ ...s.selectWrap, width: '100%' }}>
+                <select style={{ ...s.select, minWidth: 'unset', width: '100%', padding: '9px 36px 9px 12px' }} value={form.lessonId ?? ''} onChange={e => setForm({ ...form, lessonId: e.target.value })}>
+                  <option value="">-- Chọn bài học --</option>
+                  {lessons.map(l => <option key={l.id} value={l.id}>{l.title}</option>)}
+                </select>
+                <ChevronDown size={16} style={s.selectArrow} />
+              </div>
 
               <label style={s.label}>Câu hỏi *</label>
               <textarea style={{ ...s.input, minHeight: 80, resize: 'vertical' }} value={form.questionText ?? ''} onChange={e => setForm({ ...form, questionText: e.target.value })} placeholder="Nội dung câu hỏi..." />

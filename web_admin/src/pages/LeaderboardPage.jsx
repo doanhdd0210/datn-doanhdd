@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { RefreshCw, BarChart2 } from 'lucide-react'
+import { RefreshCw, BarChart2, Trophy, CalendarDays } from 'lucide-react'
 import { statsApi } from '../services/api'
 import { exportCsv } from '../utils/importExport'
 
@@ -10,8 +10,8 @@ const RANK_STYLES = {
 }
 
 const TABS = [
-  { key: 'alltime', label: '🏆 Tất cả thời gian' },
-  { key: 'weekly', label: '📅 Tuần này' },
+  { key: 'alltime', Icon: Trophy,       label: 'Tất cả thời gian' },
+  { key: 'weekly',  Icon: CalendarDays, label: 'Tuần này' },
 ]
 
 export default function LeaderboardPage() {
@@ -71,9 +71,9 @@ export default function LeaderboardPage() {
           <button
             key={t.key}
             onClick={() => { setTab(t.key); setSearch('') }}
-            style={{ ...s.tabBtn, ...(tab === t.key ? s.tabBtnActive : {}) }}
+            style={{ ...s.tabBtn, ...(tab === t.key ? s.tabBtnActive : {}), display:'inline-flex', alignItems:'center', gap:6 }}
           >
-            {t.label}
+            <t.Icon size={14}/>{t.label}
           </button>
         ))}
       </div>
@@ -90,13 +90,13 @@ export default function LeaderboardPage() {
       <div style={s.statsRow}>
         <span style={s.stat}>Tổng: <strong>{users.length}</strong></span>
         <span style={s.stat}>Hiển thị: <strong>{filtered.length}</strong></span>
-        {tab === 'weekly' && <span style={{ ...s.stat, color: '#1a73e8', fontWeight: 600 }}>📅 Dữ liệu trong tuần này</span>}
+        {tab === 'weekly' && <span style={{ ...s.stat, color: '#1a73e8', fontWeight: 600, display:'inline-flex', alignItems:'center', gap:4 }}><CalendarDays size={13}/>Dữ liệu trong tuần này</span>}
       </div>
 
       {loading ? (
         <div style={s.loading}>⏳ Đang tải...</div>
       ) : filtered.length === 0 ? (
-        <div style={s.empty}><div style={{ fontSize: 48 }}>🏆</div><div style={{ color: '#94a3b8', marginTop: 8 }}>Chưa có dữ liệu bảng xếp hạng</div></div>
+        <div style={s.empty}><Trophy size={48} color="#94a3b8"/><div style={{ color: '#94a3b8', marginTop: 8 }}>Chưa có dữ liệu bảng xếp hạng</div></div>
       ) : (
         <div style={s.tableWrap}>
           <table style={s.table}>

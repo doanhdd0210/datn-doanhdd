@@ -358,7 +358,8 @@ class _TopicsScreenState extends State<TopicsScreen> {
       context: context,
       backgroundColor: context.surfaceColor,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (_) => Padding(
+      builder: (_) => Consumer<UserProvider>(
+        builder: (_, provider, __) => Padding(
         padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -426,7 +427,7 @@ class _TopicsScreenState extends State<TopicsScreen> {
             }),
           ],
         ),
-      ),
+      )),
     );
   }
 }

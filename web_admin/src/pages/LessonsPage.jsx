@@ -336,6 +336,30 @@ export default function LessonsPage() {
                 </div>
               </div>
 
+              {editorLang === 'markdown' && (
+                <div style={{ background: '#f0f7ff', border: '1px solid #bfdbfe', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: '#1e40af' }}>
+                  <div style={{ fontWeight: 700, marginBottom: 8 }}>📝 Cú pháp Markdown được hỗ trợ trên mobile:</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 20px', fontFamily: 'monospace' }}>
+                    {[
+                      ['# Tiêu đề lớn', 'Heading cỡ lớn (18px)'],
+                      ['## Tiêu đề nhỏ', 'Heading cỡ nhỏ (16px)'],
+                      ['**in đậm**', 'Chữ in đậm'],
+                      ['`inline code`', 'Code nội tuyến'],
+                      ['- mục 1', 'Danh sách bullet'],
+                      ['```java\\ncode\\n```', 'Khối code (có nút copy)'],
+                    ].map(([syntax, desc]) => (
+                      <div key={syntax} style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
+                        <span style={{ color: '#1d4ed8', minWidth: 150, flexShrink: 0 }}>{syntax}</span>
+                        <span style={{ color: '#64748b', fontFamily: 'sans-serif' }}>→ {desc}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ marginTop: 8, color: '#64748b', fontFamily: 'sans-serif' }}>
+                    ⚠️ <strong>Không hỗ trợ:</strong> ### heading, bảng <code>|col|</code> — sẽ hiển thị dạng text thô.
+                  </div>
+                </div>
+              )}
+
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
                 <div>
                   <label style={s.label}>XP Reward</label>

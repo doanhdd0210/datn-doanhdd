@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { RefreshCw, BarChart2 } from 'lucide-react'
 import { statsApi } from '../services/api'
 import { exportCsv } from '../utils/importExport'
 
@@ -80,8 +81,8 @@ export default function LeaderboardPage() {
       {/* Toolbar */}
       <div style={s.toolbar}>
         <input placeholder="Tìm theo tên, email..." value={search} onChange={e => setSearch(e.target.value)} style={s.searchInput} />
-        <button onClick={load} style={s.btnSecondary}>⟳ Làm mới</button>
-        <button onClick={handleExportCsv} style={s.btnSm}>📊 Export CSV</button>
+        <button onClick={load} style={s.btnSecondary}><RefreshCw size={14} style={{marginRight:5,verticalAlign:"middle"}}/> Làm mới</button>
+        <button onClick={handleExportCsv} style={s.btnSm}><BarChart2 size={14} style={{marginRight:5,verticalAlign:"middle"}}/> Export CSV</button>
       </div>
 
       {error && <div style={s.errorBox}>{error}</div>}

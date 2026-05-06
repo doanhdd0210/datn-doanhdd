@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Editor from '@monaco-editor/react'
-import { Signal, Battery } from 'lucide-react'
+import { Signal, Battery, RefreshCw, Upload, Download, FileDown, X, Pencil, Trash2 } from 'lucide-react'
 import { lessonsApi, topicsApi } from '../services/api'
 
 function renderLikeFlutter(content) {
@@ -240,12 +240,12 @@ export default function LessonsPage() {
           onChange={e => setSearch(e.target.value)}
           style={s.searchInput}
         />
-        <button onClick={load} style={s.btnSecondary}>⟳ Làm mới</button>
+        <button onClick={load} style={s.btnSecondary}><RefreshCw size={14} style={{marginRight:5,verticalAlign:"middle"}}/> Làm mới</button>
         <button onClick={openCreate} style={s.btnPrimary}>+ Thêm bài học</button>
         <div style={s.btnGroup}>
-          <button onClick={() => importRef.current?.click()} style={s.btnSm}>📥 Import Excel</button>
-          <button onClick={() => exportLessonsExcel(filtered, 'lessons_export.xlsx')} style={s.btnSm}>📤 Export Excel</button>
-          <button onClick={downloadLessonsSampleExcel} style={{ ...s.btnSm, color: '#1a73e8', borderColor: '#93c5fd' }}>📋 Tải Excel mẫu</button>
+          <button onClick={() => importRef.current?.click()} style={s.btnSm}><Upload size={14} style={{marginRight:5,verticalAlign:"middle"}}/> Import Excel</button>
+          <button onClick={() => exportLessonsExcel(filtered, 'lessons_export.xlsx')} style={s.btnSm}><Download size={14} style={{marginRight:5,verticalAlign:"middle"}}/> Export Excel</button>
+          <button onClick={downloadLessonsSampleExcel} style={{ ...s.btnSm, color: '#1a73e8', borderColor: '#93c5fd' }}><FileDown size={14} style={{marginRight:5,verticalAlign:"middle"}}/> Tải Excel mẫu</button>
         </div>
         <input type="file" accept=".xlsx,.xls" ref={importRef} style={{ display: 'none' }} onChange={handleImport} />
       </div>
@@ -303,8 +303,8 @@ export default function LessonsPage() {
                   </td>
                   <td style={s.td}>
                     <div style={s.actions}>
-                      <button onClick={() => openEdit(l)} style={s.btnEdit} title="Sửa">✏️</button>
-                      <button onClick={() => openDelete(l)} style={s.btnDelete} title="Xoá">🗑️</button>
+                      <button onClick={() => openEdit(l)} style={s.btnEdit} title="Sửa"><Pencil size={14}/></button>
+                      <button onClick={() => openDelete(l)} style={s.btnDelete} title="Xoá"><Trash2 size={14}/></button>
                     </div>
                   </td>
                 </tr>
@@ -320,7 +320,7 @@ export default function LessonsPage() {
           <div style={s.modal}>
             <div style={s.modalHeader}>
               <h3 style={s.modalTitle}>{modal.mode === 'create' ? 'Thêm bài học mới' : `Sửa: ${modal.item?.title}`}</h3>
-              <button onClick={closeModal} style={s.modalClose}>✕</button>
+              <button onClick={closeModal} style={s.modalClose}><X size={16}/></button>
             </div>
             <div style={s.modalBody}>
               <label style={s.label}>Chủ đề *</label>
@@ -470,7 +470,7 @@ export default function LessonsPage() {
           <div style={{ ...s.modal, maxWidth: 400 }}>
             <div style={s.modalHeader}>
               <h3 style={s.modalTitle}>Xoá bài học</h3>
-              <button onClick={closeModal} style={s.modalClose}>✕</button>
+              <button onClick={closeModal} style={s.modalClose}><X size={16}/></button>
             </div>
             <div style={s.modalBody}>
               <p style={{ color: '#6b7280', marginBottom: 8 }}>Bạn chắc chắn muốn xoá <strong>{modal.item?.title}</strong>?</p>

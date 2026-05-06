@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { RefreshCw, Upload, Download, FileDown, BookOpen, X, Pencil, Trash2 } from 'lucide-react'
 import { topicsApi } from '../services/api'
 import { exportTopicsExcel, importTopicsExcel, downloadTopicsSampleExcel } from '../utils/importExport'
 
@@ -134,12 +135,12 @@ export default function TopicsPage() {
           onChange={e => setSearch(e.target.value)}
           style={s.searchInput}
         />
-        <button onClick={load} style={s.btnSecondary}>⟳ Làm mới</button>
+        <button onClick={load} style={s.btnSecondary}><RefreshCw size={14} style={{marginRight:5,verticalAlign:"middle"}}/> Làm mới</button>
         <button onClick={openCreate} style={s.btnPrimary}>+ Thêm chủ đề</button>
         <div style={s.btnGroup}>
-          <button onClick={() => importRef.current?.click()} style={s.btnSm}>📥 Import Excel</button>
-          <button onClick={() => exportTopicsExcel(topics, 'topics_export.xlsx')} style={s.btnSm}>📤 Export Excel</button>
-          <button onClick={downloadTopicsSampleExcel} style={{ ...s.btnSm, color: '#1a73e8', borderColor: '#93c5fd' }}>📋 Tải Excel mẫu</button>
+          <button onClick={() => importRef.current?.click()} style={s.btnSm}><Upload size={14} style={{marginRight:5,verticalAlign:"middle"}}/> Import Excel</button>
+          <button onClick={() => exportTopicsExcel(topics, 'topics_export.xlsx')} style={s.btnSm}><Download size={14} style={{marginRight:5,verticalAlign:"middle"}}/> Export Excel</button>
+          <button onClick={downloadTopicsSampleExcel} style={{ ...s.btnSm, color: '#1a73e8', borderColor: '#93c5fd' }}><FileDown size={14} style={{marginRight:5,verticalAlign:"middle"}}/> Tải Excel mẫu</button>
         </div>
         <input type="file" accept=".xlsx,.xls" ref={importRef} style={{ display: 'none' }} onChange={handleImport} />
       </div>
@@ -156,7 +157,7 @@ export default function TopicsPage() {
         <div style={s.loading}>⏳ Đang tải...</div>
       ) : filtered.length === 0 ? (
         <div style={s.empty}>
-          <div style={{ fontSize: 48 }}>📚</div>
+          <BookOpen size={48} color="#94a3b8"/>
           <div style={{ color: '#94a3b8', marginTop: 8 }}>Chưa có chủ đề nào</div>
         </div>
       ) : (
@@ -203,8 +204,8 @@ export default function TopicsPage() {
                   <td style={{ ...s.td, textAlign: 'center', color: '#64748b' }}>{t.order ?? 0}</td>
                   <td style={s.td}>
                     <div style={s.actions}>
-                      <button onClick={() => openEdit(t)} style={s.btnEdit} title="Sửa">✏️</button>
-                      <button onClick={() => openDelete(t)} style={s.btnDelete} title="Xoá">🗑️</button>
+                      <button onClick={() => openEdit(t)} style={s.btnEdit} title="Sửa"><Pencil size={14}/></button>
+                      <button onClick={() => openDelete(t)} style={s.btnDelete} title="Xoá"><Trash2 size={14}/></button>
                     </div>
                   </td>
                 </tr>
@@ -220,7 +221,7 @@ export default function TopicsPage() {
           <div style={s.modal}>
             <div style={s.modalHeader}>
               <h3 style={s.modalTitle}>{modal.mode === 'create' ? 'Thêm chủ đề mới' : `Sửa: ${modal.item?.title}`}</h3>
-              <button onClick={closeModal} style={s.modalClose}>✕</button>
+              <button onClick={closeModal} style={s.modalClose}><X size={16}/></button>
             </div>
             <div style={s.modalBody}>
               <label style={s.label}>Tiêu đề *</label>
@@ -264,7 +265,7 @@ export default function TopicsPage() {
           <div style={{ ...s.modal, maxWidth: 400 }}>
             <div style={s.modalHeader}>
               <h3 style={s.modalTitle}>Xoá chủ đề</h3>
-              <button onClick={closeModal} style={s.modalClose}>✕</button>
+              <button onClick={closeModal} style={s.modalClose}><X size={16}/></button>
             </div>
             <div style={s.modalBody}>
               <p style={{ color: '#6b7280', marginBottom: 8 }}>Bạn chắc chắn muốn xoá <strong>{modal.item?.title}</strong>?</p>

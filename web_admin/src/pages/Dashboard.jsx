@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
-  Users, BookOpen, GraduationCap, HelpCircle, Code2, ShieldCheck, Bell,
+  Users, BookOpen, GraduationCap, HelpCircle, Code2, ShieldCheck, Bell, X,
   LayoutDashboard, BarChart2, Library, ClipboardList, MessagesSquare, Trophy, Star,
   Settings, LogOut,
 } from 'lucide-react'
@@ -124,7 +124,7 @@ export default function Dashboard() {
           <div style={styles.modal}>
             <div style={styles.modalHeader}>
               <h3 style={styles.modalTitle}>Đăng xuất</h3>
-              <button onClick={() => setShowLogoutModal(false)} style={styles.modalClose}>✕</button>
+              <button onClick={() => setShowLogoutModal(false)} style={styles.modalClose}><X size={16}/></button>
             </div>
             <div style={styles.modalBody}>
               <p style={{ color: '#6b7280', margin: 0 }}>

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { RefreshCw, Upload, Download, FileDown, X, Pencil, Trash2 } from 'lucide-react'
 import { questionsApi, topicsApi, lessonsApi } from '../services/api'
 import { exportQuestionsExcel, importQuestionsExcel, downloadQuestionsSampleExcel } from '../utils/importExport'
 
@@ -180,12 +181,12 @@ export default function QuestionsPage() {
 
       {/* Toolbar */}
       <div style={s.toolbar}>
-        <button onClick={loadQuestions} style={s.btnSecondary} disabled={!selectedLesson}>⟳ Làm mới</button>
+        <button onClick={loadQuestions} style={s.btnSecondary} disabled={!selectedLesson}><RefreshCw size={14} style={{marginRight:5,verticalAlign:"middle"}}/> Làm mới</button>
         <button onClick={openCreate} style={s.btnPrimary} disabled={!selectedLesson}>+ Thêm câu hỏi</button>
         <div style={s.btnGroup}>
-          <button onClick={() => importRef.current?.click()} style={s.btnSm}>📥 Import Excel</button>
-          <button onClick={() => exportQuestionsExcel(questions, `questions_lesson_${selectedLesson}.xlsx`)} style={s.btnSm} disabled={!selectedLesson}>📤 Export Excel</button>
-          <button onClick={downloadQuestionsSampleExcel} style={{ ...s.btnSm, color: '#1a73e8', borderColor: '#93c5fd' }}>📋 Tải Excel mẫu</button>
+          <button onClick={() => importRef.current?.click()} style={s.btnSm}><Upload size={14} style={{marginRight:5,verticalAlign:"middle"}}/> Import Excel</button>
+          <button onClick={() => exportQuestionsExcel(questions, `questions_lesson_${selectedLesson}.xlsx`)} style={s.btnSm} disabled={!selectedLesson}><Download size={14} style={{marginRight:5,verticalAlign:"middle"}}/> Export Excel</button>
+          <button onClick={downloadQuestionsSampleExcel} style={{ ...s.btnSm, color: '#1a73e8', borderColor: '#93c5fd' }}><FileDown size={14} style={{marginRight:5,verticalAlign:"middle"}}/> Tải Excel mẫu</button>
         </div>
         <input type="file" accept=".xlsx,.xls" ref={importRef} style={{ display: 'none' }} onChange={handleImport} />
       </div>
@@ -244,8 +245,8 @@ export default function QuestionsPage() {
                   <td style={{ ...s.td, textAlign: 'center', color: '#64748b' }}>{q.order ?? 0}</td>
                   <td style={s.td}>
                     <div style={s.actions}>
-                      <button onClick={() => openEdit(q)} style={s.btnEdit} title="Sửa">✏️</button>
-                      <button onClick={() => openDelete(q)} style={s.btnDelete} title="Xoá">🗑️</button>
+                      <button onClick={() => openEdit(q)} style={s.btnEdit} title="Sửa"><Pencil size={14}/></button>
+                      <button onClick={() => openDelete(q)} style={s.btnDelete} title="Xoá"><Trash2 size={14}/></button>
                     </div>
                   </td>
                 </tr>
@@ -261,7 +262,7 @@ export default function QuestionsPage() {
           <div style={s.modal}>
             <div style={s.modalHeader}>
               <h3 style={s.modalTitle}>{modal.mode === 'create' ? 'Thêm câu hỏi mới' : 'Sửa câu hỏi'}</h3>
-              <button onClick={closeModal} style={s.modalClose}>✕</button>
+              <button onClick={closeModal} style={s.modalClose}><X size={16}/></button>
             </div>
             <div style={s.modalBody}>
               <label style={s.label}>Bài học</label>
@@ -324,7 +325,7 @@ export default function QuestionsPage() {
           <div style={{ ...s.modal, maxWidth: 400 }}>
             <div style={s.modalHeader}>
               <h3 style={s.modalTitle}>Xoá câu hỏi</h3>
-              <button onClick={closeModal} style={s.modalClose}>✕</button>
+              <button onClick={closeModal} style={s.modalClose}><X size={16}/></button>
             </div>
             <div style={s.modalBody}>
               <p style={{ color: '#6b7280', marginBottom: 8 }}>Bạn chắc chắn muốn xoá câu hỏi này?</p>

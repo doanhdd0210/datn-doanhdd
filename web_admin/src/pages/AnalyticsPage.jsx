@@ -69,20 +69,20 @@ export default function AnalyticsPage() {
 
   return (
     <div style={s.page}>
-      <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-        <div style={{ flex: '0 0 auto' }}>
+      <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+        <div style={{ flex: 2, minWidth: 0 }}>
           <SectionTitle Icon={Users} color="#3b82f6" label="Thống kê người dùng" />
           <div style={{ display: 'flex', gap: 12 }}>
-            <StatCard Icon={Users}       iconColor="#3b82f6" iconBg="#eff6ff" label="Tổng người dùng"  value={data.users.length}       accent="#3b82f6" />
-            <StatCard Icon={ShieldCheck} iconColor="#7c3aed" iconBg="#f5f3ff" label="Admin"            value={data.adminUsers.length}  accent="#7c3aed" />
+            <StatCard Icon={Users}       iconColor="#3b82f6" iconBg="#eff6ff" label="Tổng người dùng"  value={data.users.length}       accent="#3b82f6" flex />
+            <StatCard Icon={ShieldCheck} iconColor="#7c3aed" iconBg="#f5f3ff" label="Admin"            value={data.adminUsers.length}  accent="#7c3aed" flex />
           </div>
         </div>
-        <div style={{ flex: '1 1 auto' }}>
+        <div style={{ flex: 3, minWidth: 0 }}>
           <SectionTitle Icon={BookOpen} color="#9333ea" label="Thống kê nội dung" />
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            <StatCard Icon={BookOpen}      iconColor="#ca8a04" iconBg="#fefce8" label="Chủ đề"              value={data.topics.length}  accent="#ca8a04" />
-            <StatCard Icon={GraduationCap} iconColor="#9333ea" iconBg="#f5f3ff" label="Bài học"             value={data.lessons.length} accent="#9333ea" />
-            <StatCard Icon={Target}        iconColor="#0ea5e9" iconBg="#f0f9ff" label="Bài học TB/chủ đề"   value={data.topics.length > 0 ? (data.lessons.length / data.topics.length).toFixed(1) : '—'} accent="#0ea5e9" />
+          <div style={{ display: 'flex', gap: 12 }}>
+            <StatCard Icon={BookOpen}      iconColor="#ca8a04" iconBg="#fefce8" label="Chủ đề"              value={data.topics.length}  accent="#ca8a04" flex />
+            <StatCard Icon={GraduationCap} iconColor="#9333ea" iconBg="#f5f3ff" label="Bài học"             value={data.lessons.length} accent="#9333ea" flex />
+            <StatCard Icon={Target}        iconColor="#0ea5e9" iconBg="#f0f9ff" label="Bài học TB/chủ đề"   value={data.topics.length > 0 ? (data.lessons.length / data.topics.length).toFixed(1) : '—'} accent="#0ea5e9" flex />
           </div>
         </div>
       </div>
@@ -176,9 +176,9 @@ function SectionTitle({ Icon, color, label }) {
   )
 }
 
-function StatCard({ Icon, iconColor, iconBg, label, value, accent }) {
+function StatCard({ Icon, iconColor, iconBg, label, value, accent, flex: isFlex }) {
   return (
-    <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e2e8f0', borderTop: `3px solid ${accent}`, padding: '16px 14px', display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center', textAlign: 'center' }}>
+    <div style={{ flex: isFlex ? 1 : undefined, minWidth: 0, background: '#fff', borderRadius: 12, border: '1px solid #e2e8f0', borderTop: `3px solid ${accent}`, padding: '16px 14px', display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center', textAlign: 'center' }}>
       <div style={{ width: 40, height: 40, borderRadius: 10, background: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Icon size={20} color={iconColor} strokeWidth={1.75} />
       </div>

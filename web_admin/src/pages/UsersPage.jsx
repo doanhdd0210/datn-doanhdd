@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { RefreshCw, Trash2, BookOpen, X, Lock, Check, BarChart2 } from 'lucide-react'
 import { usersApi, statsApi } from '../services/api'
 
 async function runCleanup() {
@@ -155,9 +156,9 @@ export default function UsersPage() {
           onChange={(e) => setSearch(e.target.value)}
           style={s.searchInput}
         />
-        <button onClick={loadUsers} style={s.btnSecondary} title="Làm mới">⟳ Làm mới</button>
+        <button onClick={loadUsers} style={s.btnSecondary} title="Làm mới"><RefreshCw size={14} style={{marginRight:5,verticalAlign:"middle"}}/> Làm mới</button>
         <button onClick={runCleanup} style={{ ...s.btnSecondary, color: '#b45309' }} title="Xoá dữ liệu DB của tài khoản đã bị xoá">🧹 Dọn dữ liệu thừa</button>
-        <button onClick={() => runDeleteAll(loadUsers)} style={{ ...s.btnSecondary, color: '#dc2626', borderColor: '#fca5a5' }} title="Xoá toàn bộ người dùng (trừ admin)">🗑️ Xoá tất cả user</button>
+        <button onClick={() => runDeleteAll(loadUsers)} style={{ ...s.btnSecondary, color: '#dc2626', borderColor: '#fca5a5' }} title="Xoá toàn bộ người dùng (trừ admin)"><Trash2 size={14} style={{marginRight:5,verticalAlign:'middle'}}/> Xoá tất cả user</button>
       </div>
 
       {error && <div style={s.errorBox}>{error}</div>}
@@ -213,7 +214,7 @@ export default function UsersPage() {
                       onClick={() => toggleDisabled(u)}
                       style={{ ...s.statusBtn, background: u.disabled ? '#fef3c7' : '#dcfce7', color: u.disabled ? '#b45309' : '#15803d' }}
                     >
-                      {u.disabled ? '🔒 Khoá' : '✓ Hoạt động'}
+                      {u.disabled ? <><Lock size={12} style={{marginRight:4,verticalAlign:'middle'}}/>Khoá</> : <><Check size={12} style={{marginRight:4,verticalAlign:'middle'}}/>Hoạt động</>}
                     </button>
                   </td>
                   <td style={s.td}>
@@ -236,8 +237,8 @@ export default function UsersPage() {
                   </td>
                   <td style={s.td}>
                     <div style={s.actions}>
-                      <button onClick={() => openStats(u)} style={s.btnStats} title="Xem thống kê">📊</button>
-                      <button onClick={() => openDelete(u)} style={s.btnDelete} title="Xoá">🗑️</button>
+                      <button onClick={() => openStats(u)} style={s.btnStats} title="Xem thống kê"><BarChart2 size={14}/></button>
+                      <button onClick={() => openDelete(u)} style={s.btnDelete} title="Xoá"><Trash2 size={14}/></button>
                     </div>
                   </td>
                 </tr>
@@ -272,7 +273,7 @@ export default function UsersPage() {
                     <div style={{ fontSize: 12, color: '#64748b' }}>{modal.user.email}</div>
                   </div>
                 </div>
-                <button onClick={closeModal} style={s.modalClose}>✕</button>
+                <button onClick={closeModal} style={s.modalClose}><X size={16}/></button>
               </div>
               <div style={s.modalBody}>
                 {!st ? (
@@ -283,7 +284,7 @@ export default function UsersPage() {
                   <div style={s.statsGrid}>
                     <div style={s.statCard}><div style={s.statIcon}>⭐</div><div style={s.statValue}>{xp.toLocaleString()}</div><div style={s.statLabel}>Tổng XP</div></div>
                     <div style={s.statCard}><div style={s.statIcon}>🔥</div><div style={s.statValue}>{streak}</div><div style={s.statLabel}>Streak (ngày)</div></div>
-                    <div style={s.statCard}><div style={s.statIcon}>📚</div><div style={s.statValue}>{lessons}</div><div style={s.statLabel}>Bài học hoàn thành</div></div>
+                    <div style={s.statCard}><div style={s.statIcon}><BookOpen size={24} color="#9333ea"/></div><div style={s.statValue}>{lessons}</div><div style={s.statLabel}>Bài học hoàn thành</div></div>
                     <div style={s.statCard}><div style={s.statIcon}>🏆</div><div style={s.statValue}>{rank === '—' ? '—' : `#${rank}`}</div><div style={s.statLabel}>Thứ hạng</div></div>
                   </div>
                 )}
@@ -304,7 +305,7 @@ export default function UsersPage() {
               <h3 style={s.modalTitle}>
                 {modal.mode === 'create' ? 'Thêm người dùng mới' : `Sửa: ${modal.user?.email}`}
               </h3>
-              <button onClick={closeModal} style={s.modalClose}>✕</button>
+              <button onClick={closeModal} style={s.modalClose}><X size={16}/></button>
             </div>
             <div style={s.modalBody}>
               <label style={s.label}>Email</label>
@@ -351,7 +352,7 @@ export default function UsersPage() {
           <div style={{ ...s.modal, maxWidth: 420 }}>
             <div style={s.modalHeader}>
               <h3 style={s.modalTitle}>Xoá người dùng</h3>
-              <button onClick={closeModal} style={s.modalClose}>✕</button>
+              <button onClick={closeModal} style={s.modalClose}><X size={16}/></button>
             </div>
             <div style={s.modalBody}>
               <p style={{ color: '#6b7280', marginBottom: 8 }}>

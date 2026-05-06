@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { RefreshCw, X, Pencil, Trash2 } from 'lucide-react'
 import { achievementsApi } from '../services/api'
 
 const CONDITION_TYPES = [
@@ -100,7 +101,7 @@ export default function AchievementsPage() {
   return (
     <div>
       <div style={s.toolbar}>
-        <button onClick={load} style={s.btnSecondary}>⟳ Làm mới</button>
+        <button onClick={load} style={s.btnSecondary}><RefreshCw size={14} style={{marginRight:5,verticalAlign:"middle"}}/> Làm mới</button>
         <button onClick={openCreate} style={s.btnPrimary}>+ Thêm Achievement</button>
       </div>
 
@@ -138,8 +139,8 @@ export default function AchievementsPage() {
                 </div>
               </div>
               <div style={s.cardActions}>
-                <button onClick={() => openEdit(item)} style={s.btnEdit}>✏️ Sửa</button>
-                <button onClick={() => openDelete(item)} style={s.btnDelete}>🗑️ Xoá</button>
+                <button onClick={() => openEdit(item)} style={s.btnEdit}><Pencil size={14} style={{marginRight:4,verticalAlign:"middle"}}/> Sửa</button>
+                <button onClick={() => openDelete(item)} style={s.btnDelete}><Trash2 size={14} style={{marginRight:4,verticalAlign:"middle"}}/> Xoá</button>
               </div>
             </div>
           ))}
@@ -152,7 +153,7 @@ export default function AchievementsPage() {
           <div style={s.modal}>
             <div style={s.modalHeader}>
               <h3 style={s.modalTitle}>{modal.mode === 'create' ? 'Thêm Achievement mới' : `Sửa: ${modal.item?.title}`}</h3>
-              <button onClick={closeModal} style={s.modalClose}>✕</button>
+              <button onClick={closeModal} style={s.modalClose}><X size={16}/></button>
             </div>
             <div style={s.modalBody}>
               <label style={s.label}>Icon (emoji)</label>
@@ -198,7 +199,7 @@ export default function AchievementsPage() {
           <div style={{ ...s.modal, maxWidth: 400 }}>
             <div style={s.modalHeader}>
               <h3 style={s.modalTitle}>Xoá Achievement</h3>
-              <button onClick={closeModal} style={s.modalClose}>✕</button>
+              <button onClick={closeModal} style={s.modalClose}><X size={16}/></button>
             </div>
             <div style={s.modalBody}>
               <p style={{ color: '#6b7280', margin: 0 }}>

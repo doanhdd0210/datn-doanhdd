@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Target, Zap, X, Check } from 'lucide-react'
 import { checkHealth, settingsApi } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 
@@ -117,7 +118,7 @@ export default function SettingsPage() {
 
       {/* Daily Goal Bonus Config */}
       <div style={s.card}>
-        <h3 style={s.cardTitle}>🎯 Thưởng hoàn thành mục tiêu hàng ngày</h3>
+        <h3 style={{ ...s.cardTitle, display:'flex', alignItems:'center', gap:6 }}><Target size={18} color="#f59e0b"/> Thưởng hoàn thành mục tiêu hàng ngày</h3>
         <p style={{ color: '#64748b', fontSize: 13, marginTop: 0, marginBottom: 16 }}>
           Khi người dùng đạt đủ XP mục tiêu trong ngày, họ sẽ nhận được bonus XP này (tối đa 1 lần/ngày).
         </p>
@@ -135,11 +136,11 @@ export default function SettingsPage() {
                 ]
                 const tier = tiers[i] ?? { label: `Cấp ${i + 1}`, color: '#94a3b8', bg: '#f8fafc', border: '#e2e8f0' }
                 return (
-                  <div key={i} style={{ display: 'grid', gridTemplateColumns: '180px 1fr 1fr 44px', alignItems: 'center', gap: 0, background: '#fff', borderRadius: 12, border: `1.5px solid ${tier.border}`, overflow: 'hidden' }}>
+                  <div key={i} style={{ display: 'grid', gridTemplateColumns: '180px 1fr 1fr 80px', alignItems: 'center', gap: 0, background: '#fff', borderRadius: 12, border: `1.5px solid ${tier.border}`, overflow: 'hidden' }}>
                     {/* Tier badge */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', background: tier.bg, borderRight: `1.5px solid ${tier.border}` }}>
                       <div style={{ width: 36, height: 36, borderRadius: 10, background: tier.color + '22', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <span style={{ fontSize: 18 }}>🎯</span>
+                        <Target size={18} color={tier.color} />
                       </div>
                       <div>
                         <div style={{ fontWeight: 700, fontSize: 13, color: '#1e293b' }}>Mục tiêu</div>
@@ -160,7 +161,7 @@ export default function SettingsPage() {
                       <input type="number" min={0} max={500} value={cfg.bonusXp}
                         onChange={e => { const val = Math.max(0, parseInt(e.target.value) || 0); setBonusConfigs(prev => prev.map((c, j) => j === i ? { ...c, bonusXp: val } : c)) }}
                         style={{ width: 68, padding: '6px 10px', border: '1.5px solid #fde68a', borderRadius: 8, fontSize: 15, fontWeight: 700, textAlign: 'center', outline: 'none', color: '#d97706', background: '#fffbeb' }} />
-                      <span style={{ fontSize: 12, fontWeight: 700, color: '#f59e0b' }}>⚡ XP</span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: '#f59e0b', display:'flex', alignItems:'center', gap:2 }}><Zap size={12}/>XP</span>
                     </div>
                     {/* Action */}
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '14px 8px', borderLeft: `1px solid #f1f5f9` }}>
@@ -168,7 +169,7 @@ export default function SettingsPage() {
                         cfg.usersCount === 0
                           ? <button onClick={() => setBonusConfigs(prev => prev.filter((_, j) => j !== i))}
                               style={{ width: 28, height: 28, borderRadius: 7, background: '#fee2e2', border: 'none', cursor: 'pointer', color: '#dc2626', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                              title="Xoá mục tiêu này">✕</button>
+                              title="Xoá mục tiêu này"><X size={14}/></button>
                           : <span style={{ fontSize: 11, color: '#94a3b8', textAlign: 'center', lineHeight: 1.3 }}>{cfg.usersCount}<br/>users</span>
                       )}
                     </div>

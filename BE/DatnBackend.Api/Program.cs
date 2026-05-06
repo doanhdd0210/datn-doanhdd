@@ -216,6 +216,23 @@ using (var scope = app.Services.CreateScope())
             ON ""DailyGoalBonusClaims"" (""UserId"", ""Date"");
     ");
 
+    // Tạo bảng AppSettings nếu chưa có
+    await db.Database.ExecuteSqlRawAsync(@"
+        CREATE TABLE IF NOT EXISTS ""AppSettings"" (
+            ""Key"" text NOT NULL PRIMARY KEY,
+            ""Value"" text NOT NULL DEFAULT ''
+        );
+    ");
+
+    // Seed giá trị mặc định daily goal bonuses nếu chưa có
+    await db.Database.ExecuteSqlRawAsync(@"
+        INSERT INTO ""AppSettings"" (""Key"", ""Value"") VALUES
+            ('dailyGoalBonus:20',  '5'),
+            ('dailyGoalBonus:50',  '15'),
+            ('dailyGoalBonus:100', '35')
+        ON CONFLICT (""Key"") DO NOTHING;
+    ");
+
     // Sync IsAdmin flag from Firebase claims to UserProfiles
     try
     {

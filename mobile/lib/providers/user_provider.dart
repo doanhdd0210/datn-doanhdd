@@ -88,8 +88,7 @@ class UserProvider extends ChangeNotifier {
     for (final config in _dailyGoalBonusConfigs) {
       if (config['goalXp'] == goal) return config['bonusXp'] as int? ?? 0;
     }
-    const defaults = {20: 5, 50: 15, 100: 35};
-    return defaults[goal] ?? 0;
+    return 0;
   }
 
   bool get achievementsLoaded => _achievementsLoaded;

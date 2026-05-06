@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import Editor from '@monaco-editor/react'
 import { lessonsApi, topicsApi } from '../services/api'
 import { exportLessonsExcel, importLessonsExcel, downloadLessonsSampleExcel } from '../utils/importExport'
 
@@ -27,6 +28,7 @@ export default function LessonsPage() {
   const [form, setForm] = useState({})
   const [toast, setToast] = useState({ msg: '', type: 'success' })
   const [importProgress, setImportProgress] = useState('')
+  const [editorLang, setEditorLang] = useState('html')
   const importRef = useRef()
 
   const showToast = (msg, type = 'success') => {
@@ -242,7 +244,46 @@ export default function LessonsPage() {
               <textarea style={{ ...s.input, minHeight: 60, resize: 'vertical' }} value={form.summary ?? ''} onChange={e => setForm({ ...form, summary: e.target.value })} placeholder="Mô tả ngắn..." />
 
               <label style={s.label}>Nội dung (HTML/Markdown)</label>
-              <textarea style={{ ...s.input, minHeight: 160, resize: 'vertical', fontFamily: 'monospace', fontSize: 13 }} value={form.content ?? ''} onChange={e => setForm({ ...form, content: e.target.value })} placeholder="Nội dung bài học..." />
+              <div style={{ border: '1.5px solid #e2e8f0', borderRadius: 8, overflow: 'hidden' }}>
+                <div style={{ display: 'flex', alignItems: 'center', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', padding: '5px 10px', gap: 6 }}>
+                  <span style={{ fontSize: 12, color: '#64748b', fontWeight: 500, marginRight: 4 }}>Ngôn ngữ:</span>
+                  {['html', 'markdown'].map(lang => (
+                    <button key={lang} type="button" onClick={() => setEditorLang(lang)} style={{
+                      padding: '2px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 500,
+                      background: editorLang === lang ? '#1a73e8' : '#e2e8f0',
+                      color: editorLang === lang ? '#fff' : '#64748b',
+                    }}>{lang.toUpperCase()}</button>
+                  ))}
+                  <span style={{ marginLeft: 'auto', fontSize: 11, color: '#94a3b8' }}>Editor · Preview</span>
+                </div>
+                <div style={{ display: 'flex', height: 300 }}>
+                  <div style={{ flex: 1, overflow: 'hidden', borderRight: '1px solid #e2e8f0' }}>
+                    <Editor
+                      height="100%"
+                      language={editorLang}
+                      value={form.content ?? ''}
+                      onChange={val => setForm(f => ({ ...f, content: val ?? '' }))}
+                      options={{
+                        minimap: { enabled: false },
+                        fontSize: 13,
+                        lineNumbers: 'on',
+                        wordWrap: 'on',
+                        scrollBeyondLastLine: false,
+                        padding: { top: 8 },
+                      }}
+                    />
+                  </div>
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#fff' }}>
+                    <div style={{ padding: '3px 10px', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', fontSize: 11, color: '#94a3b8', fontWeight: 600, letterSpacing: 1 }}>PREVIEW</div>
+                    <iframe
+                      srcDoc={`<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:10px 14px;margin:0;font-size:13px;line-height:1.7;color:#1e293b}h1,h2,h3{margin:0.7em 0 0.3em}pre{background:#f1f5f9;padding:10px;border-radius:6px;overflow-x:auto;font-size:12px}code{background:#f1f5f9;padding:2px 5px;border-radius:4px;font-size:12px}ul,ol{padding-left:1.5em}a{color:#1a73e8}img{max-width:100%}</style></head><body>${(form.content ?? '').replace(/<\/body>|<\/html>/gi, '')}</body></html>`}
+                      style={{ flex: 1, border: 'none', background: '#fff' }}
+                      title="HTML Preview"
+                      sandbox="allow-same-origin"
+                    />
+                  </div>
+                </div>
+              </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
                 <div>
@@ -321,7 +362,7 @@ const s = {
   btnEdit: { padding: '4px 10px', background: '#e0f2fe', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 14 },
   btnDelete: { padding: '4px 10px', background: '#fee2e2', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 14 },
   overlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200 },
-  modal: { background: '#fff', borderRadius: 14, width: 600, maxWidth: '90vw', maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' },
+  modal: { background: '#fff', borderRadius: 14, width: 1000, maxWidth: '95vw', maxHeight: '92vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' },
   modalHeader: { padding: '18px 24px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 },
   modalTitle: { margin: 0, fontSize: 18, fontWeight: 700, color: '#1e293b' },
   modalBody: { padding: '20px 24px', overflowY: 'auto', flex: 1 },

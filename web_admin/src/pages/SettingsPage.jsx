@@ -128,12 +128,11 @@ export default function SettingsPage() {
           <>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
               {bonusConfigs.map((cfg, i) => {
-                const icons = ['🌱', '🔥', '⚡']
                 const labels = ['Cơ bản', 'Trung bình', 'Thách thức']
                 return (
                   <div key={i} style={s.bonusRow}>
                     <div style={s.goalBadge}>
-                      <span style={{ fontSize: 18 }}>{icons[i] ?? '⭐'}</span>
+                      <span style={{ fontSize: 18 }}>🎯</span>
                       <div>
                         <div style={{ fontWeight: 700, fontSize: 14, color: '#1e293b' }}>Mục tiêu</div>
                         <div style={{ fontSize: 12, color: '#64748b' }}>{labels[i] ?? `Cấp ${i + 1}`}</div>

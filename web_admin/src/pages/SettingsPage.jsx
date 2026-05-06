@@ -167,10 +167,14 @@ export default function SettingsPage() {
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, padding: '10px 8px', borderLeft: `1px solid #f1f5f9` }}>
                       {bonusConfigs.length > 1 && (
                         <button
-                          onClick={() => cfg.usersCount === 0 && setBonusConfigs(prev => prev.filter((_, j) => j !== i))}
-                          disabled={cfg.usersCount > 0}
-                          style={{ width: 28, height: 28, borderRadius: 7, background: cfg.usersCount > 0 ? '#f1f5f9' : '#fee2e2', border: 'none', cursor: cfg.usersCount > 0 ? 'not-allowed' : 'pointer', color: cfg.usersCount > 0 ? '#94a3b8' : '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                          title={cfg.usersCount > 0 ? `${cfg.usersCount} user đang dùng` : 'Xoá mục tiêu này'}>
+                          onClick={() => {
+                            if (cfg.usersCount > 0) {
+                              if (!window.confirm(`Mục tiêu này đang có ${cfg.usersCount} user. Vẫn xoá?`)) return
+                            }
+                            setBonusConfigs(prev => prev.filter((_, j) => j !== i))
+                          }}
+                          style={{ width: 28, height: 28, borderRadius: 7, background: '#fee2e2', border: 'none', cursor: 'pointer', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          title={cfg.usersCount > 0 ? `Xoá (${cfg.usersCount} user đang dùng)` : 'Xoá mục tiêu này'}>
                           <X size={14}/>
                         </button>
                       )}

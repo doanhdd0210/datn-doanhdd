@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Editor from '@monaco-editor/react'
+import { marked } from 'marked'
 import { lessonsApi, topicsApi } from '../services/api'
 import { exportLessonsExcel, importLessonsExcel, downloadLessonsSampleExcel } from '../utils/importExport'
 
@@ -276,7 +277,11 @@ export default function LessonsPage() {
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#fff' }}>
                     <div style={{ padding: '3px 10px', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', fontSize: 11, color: '#94a3b8', fontWeight: 600, letterSpacing: 1 }}>PREVIEW</div>
                     <iframe
-                      srcDoc={`<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:10px 14px;margin:0;font-size:13px;line-height:1.7;color:#1e293b}h1,h2,h3{margin:0.7em 0 0.3em}pre{background:#f1f5f9;padding:10px;border-radius:6px;overflow-x:auto;font-size:12px}code{background:#f1f5f9;padding:2px 5px;border-radius:4px;font-size:12px}ul,ol{padding-left:1.5em}a{color:#1a73e8}img{max-width:100%}</style></head><body>${(form.content ?? '').replace(/<\/body>|<\/html>/gi, '')}</body></html>`}
+                      srcDoc={(() => {
+                        const raw = form.content ?? ''
+                        const body = editorLang === 'markdown' ? marked.parse(raw) : raw.replace(/<\/body>|<\/html>/gi, '')
+                        return `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:10px 14px;margin:0;font-size:13px;line-height:1.7;color:#1e293b}h1,h2,h3{margin:0.7em 0 0.3em}pre{background:#f1f5f9;padding:10px;border-radius:6px;overflow-x:auto;font-size:12px}code{background:#f1f5f9;padding:2px 5px;border-radius:4px;font-size:12px}ul,ol{padding-left:1.5em}a{color:#1a73e8}img{max-width:100%}table{border-collapse:collapse;width:100%}th,td{border:1px solid #e2e8f0;padding:6px 10px;font-size:12px}th{background:#f1f5f9;font-weight:600}</style></head><body>${body}</body></html>`
+                      })()}
                       style={{ flex: 1, border: 'none', background: '#fff' }}
                       title="HTML Preview"
                       sandbox="allow-same-origin"

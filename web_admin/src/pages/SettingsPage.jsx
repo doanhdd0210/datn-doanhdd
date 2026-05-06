@@ -172,7 +172,7 @@ export default function SettingsPage() {
                       </div>
                     </div>
                     {/* Goal XP */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '14px 16px', borderRight: `1px solid #f1f5f9` }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '14px 16px', borderRight: `1px solid #f1f5f9`, minWidth: 0, overflow: 'hidden' }}>
                       <span style={{ fontSize: 12, color: '#94a3b8', whiteSpace: 'nowrap' }}>Mục tiêu</span>
                       <input type="number" min={1} max={9999} value={cfg.goalXp}
                         onChange={e => { const val = Math.max(1, parseInt(e.target.value) || 1); setBonusConfigs(prev => prev.map((c, j) => j === i ? { ...c, goalXp: val } : c)) }}
@@ -180,7 +180,7 @@ export default function SettingsPage() {
                       <span style={{ fontSize: 12, fontWeight: 700, color: '#475569' }}>XP</span>
                     </div>
                     {/* Bonus XP */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '14px 16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '14px 16px', minWidth: 0, overflow: 'hidden' }}>
                       <span style={{ fontSize: 12, color: '#94a3b8', whiteSpace: 'nowrap' }}>Thưởng</span>
                       <input type="number" min={0} max={500} value={cfg.bonusXp}
                         onChange={e => { const val = Math.max(0, parseInt(e.target.value) || 0); setBonusConfigs(prev => prev.map((c, j) => j === i ? { ...c, bonusXp: val } : c)) }}

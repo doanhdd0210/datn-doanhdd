@@ -63,9 +63,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
       final body = msg.notification?.body ?? '';
       final displayMsg = body.isNotEmpty ? '$title\n$body' : title;
       final screen = msg.data['screen'] as String?;
-      AppSnackBar.info(
+      AppSnackBar.showTop(
         context,
         displayMsg,
+        type: SnackType.info,
         actionLabel: screen != null && _screenIndex.containsKey(screen) ? 'Xem' : null,
         onAction: screen != null && _screenIndex.containsKey(screen)
             ? () => setState(() => _currentIndex = _screenIndex[screen]!)

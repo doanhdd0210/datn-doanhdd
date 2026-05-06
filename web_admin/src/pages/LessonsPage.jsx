@@ -53,32 +53,32 @@ function buildMobilePreviewDoc(content, title, summary, xpReward, topicTitle) {
 <meta charset="utf-8">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#181A20;color:#FAFAFA;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;line-height:1.5;overflow-x:hidden;overflow-y:auto}
-.appbar{padding:6px 12px 4px;background:#181A20}
-.topic{color:#F5A623;font-size:10px;font-weight:600;display:flex;align-items:center;gap:4px}
-.lesson-hdr{color:#FAFAFA;font-size:13px;font-weight:700;margin-top:2px;padding-left:18px}
-.card{background:#1F222A;margin:8px 10px 10px;border-radius:14px;padding:12px}
-.card-row{display:flex;align-items:center;gap:10px;margin-bottom:6px}
-.card-icon{width:42px;height:42px;background:#2D3038;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
-.card-name{font-size:15px;font-weight:700;color:#FAFAFA;line-height:1.2}
-.card-summary{font-size:11px;color:#9E9E9E;line-height:1.4;margin-bottom:8px}
-.xp{display:inline-flex;align-items:center;gap:3px;background:#2D2415;color:#F5A623;font-size:11px;font-weight:700;padding:3px 10px;border-radius:16px}
-.content{padding:4px 12px 80px}
-h1{font-size:16px;font-weight:700;margin:12px 0 6px}
-h2{font-size:14px;font-weight:700;margin:10px 0 4px}
-p{margin:3px 0}
-ul{list-style:none;padding:0;margin:3px 0}
-li{display:flex;align-items:flex-start;padding:2px 0}
-li::before{content:'';display:inline-block;width:5px;height:5px;border-radius:50%;background:#304FFE;margin:6px 7px 0 0;flex-shrink:0}
+body{background:#181A20;color:#FAFAFA;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:10px;line-height:1.5;overflow-x:hidden;overflow-y:auto}
+.appbar{padding:4px 10px 2px;background:#181A20}
+.topic{color:#F5A623;font-size:8px;font-weight:600;display:flex;align-items:center;gap:3px}
+.lesson-hdr{color:#FAFAFA;font-size:10px;font-weight:700;margin-top:2px;padding-left:14px}
+.card{background:#1F222A;margin:6px 8px 8px;border-radius:11px;padding:9px}
+.card-row{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.card-icon{width:32px;height:32px;background:#2D3038;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.card-name{font-size:11px;font-weight:700;color:#FAFAFA;line-height:1.2}
+.card-summary{font-size:8px;color:#9E9E9E;line-height:1.4;margin-bottom:6px}
+.xp{display:inline-flex;align-items:center;gap:2px;background:#2D2415;color:#F5A623;font-size:8px;font-weight:700;padding:2px 7px;border-radius:12px}
+.content{padding:3px 10px 60px}
+h1{font-size:12px;font-weight:700;margin:9px 0 4px}
+h2{font-size:11px;font-weight:700;margin:7px 0 3px}
+p{margin:2px 0}
+ul{list-style:none;padding:0;margin:2px 0}
+li{display:flex;align-items:flex-start;padding:1px 0}
+li::before{content:'';display:inline-block;width:4px;height:4px;border-radius:50%;background:#304FFE;margin:5px 5px 0 0;flex-shrink:0}
 strong{font-weight:700}
-code{background:#35383F;padding:1px 4px;border-radius:4px;font-size:11px;font-family:monospace}
-.cb{background:#1E1E2E;border-radius:10px;margin:8px 0}
-.cbh{display:flex;justify-content:space-between;align-items:center;padding:6px 12px;background:#2D2D3F;border-radius:10px 10px 0 0}
-.cbh span{color:#4FC3F7;font-size:10px;font-weight:600}
-.cbh button{background:none;border:none;color:#888;cursor:pointer;font-size:12px;padding:2px}
-pre{padding:10px 12px;margin:0;font-family:monospace;font-size:11px;line-height:1.5;color:#fff;white-space:pre-wrap;overflow-x:auto}
-.bottom-bar{position:fixed;bottom:0;left:0;right:0;background:linear-gradient(transparent,#181A20 30%);padding:8px 12px 10px}
-.quiz-btn{background:#1a73e8;color:#fff;text-align:center;padding:11px;border-radius:10px;font-size:12px;font-weight:600}
+code{background:#35383F;padding:1px 3px;border-radius:3px;font-size:8px;font-family:monospace}
+.cb{background:#1E1E2E;border-radius:8px;margin:6px 0}
+.cbh{display:flex;justify-content:space-between;align-items:center;padding:4px 9px;background:#2D2D3F;border-radius:8px 8px 0 0}
+.cbh span{color:#4FC3F7;font-size:8px;font-weight:600}
+.cbh button{background:none;border:none;color:#888;cursor:pointer;font-size:9px;padding:1px}
+pre{padding:7px 9px;margin:0;font-family:monospace;font-size:8px;line-height:1.5;color:#fff;white-space:pre-wrap;overflow-x:auto}
+.bottom-bar{position:fixed;bottom:0;left:0;right:0;background:linear-gradient(transparent,#181A20 30%);padding:6px 10px 8px}
+.quiz-btn{background:#1a73e8;color:#fff;text-align:center;padding:8px;border-radius:9px;font-size:9px;font-weight:600}
 </style></head><body>
 <div class="appbar">
 <div class="topic">← ${esc(topicTitle || 'Chủ đề')}</div>

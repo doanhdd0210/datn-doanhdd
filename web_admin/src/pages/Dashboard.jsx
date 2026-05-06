@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
-  Users, BookOpen, GraduationCap, HelpCircle, Code2, ShieldCheck, Bell, Coffee,
+  Users, BookOpen, GraduationCap, HelpCircle, Code2, ShieldCheck, Bell,
   LayoutDashboard, BarChart2, Library, ClipboardList, MessagesSquare, Trophy, Star,
   Settings, LogOut,
 } from 'lucide-react'
+import logo from '../assets/logo.png'
 import { useNavigate } from 'react-router-dom'
 import { signOut } from '../services/auth'
 import { useAuth } from '../context/AuthContext'
@@ -51,7 +52,7 @@ export default function Dashboard() {
       {/* Sidebar */}
       <aside style={styles.sidebar}>
         <div style={styles.sidebarHeader}>
-          <Coffee size={20} style={styles.sidebarIcon} />
+          <img src={logo} alt="logo" style={{ width: 28, height: 28, objectFit: 'contain', borderRadius: 6 }} />
           <span style={styles.sidebarTitle}>JavaUp Admin</span>
         </div>
 

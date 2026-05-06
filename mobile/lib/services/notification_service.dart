@@ -28,6 +28,21 @@ class NotificationService {
   final dataMessages = StreamController<Map<String, dynamic>>.broadcast();
 
   Future<void> init() async {
+    // Xin quyền notification (iOS + Android 13+)
+    final settings = await _messaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+    debugPrint('[FCM] Permission: ${settings.authorizationStatus}');
+
+    // Hiện notification khi app đang foreground (Android)
+    await _messaging.setForegroundNotificationPresentationOptions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
     // Thử lấy token để kiểm tra FCM có khả dụng không
     // Emulator hoặc thiết bị không có Google Play Services sẽ fail ở đây
     try {
@@ -42,6 +57,9 @@ class NotificationService {
       _fcmAvailable = true;
       debugPrint('[FCM] Token: $token');
       await _uploadToken(token);
+      // Subscribe topic "all" để nhận broadcast notification
+      await _messaging.subscribeToTopic('all');
+      debugPrint('[FCM] Subscribed to topic: all');
     } catch (e) {
       debugPrint('[FCM] FCM không khả dụng (emulator / no Play Services): $e');
       return; // Bỏ qua toàn bộ setup FCM

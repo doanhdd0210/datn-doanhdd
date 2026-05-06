@@ -51,7 +51,7 @@ public class NotificationService : INotificationService
             Android = new AndroidConfig
             {
                 Priority = Priority.High,
-                Notification = new AndroidNotification { Sound = "default", ChannelId = "default" },
+                Notification = new AndroidNotification { Sound = "default", ChannelId = "high_importance_channel" },
             },
             Apns = new ApnsConfig { Aps = new Aps { Sound = "default", Badge = 1 } },
         };
@@ -128,7 +128,7 @@ public class NotificationService : INotificationService
         Android = new AndroidConfig
         {
             Priority = Priority.High,
-            Notification = new AndroidNotification { Sound = "default", ChannelId = "default" },
+            Notification = new AndroidNotification { Sound = "default", ChannelId = "high_importance_channel" },
         },
         Apns = new ApnsConfig { Aps = new Aps { Sound = "default", Badge = 1 } },
     };

@@ -46,6 +46,54 @@ const MOBILE_CSS = `
   .cbh button{background:none;border:none;color:#666;cursor:pointer;font-size:14px;padding:0}
   pre{padding:14px;margin:0;font-family:monospace;font-size:13px;line-height:1.55;color:#fff;white-space:pre-wrap;overflow-x:auto}
 `
+function buildMobilePreviewDoc(content, title, summary, xpReward, topicTitle) {
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const renderedContent = renderLikeFlutter(content)
+  return `<!DOCTYPE html><html><head>
+<meta charset="utf-8">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#181A20;color:#FAFAFA;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;line-height:1.5;overflow-x:hidden;overflow-y:auto}
+.appbar{padding:6px 12px 4px;background:#181A20}
+.topic{color:#F5A623;font-size:10px;font-weight:600;display:flex;align-items:center;gap:4px}
+.lesson-hdr{color:#FAFAFA;font-size:13px;font-weight:700;margin-top:2px;padding-left:18px}
+.card{background:#1F222A;margin:8px 10px 10px;border-radius:14px;padding:12px}
+.card-row{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.card-icon{width:42px;height:42px;background:#2D3038;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.card-name{font-size:15px;font-weight:700;color:#FAFAFA;line-height:1.2}
+.card-summary{font-size:11px;color:#9E9E9E;line-height:1.4;margin-bottom:8px}
+.xp{display:inline-flex;align-items:center;gap:3px;background:#2D2415;color:#F5A623;font-size:11px;font-weight:700;padding:3px 10px;border-radius:16px}
+.content{padding:4px 12px 80px}
+h1{font-size:16px;font-weight:700;margin:12px 0 6px}
+h2{font-size:14px;font-weight:700;margin:10px 0 4px}
+p{margin:3px 0}
+ul{list-style:none;padding:0;margin:3px 0}
+li{display:flex;align-items:flex-start;padding:2px 0}
+li::before{content:'';display:inline-block;width:5px;height:5px;border-radius:50%;background:#304FFE;margin:6px 7px 0 0;flex-shrink:0}
+strong{font-weight:700}
+code{background:#35383F;padding:1px 4px;border-radius:4px;font-size:11px;font-family:monospace}
+.cb{background:#1E1E2E;border-radius:10px;margin:8px 0}
+.cbh{display:flex;justify-content:space-between;align-items:center;padding:6px 12px;background:#2D2D3F;border-radius:10px 10px 0 0}
+.cbh span{color:#4FC3F7;font-size:10px;font-weight:600}
+.cbh button{background:none;border:none;color:#888;cursor:pointer;font-size:12px;padding:2px}
+pre{padding:10px 12px;margin:0;font-family:monospace;font-size:11px;line-height:1.5;color:#fff;white-space:pre-wrap;overflow-x:auto}
+.bottom-bar{position:fixed;bottom:0;left:0;right:0;background:linear-gradient(transparent,#181A20 30%);padding:8px 12px 10px}
+.quiz-btn{background:#1a73e8;color:#fff;text-align:center;padding:11px;border-radius:10px;font-size:12px;font-weight:600}
+</style></head><body>
+<div class="appbar">
+<div class="topic">← ${esc(topicTitle || 'Chủ đề')}</div>
+<div class="lesson-hdr">${esc(title || 'Tiêu đề bài học')}</div>
+</div>
+<div class="card">
+<div class="card-row"><div class="card-icon">☕</div><div class="card-name">${esc(title || 'Tiêu đề bài học')}</div></div>
+<div class="card-summary">${esc(summary || 'Mô tả bài học...')}</div>
+<div class="xp">⚡ ${esc(String(xpReward || 10))} XP</div>
+</div>
+<div class="content">${renderedContent}</div>
+<div class="bottom-bar"><div class="quiz-btn">❓ Bắt đầu trắc nghiệm</div></div>
+</body></html>`
+}
+
 import { exportLessonsExcel, importLessonsExcel, downloadLessonsSampleExcel } from '../utils/importExport'
 
 function Toast({ msg, type }) {
@@ -73,7 +121,7 @@ export default function LessonsPage() {
   const [form, setForm] = useState({})
   const [toast, setToast] = useState({ msg: '', type: 'success' })
   const [importProgress, setImportProgress] = useState('')
-  const [editorLang, setEditorLang] = useState('html')
+  const [editorLang, setEditorLang] = useState('markdown')
   const importRef = useRef()
 
   const showToast = (msg, type = 'success') => {
@@ -288,24 +336,24 @@ export default function LessonsPage() {
               <label style={s.label}>Tóm tắt</label>
               <textarea style={{ ...s.input, minHeight: 60, resize: 'vertical' }} value={form.summary ?? ''} onChange={e => setForm({ ...form, summary: e.target.value })} placeholder="Mô tả ngắn..." />
 
-              <label style={s.label}>Nội dung (HTML/Markdown)</label>
+              <label style={s.label}>Nội dung (Markdown)</label>
               <div style={{ border: '1.5px solid #e2e8f0', borderRadius: 8, overflow: 'hidden' }}>
                 <div style={{ display: 'flex', alignItems: 'center', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', padding: '5px 10px', gap: 6 }}>
-                  <span style={{ fontSize: 12, color: '#64748b', fontWeight: 500, marginRight: 4 }}>Ngôn ngữ:</span>
-                  {['html', 'markdown'].map(lang => (
+                  <span style={{ fontSize: 12, color: '#64748b', fontWeight: 500, marginRight: 4 }}>Chế độ:</span>
+                  {[['markdown', 'MARKDOWN'], ['raw', 'RAW']].map(([lang, label]) => (
                     <button key={lang} type="button" onClick={() => setEditorLang(lang)} style={{
                       padding: '2px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 500,
                       background: editorLang === lang ? '#1a73e8' : '#e2e8f0',
                       color: editorLang === lang ? '#fff' : '#64748b',
-                    }}>{lang.toUpperCase()}</button>
+                    }}>{label}</button>
                   ))}
                   <span style={{ marginLeft: 'auto', fontSize: 11, color: '#94a3b8' }}>Editor · Preview</span>
                 </div>
-                <div style={{ display: 'flex', height: 300 }}>
+                <div style={{ display: 'flex', height: 480 }}>
                   <div style={{ flex: 1, overflow: 'hidden', borderRight: '1px solid #e2e8f0' }}>
                     <Editor
                       height="100%"
-                      language={editorLang}
+                      language="markdown"
                       value={form.content ?? ''}
                       onChange={val => setForm(f => ({ ...f, content: val ?? '' }))}
                       options={{
@@ -318,25 +366,58 @@ export default function LessonsPage() {
                       }}
                     />
                   </div>
-                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: editorLang === 'markdown' ? '#181A20' : '#fff' }}>
-                    <div style={{ padding: '3px 10px', background: editorLang === 'markdown' ? '#1F222A' : '#f8fafc', borderBottom: `1px solid ${editorLang === 'markdown' ? '#262A35' : '#e2e8f0'}`, fontSize: 11, color: '#94a3b8', fontWeight: 600, letterSpacing: 1 }}>PREVIEW</div>
-                    <iframe
-                      srcDoc={(() => {
-                        const raw = form.content ?? ''
-                        if (editorLang === 'markdown') {
-                          return `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${MOBILE_CSS}</style></head><body>${renderLikeFlutter(raw)}</body></html>`
-                        }
-                        return `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:10px 14px;margin:0;font-size:13px;line-height:1.7;color:#1e293b}h1,h2,h3{margin:0.7em 0 0.3em}pre{background:#f1f5f9;padding:10px;border-radius:6px;overflow-x:auto;font-size:12px}code{background:#f1f5f9;padding:2px 5px;border-radius:4px;font-size:12px}ul,ol{padding-left:1.5em}a{color:#1a73e8}img{max-width:100%}</style></head><body>${raw.replace(/<\/body>|<\/html>/gi, '')}</body></html>`
-                      })()}
-                      style={{ flex: 1, border: 'none', background: editorLang === 'markdown' ? '#181A20' : '#fff' }}
-                      title="HTML Preview"
-                      sandbox="allow-same-origin allow-scripts"
-                    />
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: editorLang === 'raw' ? '#1e1e1e' : '#dce1e9' }}>
+                    <div style={{ padding: '3px 10px', background: editorLang === 'raw' ? '#252526' : '#c5ccd8', borderBottom: `1px solid ${editorLang === 'raw' ? '#333' : '#b0b8c8'}`, fontSize: 10, color: editorLang === 'raw' ? '#888' : '#555', fontWeight: 700, letterSpacing: 1 }}>
+                      {editorLang === 'raw' ? 'RAW TEXT' : 'MOBILE PREVIEW'}
+                    </div>
+                    {editorLang === 'raw' ? (
+                      <div style={{ flex: 1, overflow: 'auto', padding: 14, fontFamily: 'monospace', fontSize: 12, color: '#d4d4d4', lineHeight: 1.6, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                        {form.content ?? ''}
+                      </div>
+                    ) : (
+                      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px 12px', overflow: 'hidden' }}>
+                        {/* Phone mockup frame */}
+                        <div style={{
+                          display: 'flex', flexDirection: 'column',
+                          background: '#18181e',
+                          borderRadius: 36,
+                          padding: '6px 5px 4px',
+                          boxShadow: '0 0 0 1px #3a3a4e, 0 0 0 5px #202028, 0 20px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.07)',
+                          flexShrink: 0,
+                          height: 456,
+                          width: 222,
+                        }}>
+                          <div style={{ flex: 1, borderRadius: 28, overflow: 'hidden', display: 'flex', flexDirection: 'column', background: '#181A20' }}>
+                            {/* Status bar */}
+                            <div style={{ height: 22, flexShrink: 0, background: '#181A20', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 14px', position: 'relative' }}>
+                              <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 16, height: 6, background: '#18181e', borderRadius: 3 }} />
+                              <span style={{ fontSize: 9, fontWeight: 700, color: '#fff', zIndex: 1 }}>6:28</span>
+                              <div style={{ display: 'flex', gap: 3, alignItems: 'center', zIndex: 1 }}>
+                                <span style={{ fontSize: 8, color: '#fff', fontWeight: 700 }}>G</span>
+                                <svg width="10" height="8" viewBox="0 0 10 8" fill="#fff"><rect x="0" y="5" width="2" height="3" rx="0.5"/><rect x="2.5" y="3" width="2" height="5" rx="0.5"/><rect x="5" y="1" width="2" height="7" rx="0.5"/><rect x="7.5" y="0" width="2" height="8" rx="0.5"/></svg>
+                                <svg width="14" height="8" viewBox="0 0 14 8" fill="none"><rect x="0.5" y="0.5" width="11" height="7" rx="1.5" stroke="#fff" strokeWidth="1"/><rect x="12" y="2.5" width="1.5" height="3" rx="0.75" fill="#fff"/><rect x="1.5" y="1.5" width="8" height="5" rx="1" fill="#fff"/></svg>
+                              </div>
+                            </div>
+                            {/* Content iframe */}
+                            <iframe
+                              srcDoc={buildMobilePreviewDoc(form.content ?? '', form.title ?? '', form.summary ?? '', form.xpReward ?? 10, topicName(form.topicId))}
+                              style={{ flex: 1, border: 'none', width: '100%', display: 'block' }}
+                              title="Mobile Preview"
+                              sandbox="allow-same-origin allow-scripts"
+                            />
+                          </div>
+                          {/* Home indicator */}
+                          <div style={{ height: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <div style={{ width: 48, height: 3.5, background: '#3a3a4e', borderRadius: 2 }} />
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
 
-              {editorLang === 'markdown' && (
+              {(
                 <div style={{ background: '#f0f7ff', border: '1px solid #bfdbfe', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: '#1e40af' }}>
                   <div style={{ fontWeight: 700, marginBottom: 8 }}>📝 Cú pháp Markdown được hỗ trợ trên mobile:</div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 20px', fontFamily: 'monospace' }}>

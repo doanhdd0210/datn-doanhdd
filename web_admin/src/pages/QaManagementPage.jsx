@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { Eye, Trash2, RefreshCw, X, CheckCircle, Circle } from 'lucide-react'
 import { qaApi } from '../services/api'
 import { exportJson } from '../utils/importExport'
 
@@ -17,8 +18,8 @@ function Toast({ msg, type }) {
 
 const STATUS_FILTERS = [
   { id: 'all', label: 'Tất cả' },
-  { id: 'solved', label: '✓ Đã giải' },
-  { id: 'unsolved', label: '○ Chưa giải' },
+  { id: 'solved', label: 'Đã giải' },
+  { id: 'unsolved', label: 'Chưa giải' },
 ]
 
 export default function QaManagementPage() {
@@ -120,8 +121,8 @@ export default function QaManagementPage() {
             </button>
           ))}
         </div>
-        <button onClick={() => load(true)} style={s.btnSecondary}>⟳ Làm mới</button>
-        <button onClick={handleExportJson} style={s.btnSm}>📤 Export JSON</button>
+        <button onClick={() => load(true)} style={s.btnSecondary}><RefreshCw size={14} /> Làm mới</button>
+        <button onClick={handleExportJson} style={s.btnSm}>Export JSON</button>
       </div>
 
       {error && <div style={s.errorBox}>{error}</div>}
@@ -177,14 +178,14 @@ export default function QaManagementPage() {
                     </td>
                     <td style={s.td}>
                       <span style={{ ...s.statusBadge, background: p.isSolved ? '#dcfce7' : '#fff7ed', color: p.isSolved ? '#16a34a' : '#c2410c' }}>
-                        {p.isSolved ? '✓ Đã giải' : '○ Chưa giải'}
+                        {p.isSolved ? <><CheckCircle size={12} style={{verticalAlign:'middle',marginRight:3}}/>Đã giải</> : <><Circle size={12} style={{verticalAlign:'middle',marginRight:3}}/>Chưa giải</>}
                       </span>
                     </td>
                     <td style={{ ...s.td, fontSize: 12, color: '#64748b' }}>{formatDate(p.createdAt)}</td>
                     <td style={s.td} onClick={e => e.stopPropagation()}>
                       <div style={s.actions}>
-                        <button onClick={() => openView(p)} style={s.btnEdit} title="Xem">👁️</button>
-                        <button onClick={() => openDelete(p)} style={s.btnDelete} title="Xoá">🗑️</button>
+                        <button onClick={() => openView(p)} style={s.btnEdit} title="Xem"><Eye size={14} /></button>
+                        <button onClick={() => openDelete(p)} style={s.btnDelete} title="Xoá"><Trash2 size={14} /></button>
                       </div>
                     </td>
                   </tr>
@@ -209,13 +210,13 @@ export default function QaManagementPage() {
           <div style={{ ...s.modal, maxWidth: 700 }}>
             <div style={s.modalHeader}>
               <h3 style={s.modalTitle}>{modal.item.title || '(Không có tiêu đề)'}</h3>
-              <button onClick={closeModal} style={s.modalClose}>✕</button>
+              <button onClick={closeModal} style={s.modalClose}><X size={16} /></button>
             </div>
             <div style={s.modalBody}>
               <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
                 <span style={s.badge}>👤 {modal.item.userName || '—'}</span>
                 <span style={{ ...s.badge, background: modal.item.isSolved ? '#dcfce7' : '#fff7ed', color: modal.item.isSolved ? '#16a34a' : '#c2410c' }}>
-                  {modal.item.isSolved ? '✓ Đã giải' : '○ Chưa giải'}
+                  {modal.item.isSolved ? <><CheckCircle size={12} style={{verticalAlign:'middle',marginRight:3}}/>Đã giải</> : <><Circle size={12} style={{verticalAlign:'middle',marginRight:3}}/>Chưa giải</>}
                 </span>
                 <span style={s.badge}>📅 {formatDate(modal.item.createdAt)}</span>
                 {(modal.item.tags ?? []).map((tag, i) => (
@@ -254,7 +255,7 @@ export default function QaManagementPage() {
                             </div>
                             <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                               {ans.upvoteCount > 0 && <span style={{ fontSize: 12, color: '#64748b' }}>👍 {ans.upvoteCount}</span>}
-                              {ans.isAccepted && <span style={{ ...s.badge, background: '#dcfce7', color: '#16a34a', fontSize: 11 }}>✓ Đáp án được chọn</span>}
+                              {ans.isAccepted && <span style={{ ...s.badge, background: '#dcfce7', color: '#16a34a', fontSize: 11, display:'inline-flex', alignItems:'center', gap:3 }}><CheckCircle size={11}/>Đáp án được chọn</span>}
                             </div>
                           </div>
                           <div style={{ color: '#475569', fontSize: 14, lineHeight: 1.6 }}>{ans.content || ans.body || '—'}</div>
@@ -266,7 +267,7 @@ export default function QaManagementPage() {
               )}
             </div>
             <div style={s.modalFooter}>
-              <button onClick={() => { closeModal(); openDelete(modal.item) }} style={{ ...s.cancelBtn, color: '#dc2626', border: '1.5px solid #dc2626' }}>🗑️ Xoá bài đăng</button>
+              <button onClick={() => { closeModal(); openDelete(modal.item) }} style={{ ...s.cancelBtn, color: '#dc2626', border: '1.5px solid #dc2626', display:'inline-flex', alignItems:'center', gap:5 }}><Trash2 size={14}/>Xoá bài đăng</button>
               <button onClick={closeModal} style={s.btnPrimary}>Đóng</button>
             </div>
           </div>
@@ -279,7 +280,7 @@ export default function QaManagementPage() {
           <div style={{ ...s.modal, maxWidth: 400 }}>
             <div style={s.modalHeader}>
               <h3 style={s.modalTitle}>Xoá bài đăng QA</h3>
-              <button onClick={closeModal} style={s.modalClose}>✕</button>
+              <button onClick={closeModal} style={s.modalClose}><X size={16} /></button>
             </div>
             <div style={s.modalBody}>
               <p style={{ color: '#6b7280', marginBottom: 8 }}>Xoá bài đăng: <strong>{modal.item?.title || '(không có tiêu đề)'}</strong>?</p>

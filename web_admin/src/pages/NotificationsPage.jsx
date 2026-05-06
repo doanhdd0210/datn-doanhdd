@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { Send, ClipboardList, RefreshCw, Check, X } from 'lucide-react'
 import { notificationsApi, usersApi } from '../services/api'
 
 const TARGET_OPTS = [
@@ -74,8 +75,12 @@ export default function NotificationsPage() {
     <div>
       {/* Tabs */}
       <div style={s.tabs}>
-        {[['send', '📤 Gửi thông báo'], ['history', '📋 Lịch sử']].map(([id, label]) => (
-          <button key={id} onClick={() => setTab(id)} style={{ ...s.tab, ...(tab === id ? s.tabActive : {}) }}>
+        {[
+          { id: 'send',    Icon: Send,          label: 'Gửi thông báo' },
+          { id: 'history', Icon: ClipboardList,  label: 'Lịch sử' },
+        ].map(({ id, Icon, label }) => (
+          <button key={id} onClick={() => setTab(id)} style={{ ...s.tab, ...(tab === id ? s.tabActive : {}), display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <Icon size={15} />
             {label}
           </button>
         ))}
@@ -173,13 +178,13 @@ export default function NotificationsPage() {
 
             {result && (
               <div style={{ ...s.resultBox, background: result.ok ? '#f0fdf4' : '#fef2f2', borderColor: result.ok ? '#86efac' : '#fca5a5', color: result.ok ? '#166534' : '#dc2626' }}>
-                {result.ok ? '✓ ' : '✗ '}{result.msg}
+                {result.ok ? <Check size={14} style={{verticalAlign:'middle',marginRight:4}}/> : <X size={14} style={{verticalAlign:'middle',marginRight:4}}/>}{result.msg}
                 {result.detail && <span style={{ marginLeft: 8, opacity: 0.7 }}>({result.detail})</span>}
               </div>
             )}
 
             <button type="submit" disabled={sending} style={{ ...s.btnPrimary, marginTop: 20, width: '100%' }}>
-              {sending ? 'Đang gửi...' : '📤 Gửi thông báo'}
+              {sending ? 'Đang gửi...' : <><Send size={15} style={{verticalAlign:'middle',marginRight:6}}/>Gửi thông báo</>}
             </button>
           </form>
         </div>
@@ -189,7 +194,7 @@ export default function NotificationsPage() {
       {tab === 'history' && (
         <div>
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
-            <button onClick={loadHistory} style={s.btnSecondary}>⟳ Làm mới</button>
+            <button onClick={loadHistory} style={{ ...s.btnSecondary, display:'inline-flex', alignItems:'center', gap:6 }}><RefreshCw size={14}/>Làm mới</button>
           </div>
           {loadingHistory ? (
             <div style={s.loading}>Đang tải lịch sử...</div>

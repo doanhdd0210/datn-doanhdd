@@ -69,17 +69,22 @@ export default function AnalyticsPage() {
 
   return (
     <div style={s.page}>
-      <SectionTitle Icon={Users} color="#3b82f6" label="Thống kê người dùng" />
-      <div style={s.cardRow}>
-        <StatCard Icon={Users}       iconColor="#3b82f6" iconBg="#eff6ff" label="Tổng người dùng"  value={data.users.length}       accent="#3b82f6" />
-        <StatCard Icon={ShieldCheck} iconColor="#7c3aed" iconBg="#f5f3ff" label="Admin"            value={data.adminUsers.length}  accent="#7c3aed" />
-      </div>
-
-      <SectionTitle Icon={BookOpen} color="#9333ea" label="Thống kê nội dung" />
-      <div style={s.cardRow}>
-        <StatCard Icon={BookOpen}      iconColor="#ca8a04" iconBg="#fefce8" label="Chủ đề"              value={data.topics.length}  accent="#ca8a04" />
-        <StatCard Icon={GraduationCap} iconColor="#9333ea" iconBg="#f5f3ff" label="Bài học"             value={data.lessons.length} accent="#9333ea" />
-        <StatCard Icon={Target}        iconColor="#0ea5e9" iconBg="#f0f9ff" label="Bài học TB/chủ đề"   value={data.topics.length > 0 ? (data.lessons.length / data.topics.length).toFixed(1) : '—'} accent="#0ea5e9" />
+      <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+        <div style={{ flex: '0 0 auto' }}>
+          <SectionTitle Icon={Users} color="#3b82f6" label="Thống kê người dùng" />
+          <div style={{ display: 'flex', gap: 12 }}>
+            <StatCard Icon={Users}       iconColor="#3b82f6" iconBg="#eff6ff" label="Tổng người dùng"  value={data.users.length}       accent="#3b82f6" />
+            <StatCard Icon={ShieldCheck} iconColor="#7c3aed" iconBg="#f5f3ff" label="Admin"            value={data.adminUsers.length}  accent="#7c3aed" />
+          </div>
+        </div>
+        <div style={{ flex: '1 1 auto' }}>
+          <SectionTitle Icon={BookOpen} color="#9333ea" label="Thống kê nội dung" />
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <StatCard Icon={BookOpen}      iconColor="#ca8a04" iconBg="#fefce8" label="Chủ đề"              value={data.topics.length}  accent="#ca8a04" />
+            <StatCard Icon={GraduationCap} iconColor="#9333ea" iconBg="#f5f3ff" label="Bài học"             value={data.lessons.length} accent="#9333ea" />
+            <StatCard Icon={Target}        iconColor="#0ea5e9" iconBg="#f0f9ff" label="Bài học TB/chủ đề"   value={data.topics.length > 0 ? (data.lessons.length / data.topics.length).toFixed(1) : '—'} accent="#0ea5e9" />
+          </div>
+        </div>
       </div>
 
       <SectionTitle Icon={Zap} color="#f59e0b" label="Thống kê tương tác" />

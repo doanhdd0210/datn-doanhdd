@@ -357,6 +357,7 @@ class _TopicsScreenState extends State<TopicsScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: context.surfaceColor,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (_) => Consumer<UserProvider>(
         builder: (_, provider, __) => Padding(

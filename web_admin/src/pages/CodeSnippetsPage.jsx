@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { RefreshCw, Upload, Download, FileDown, X, Pencil, Trash2 } from 'lucide-react'
+import { RefreshCw, Upload, Download, FileDown, X, Pencil, Trash2, ChevronDown } from 'lucide-react'
 import Editor from '@monaco-editor/react'
 import { codeSnippetsApi, topicsApi } from '../services/api'
 import { exportExcel, importExcel, downloadSampleExcel } from '../utils/importExport'
@@ -166,10 +166,13 @@ export default function CodeSnippetsPage() {
 
       {/* Toolbar */}
       <div style={s.toolbar}>
-        <select value={topicFilter} onChange={e => setTopicFilter(e.target.value)} style={s.select}>
-          <option value="">Tất cả chủ đề</option>
-          {topics.map(t => <option key={t.id} value={t.id}>{t.icon} {t.title}</option>)}
-        </select>
+        <div style={{ position:'relative', display:'inline-flex', alignItems:'center' }}>
+          <select value={topicFilter} onChange={e => setTopicFilter(e.target.value)} style={s.select}>
+            <option value="">Tất cả chủ đề</option>
+            {topics.map(t => <option key={t.id} value={t.id}>{t.icon} {t.title}</option>)}
+          </select>
+          <ChevronDown size={16} style={{ position:'absolute', right:10, pointerEvents:'none', color:'#64748b' }} />
+        </div>
         <input placeholder="Tìm code snippet..." value={search} onChange={e => setSearch(e.target.value)} style={s.searchInput} />
         <button onClick={load} style={s.btnSecondary}><RefreshCw size={14} style={{marginRight:5,verticalAlign:"middle"}}/> Làm mới</button>
         <button onClick={openCreate} style={s.btnPrimary}>+ Thêm snippet</button>
@@ -447,7 +450,7 @@ export default function CodeSnippetsPage() {
 const s = {
   toolbar: { display: 'flex', gap: 10, marginBottom: 16, alignItems: 'center', flexWrap: 'wrap' },
   searchInput: { flex: 1, minWidth: 180, padding: '8px 14px', border: '1.5px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none' },
-  select: { padding: '8px 36px 8px 12px', border: '1.5px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none', background: '#fff', cursor: 'pointer', minWidth: 160 },
+  select: { padding: '8px 36px 8px 12px', border: '1.5px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none', background: '#fff', cursor: 'pointer', minWidth: 160, appearance: 'none', WebkitAppearance: 'none' },
   btnPrimary: { padding: '8px 18px', background: '#1a73e8', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600, fontSize: 14 },
   btnSecondary: { padding: '8px 14px', background: '#f1f5f9', color: '#334155', border: '1.5px solid #e2e8f0', borderRadius: 8, cursor: 'pointer', fontSize: 14 },
   btnGroup: { display: 'flex', gap: 6 },

@@ -1,7 +1,31 @@
 import { useState, useEffect } from 'react'
-import { Target, Zap, X, Check } from 'lucide-react'
+import { Target, Zap, X, Check, Trash2 } from 'lucide-react'
 import { checkHealth, settingsApi } from '../services/api'
 import { useAuth } from '../context/AuthContext'
+
+function DeleteGoalBtn({ canDelete, usersCount, onDelete }) {
+  const [hovered, setHovered] = useState(false)
+  return (
+    <div style={{ position: 'relative', display: 'inline-flex' }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <button
+        onClick={canDelete ? onDelete : undefined}
+        disabled={!canDelete}
+        style={{ width: 28, height: 28, borderRadius: 7, border: 'none', cursor: canDelete ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', background: canDelete ? '#fee2e2' : '#f1f5f9', color: canDelete ? '#dc2626' : '#cbd5e1' }}
+      >
+        <Trash2 size={14} />
+      </button>
+      {usersCount > 0 && hovered && (
+        <div style={{ position: 'absolute', bottom: 'calc(100% + 6px)', left: '50%', transform: 'translateX(-50%)', background: '#1e293b', color: '#fff', fontSize: 11, padding: '5px 9px', borderRadius: 6, whiteSpace: 'nowrap', pointerEvents: 'none', zIndex: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.18)' }}>
+          Không thể xoá: có {usersCount} người dùng
+          <div style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', borderWidth: 5, borderStyle: 'solid', borderColor: '#1e293b transparent transparent transparent' }} />
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default function SettingsPage() {
   const { user } = useAuth()
@@ -164,23 +188,12 @@ export default function SettingsPage() {
                       <span style={{ fontSize: 12, fontWeight: 700, color: '#f59e0b', display:'flex', alignItems:'center', gap:2 }}><Zap size={12}/>XP</span>
                     </div>
                     {/* Action */}
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, padding: '10px 8px', borderLeft: `1px solid #f1f5f9` }}>
-                      {bonusConfigs.length > 1 && (
-                        <button
-                          onClick={() => {
-                            if (cfg.usersCount > 0) {
-                              if (!window.confirm(`Mục tiêu này đang có ${cfg.usersCount} user. Vẫn xoá?`)) return
-                            }
-                            setBonusConfigs(prev => prev.filter((_, j) => j !== i))
-                          }}
-                          style={{ width: 28, height: 28, borderRadius: 7, background: '#fee2e2', border: 'none', cursor: 'pointer', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                          title={cfg.usersCount > 0 ? `Xoá (${cfg.usersCount} user đang dùng)` : 'Xoá mục tiêu này'}>
-                          <X size={14}/>
-                        </button>
-                      )}
-                      {cfg.usersCount > 0 && (
-                        <span style={{ fontSize: 10, color: '#94a3b8', textAlign: 'center', lineHeight: 1.2 }}>{cfg.usersCount}<br/>users</span>
-                      )}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px 8px', borderLeft: `1px solid #f1f5f9` }}>
+                      <DeleteGoalBtn
+                        canDelete={bonusConfigs.length > 1 && cfg.usersCount === 0}
+                        usersCount={cfg.usersCount}
+                        onDelete={() => setBonusConfigs(prev => prev.filter((_, j) => j !== i))}
+                      />
                     </div>
                   </div>
                 )

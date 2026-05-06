@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { Users, BookOpen, GraduationCap, HelpCircle, Code2, ShieldCheck, Bell } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { signOut } from '../services/auth'
 import { useAuth } from '../context/AuthContext'
@@ -182,12 +183,12 @@ function OverviewCards({ setActiveNav }) {
   }, [])
 
   const cards = [
-    { label: 'Tổng người dùng',  value: loading ? '…' : stats.totalUsers,    icon: '👥', color: '#e8f0fe' },
-    { label: 'Chủ đề',           value: loading ? '…' : stats.totalTopics,   icon: '📚', color: '#fef9c3' },
-    { label: 'Bài học',          value: loading ? '…' : stats.totalLessons,  icon: '📖', color: '#f3e8ff' },
-    { label: 'Câu hỏi Quiz',     value: loading ? '…' : stats.totalQuestions,icon: '📝', color: '#ecfdf5' },
-    { label: 'Demo Code',        value: loading ? '…' : stats.totalSnippets, icon: '💻', color: '#fffbeb' },
-    { label: 'Tài khoản Admin',  value: loading ? '…' : stats.admins,        icon: '🛡️', color: '#ede9fe' },
+    { label: 'Tổng người dùng',  value: loading ? '…' : stats.totalUsers,    Icon: Users,       color: '#e8f0fe', iconColor: '#3b82f6' },
+    { label: 'Chủ đề',           value: loading ? '…' : stats.totalTopics,   Icon: BookOpen,    color: '#fef9c3', iconColor: '#ca8a04' },
+    { label: 'Bài học',          value: loading ? '…' : stats.totalLessons,  Icon: GraduationCap, color: '#f3e8ff', iconColor: '#9333ea' },
+    { label: 'Câu hỏi Quiz',     value: loading ? '…' : stats.totalQuestions,Icon: HelpCircle,  color: '#ecfdf5', iconColor: '#16a34a' },
+    { label: 'Demo Code',        value: loading ? '…' : stats.totalSnippets, Icon: Code2,       color: '#fffbeb', iconColor: '#d97706' },
+    { label: 'Tài khoản Admin',  value: loading ? '…' : stats.admins,        Icon: ShieldCheck, color: '#ede9fe', iconColor: '#7c3aed' },
   ]
 
   return (
@@ -195,7 +196,7 @@ function OverviewCards({ setActiveNav }) {
       <div style={styles.cards}>
         {cards.map((c) => (
           <div key={c.label} style={{ ...styles.card, background: c.color }}>
-            <span style={{ fontSize: 32 }}>{c.icon}</span>
+            <c.Icon size={32} color={c.iconColor} strokeWidth={1.75} />
             <p style={styles.cardValue}>{c.value}</p>
             <p style={styles.cardLabel}>{c.label}</p>
           </div>
@@ -205,18 +206,18 @@ function OverviewCards({ setActiveNav }) {
       <div style={styles.quickActions}>
         <h3 style={{ margin: '0 0 12px', fontSize: 16, color: '#1e293b' }}>Truy cập nhanh</h3>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          <QuickBtn label="Quản lý người dùng" icon="👥" desc="Thêm, sửa, xoá, khoá tài khoản" color="#e8f0fe" onClick={() => setActiveNav('users')} />
-          <QuickBtn label="Chủ đề"             icon="📚" desc="Quản lý chủ đề học tập"          color="#fef9c3" onClick={() => setActiveNav('topics')} />
-          <QuickBtn label="Bài học"            icon="📖" desc="Quản lý bài học theo chủ đề"     color="#f3e8ff" onClick={() => setActiveNav('lessons')} />
-          <QuickBtn label="Câu hỏi Quiz"       icon="📝" desc="Quiz theo từng bài học"           color="#ecfdf5" onClick={() => setActiveNav('questions')} />
-          <QuickBtn label="Gửi thông báo"      icon="🔔" desc="Push notification đến người dùng" color="#fff7ed" onClick={() => setActiveNav('notifications')} />
+          <QuickBtn label="Quản lý người dùng" Icon={Users}       iconColor="#3b82f6" desc="Thêm, sửa, xoá, khoá tài khoản"  color="#e8f0fe" onClick={() => setActiveNav('users')} />
+          <QuickBtn label="Chủ đề"             Icon={BookOpen}    iconColor="#ca8a04" desc="Quản lý chủ đề học tập"           color="#fef9c3" onClick={() => setActiveNav('topics')} />
+          <QuickBtn label="Bài học"            Icon={GraduationCap} iconColor="#9333ea" desc="Quản lý bài học theo chủ đề"   color="#f3e8ff" onClick={() => setActiveNav('lessons')} />
+          <QuickBtn label="Câu hỏi Quiz"       Icon={HelpCircle}  iconColor="#16a34a" desc="Quiz theo từng bài học"           color="#ecfdf5" onClick={() => setActiveNav('questions')} />
+          <QuickBtn label="Gửi thông báo"      Icon={Bell}        iconColor="#ea580c" desc="Push notification đến người dùng" color="#fff7ed" onClick={() => setActiveNav('notifications')} />
         </div>
       </div>
     </div>
   )
 }
 
-function QuickBtn({ icon, label, desc, color, onClick }) {
+function QuickBtn({ Icon, iconColor, label, desc, color, onClick }) {
   return (
     <div
       onClick={onClick}
@@ -224,7 +225,7 @@ function QuickBtn({ icon, label, desc, color, onClick }) {
       onMouseEnter={e => e.currentTarget.style.opacity = '0.8'}
       onMouseLeave={e => e.currentTarget.style.opacity = '1'}
     >
-      <div style={{ fontSize: 24, marginBottom: 6 }}>{icon}</div>
+      <div style={{ marginBottom: 8 }}><Icon size={24} color={iconColor} strokeWidth={1.75} /></div>
       <div style={{ fontWeight: 700, color: '#1e293b', marginBottom: 4 }}>{label}</div>
       <div style={{ fontSize: 12, color: '#64748b' }}>{desc}</div>
     </div>

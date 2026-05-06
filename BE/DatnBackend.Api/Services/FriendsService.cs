@@ -231,40 +231,31 @@ public class FriendsService
 
         var bonusDict = weeklyBonusList.ToDictionary(x => x.UserId, x => x.Bonus);
         var achievementDict = weeklyAchievementList.ToDictionary(x => x.UserId, x => x.AchievementXp);
+        var xpDict = weeklyXpList.ToDictionary(x => x.UserId, x => x.Xp);
 
-        var merged = weeklyXpList
-            .Select(x => x.UserId)
-            .Union(bonusDict.Keys)
-            .Union(achievementDict.Keys)
-            .Select(uid => new
+        var allProfiles = await _db.UserProfiles
+            .Where(p => !p.IsAdmin)
+            .ToListAsync();
+
+        var entries = allProfiles
+            .Select(p => new
             {
-                UserId = uid,
-                WeeklyXp = (weeklyXpList.FirstOrDefault(x => x.UserId == uid)?.Xp ?? 0)
-                         + (bonusDict.TryGetValue(uid, out var b) ? b : 0)
-                         + (achievementDict.TryGetValue(uid, out var a) ? a : 0),
+                Profile = p,
+                WeeklyXp = (xpDict.TryGetValue(p.Uid, out var xp) ? xp : 0)
+                         + (bonusDict.TryGetValue(p.Uid, out var b) ? b : 0)
+                         + (achievementDict.TryGetValue(p.Uid, out var a) ? a : 0),
             })
             .OrderByDescending(x => x.WeeklyXp)
             .Take(limit)
-            .ToList();
-
-        if (merged.Count == 0) return [];
-
-        var userIds = merged.Select(x => x.UserId).ToList();
-        var profiles = await _db.UserProfiles
-            .Where(p => userIds.Contains(p.Uid))
-            .ToDictionaryAsync(p => p.Uid);
-
-        var entries = merged
-            .Where(x => profiles.ContainsKey(x.UserId))
             .Select((x, i) => new LeaderboardEntry
             {
                 Rank = i + 1,
-                UserId = x.UserId,
-                DisplayName = profiles[x.UserId].DisplayName,
-                PhotoUrl = profiles[x.UserId].PhotoUrl,
+                UserId = x.Profile.Uid,
+                DisplayName = x.Profile.DisplayName,
+                PhotoUrl = x.Profile.PhotoUrl,
                 TotalXp = x.WeeklyXp,
-                LessonsCompleted = profiles[x.UserId].LessonsCompleted,
-                CurrentStreak = profiles[x.UserId].CurrentStreak,
+                LessonsCompleted = x.Profile.LessonsCompleted,
+                CurrentStreak = x.Profile.CurrentStreak,
             })
             .ToList();
 

@@ -40,9 +40,9 @@ public class SettingsController : ControllerBase
         {
             if (cfg.GoalXp <= 0 || cfg.BonusXp < 0)
                 return BadRequest(ApiResponse<object>.Fail("Invalid goal or bonus value"));
-
-            await _settingsService.SetDailyGoalBonusAsync(cfg.GoalXp, cfg.BonusXp);
         }
+
+        await _settingsService.ReplaceDailyGoalBonusesAsync(configs.Select(c => (c.GoalXp, c.BonusXp)).ToList());
 
         return Ok(ApiResponse<object>.Ok(null, "Settings updated"));
     }

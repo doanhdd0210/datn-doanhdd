@@ -127,38 +127,57 @@ export default function SettingsPage() {
         ) : (
           <>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
-              {bonusConfigs.map((cfg, i) => (
-                <div key={cfg.goalXp} style={s.bonusRow}>
-                  <div style={s.goalBadge}>
-                    <span style={{ fontSize: 18 }}>
-                      {cfg.goalXp === 20 ? '🌱' : cfg.goalXp === 50 ? '🔥' : '⚡'}
-                    </span>
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: 14, color: '#1e293b' }}>
-                        Mục tiêu {cfg.goalXp} XP
+              {bonusConfigs.map((cfg, i) => {
+                const icons = ['🌱', '🔥', '⚡']
+                const labels = ['Cơ bản', 'Trung bình', 'Thách thức']
+                return (
+                  <div key={i} style={s.bonusRow}>
+                    <div style={s.goalBadge}>
+                      <span style={{ fontSize: 18 }}>{icons[i] ?? '⭐'}</span>
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: 14, color: '#1e293b' }}>
+                          Mục tiêu
+                        </div>
+                        <div style={{ fontSize: 12, color: '#64748b' }}>
+                          {labels[i] ?? `Cấp ${i + 1}`}
+                        </div>
                       </div>
-                      <div style={{ fontSize: 12, color: '#64748b' }}>
-                        {cfg.goalXp === 20 ? 'Cơ bản' : cfg.goalXp === 50 ? 'Trung bình' : 'Thách thức'}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                      <div style={s.bonusInput}>
+                        <span style={{ fontSize: 13, color: '#475569', whiteSpace: 'nowrap' }}>Mục tiêu:</span>
+                        <input
+                          type="number"
+                          min={1}
+                          max={9999}
+                          value={cfg.goalXp}
+                          onChange={e => {
+                            const val = Math.max(1, parseInt(e.target.value) || 1)
+                            setBonusConfigs(prev => prev.map((c, j) => j === i ? { ...c, goalXp: val } : c))
+                          }}
+                          style={s.numberInput}
+                        />
+                        <span style={{ fontSize: 13, color: '#64748b', fontWeight: 600 }}>XP</span>
+                      </div>
+                      <div style={s.bonusInput}>
+                        <span style={{ fontSize: 13, color: '#475569', whiteSpace: 'nowrap' }}>Thưởng:</span>
+                        <input
+                          type="number"
+                          min={0}
+                          max={500}
+                          value={cfg.bonusXp}
+                          onChange={e => {
+                            const val = Math.max(0, parseInt(e.target.value) || 0)
+                            setBonusConfigs(prev => prev.map((c, j) => j === i ? { ...c, bonusXp: val } : c))
+                          }}
+                          style={s.numberInput}
+                        />
+                        <span style={{ fontSize: 13, color: '#f59e0b', fontWeight: 700 }}>⚡ XP</span>
                       </div>
                     </div>
                   </div>
-                  <div style={s.bonusInput}>
-                    <span style={{ fontSize: 13, color: '#475569', whiteSpace: 'nowrap' }}>Thưởng:</span>
-                    <input
-                      type="number"
-                      min={0}
-                      max={500}
-                      value={cfg.bonusXp}
-                      onChange={e => {
-                        const val = Math.max(0, parseInt(e.target.value) || 0)
-                        setBonusConfigs(prev => prev.map((c, j) => j === i ? { ...c, bonusXp: val } : c))
-                      }}
-                      style={s.numberInput}
-                    />
-                    <span style={{ fontSize: 13, color: '#f59e0b', fontWeight: 700 }}>⚡ XP</span>
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>

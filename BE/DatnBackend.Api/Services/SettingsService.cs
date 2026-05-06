@@ -61,4 +61,17 @@ public class SettingsService
 
         await _db.SaveChangesAsync();
     }
+
+    public async Task ReplaceDailyGoalBonusesAsync(List<(int GoalXp, int BonusXp)> configs)
+    {
+        var existing = await _db.AppSettings
+            .Where(s => s.Key.StartsWith("dailyGoalBonus:"))
+            .ToListAsync();
+        _db.AppSettings.RemoveRange(existing);
+
+        foreach (var (goal, bonus) in configs)
+            _db.AppSettings.Add(new AppSetting { Key = $"dailyGoalBonus:{goal}", Value = bonus.ToString() });
+
+        await _db.SaveChangesAsync();
+    }
 }

@@ -27,7 +27,9 @@ public class SettingsService
             .Where(s => s.Key.StartsWith("dailyGoalBonus:"))
             .ToListAsync();
 
-        var result = new Dictionary<int, int>(DefaultBonuses);
+        if (settings.Count == 0) return new Dictionary<int, int>(DefaultBonuses);
+
+        var result = new Dictionary<int, int>();
         foreach (var s in settings)
         {
             var parts = s.Key.Split(':');
@@ -60,6 +62,15 @@ public class SettingsService
             _db.AppSettings.Add(new AppSetting { Key = key, Value = bonus.ToString() });
 
         await _db.SaveChangesAsync();
+    }
+
+    public async Task<Dictionary<int, int>> GetUsersCountPerGoalAsync()
+    {
+        return await _db.UserProfiles
+            .Where(p => !p.IsAdmin)
+            .GroupBy(p => p.DailyGoalTarget)
+            .Select(g => new { Goal = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Goal, x => x.Count);
     }
 
     public async Task ReplaceDailyGoalBonusesAsync(List<(int GoalXp, int BonusXp)> configs)

@@ -10,9 +10,9 @@ export default function SettingsPage() {
 
   // Daily goal bonus config
   const [bonusConfigs, setBonusConfigs] = useState([
-    { goalXp: 20,  bonusXp: 5  },
-    { goalXp: 50,  bonusXp: 15 },
-    { goalXp: 100, bonusXp: 35 },
+    { goalXp: 20,  bonusXp: 5,  usersCount: 0 },
+    { goalXp: 50,  bonusXp: 15, usersCount: 0 },
+    { goalXp: 100, bonusXp: 35, usersCount: 0 },
   ])
   const [bonusLoading, setBonusLoading] = useState(true)
   const [bonusSaving, setBonusSaving] = useState(false)
@@ -22,7 +22,7 @@ export default function SettingsPage() {
     settingsApi.getDailyGoalBonuses()
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {
-          setBonusConfigs(data.map(d => ({ goalXp: d.goalXp, bonusXp: d.bonusXp })))
+          setBonusConfigs(data.map(d => ({ goalXp: d.goalXp, bonusXp: d.bonusXp, usersCount: d.usersCount ?? 0 })))
         }
       })
       .catch(() => {})
@@ -135,49 +135,47 @@ export default function SettingsPage() {
                     <div style={s.goalBadge}>
                       <span style={{ fontSize: 18 }}>{icons[i] ?? '⭐'}</span>
                       <div>
-                        <div style={{ fontWeight: 700, fontSize: 14, color: '#1e293b' }}>
-                          Mục tiêu
-                        </div>
-                        <div style={{ fontSize: 12, color: '#64748b' }}>
-                          {labels[i] ?? `Cấp ${i + 1}`}
-                        </div>
+                        <div style={{ fontWeight: 700, fontSize: 14, color: '#1e293b' }}>Mục tiêu</div>
+                        <div style={{ fontSize: 12, color: '#64748b' }}>{labels[i] ?? `Cấp ${i + 1}`}</div>
                       </div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                       <div style={s.bonusInput}>
                         <span style={{ fontSize: 13, color: '#475569', whiteSpace: 'nowrap' }}>Mục tiêu:</span>
-                        <input
-                          type="number"
-                          min={1}
-                          max={9999}
-                          value={cfg.goalXp}
-                          onChange={e => {
-                            const val = Math.max(1, parseInt(e.target.value) || 1)
-                            setBonusConfigs(prev => prev.map((c, j) => j === i ? { ...c, goalXp: val } : c))
-                          }}
-                          style={s.numberInput}
-                        />
+                        <input type="number" min={1} max={9999} value={cfg.goalXp}
+                          onChange={e => { const val = Math.max(1, parseInt(e.target.value) || 1); setBonusConfigs(prev => prev.map((c, j) => j === i ? { ...c, goalXp: val } : c)) }}
+                          style={s.numberInput} />
                         <span style={{ fontSize: 13, color: '#64748b', fontWeight: 600 }}>XP</span>
                       </div>
                       <div style={s.bonusInput}>
                         <span style={{ fontSize: 13, color: '#475569', whiteSpace: 'nowrap' }}>Thưởng:</span>
-                        <input
-                          type="number"
-                          min={0}
-                          max={500}
-                          value={cfg.bonusXp}
-                          onChange={e => {
-                            const val = Math.max(0, parseInt(e.target.value) || 0)
-                            setBonusConfigs(prev => prev.map((c, j) => j === i ? { ...c, bonusXp: val } : c))
-                          }}
-                          style={s.numberInput}
-                        />
+                        <input type="number" min={0} max={500} value={cfg.bonusXp}
+                          onChange={e => { const val = Math.max(0, parseInt(e.target.value) || 0); setBonusConfigs(prev => prev.map((c, j) => j === i ? { ...c, bonusXp: val } : c)) }}
+                          style={s.numberInput} />
                         <span style={{ fontSize: 13, color: '#f59e0b', fontWeight: 700 }}>⚡ XP</span>
                       </div>
+                      {bonusConfigs.length > 1 && (
+                        cfg.usersCount === 0
+                          ? <button onClick={() => setBonusConfigs(prev => prev.filter((_, j) => j !== i))}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#dc2626', fontSize: 18, padding: '0 4px', lineHeight: 1 }}
+                              title="Xoá mục tiêu này">✕</button>
+                          : <span style={{ fontSize: 11, color: '#64748b', whiteSpace: 'nowrap' }}>{cfg.usersCount} người dùng</span>
+                      )}
                     </div>
                   </div>
                 )
               })}
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+              {bonusConfigs.length < 5 && (
+                <button
+                  onClick={() => setBonusConfigs(prev => [...prev, { goalXp: (prev[prev.length - 1]?.goalXp ?? 0) + 10, bonusXp: 10, usersCount: 0 }])}
+                  style={{ padding: '6px 14px', borderRadius: 8, border: '1.5px dashed #cbd5e1', background: 'none', cursor: 'pointer', fontSize: 13, color: '#475569', fontWeight: 500 }}>
+                  + Thêm mục tiêu
+                </button>
+              )}
+              <span style={{ fontSize: 12, color: '#94a3b8' }}>{bonusConfigs.length}/5 mục tiêu</span>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>

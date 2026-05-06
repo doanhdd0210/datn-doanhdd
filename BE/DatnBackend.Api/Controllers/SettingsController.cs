@@ -23,8 +23,14 @@ public class SettingsController : ControllerBase
     public async Task<ActionResult<ApiResponse<List<DailyGoalBonusConfig>>>> GetDailyGoalBonuses()
     {
         var bonuses = await _settingsService.GetDailyGoalBonusesAsync();
+        var userCounts = await _settingsService.GetUsersCountPerGoalAsync();
         var result = bonuses
-            .Select(kv => new DailyGoalBonusConfig { GoalXp = kv.Key, BonusXp = kv.Value })
+            .Select(kv => new DailyGoalBonusConfig
+            {
+                GoalXp = kv.Key,
+                BonusXp = kv.Value,
+                UsersCount = userCounts.TryGetValue(kv.Key, out var c) ? c : 0,
+            })
             .OrderBy(x => x.GoalXp)
             .ToList();
         return Ok(ApiResponse<List<DailyGoalBonusConfig>>.Ok(result));
@@ -52,4 +58,5 @@ public class DailyGoalBonusConfig
 {
     public int GoalXp { get; set; }
     public int BonusXp { get; set; }
+    public int UsersCount { get; set; }
 }

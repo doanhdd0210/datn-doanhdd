@@ -138,21 +138,21 @@ export default function SettingsPage() {
                         <div style={{ fontSize: 12, color: '#64748b' }}>{labels[i] ?? `Cấp ${i + 1}`}</div>
                       </div>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                      <div style={s.bonusInput}>
-                        <span style={{ fontSize: 13, color: '#475569', whiteSpace: 'nowrap' }}>Mục tiêu:</span>
-                        <input type="number" min={1} max={9999} value={cfg.goalXp}
-                          onChange={e => { const val = Math.max(1, parseInt(e.target.value) || 1); setBonusConfigs(prev => prev.map((c, j) => j === i ? { ...c, goalXp: val } : c)) }}
-                          style={s.numberInput} />
-                        <span style={{ fontSize: 13, color: '#64748b', fontWeight: 600 }}>XP</span>
-                      </div>
-                      <div style={s.bonusInput}>
-                        <span style={{ fontSize: 13, color: '#475569', whiteSpace: 'nowrap' }}>Thưởng:</span>
-                        <input type="number" min={0} max={500} value={cfg.bonusXp}
-                          onChange={e => { const val = Math.max(0, parseInt(e.target.value) || 0); setBonusConfigs(prev => prev.map((c, j) => j === i ? { ...c, bonusXp: val } : c)) }}
-                          style={s.numberInput} />
-                        <span style={{ fontSize: 13, color: '#f59e0b', fontWeight: 700 }}>⚡ XP</span>
-                      </div>
+                    <div style={s.bonusInput}>
+                      <span style={{ fontSize: 13, color: '#475569', whiteSpace: 'nowrap' }}>Mục tiêu:</span>
+                      <input type="number" min={1} max={9999} value={cfg.goalXp}
+                        onChange={e => { const val = Math.max(1, parseInt(e.target.value) || 1); setBonusConfigs(prev => prev.map((c, j) => j === i ? { ...c, goalXp: val } : c)) }}
+                        style={s.numberInput} />
+                      <span style={{ fontSize: 13, color: '#64748b', fontWeight: 600 }}>XP</span>
+                    </div>
+                    <div style={s.bonusInput}>
+                      <span style={{ fontSize: 13, color: '#475569', whiteSpace: 'nowrap' }}>Thưởng:</span>
+                      <input type="number" min={0} max={500} value={cfg.bonusXp}
+                        onChange={e => { const val = Math.max(0, parseInt(e.target.value) || 0); setBonusConfigs(prev => prev.map((c, j) => j === i ? { ...c, bonusXp: val } : c)) }}
+                        style={s.numberInput} />
+                      <span style={{ fontSize: 13, color: '#f59e0b', fontWeight: 700 }}>⚡ XP</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'center' }}>
                       {bonusConfigs.length > 1 && (
                         cfg.usersCount === 0
                           ? <button onClick={() => setBonusConfigs(prev => prev.filter((_, j) => j !== i))}
@@ -226,8 +226,8 @@ const s = {
   statusBox: { marginTop: 14, padding: '10px 14px', borderRadius: 8, border: '1px solid', fontSize: 14 },
   infoGrid: { display: 'flex', flexDirection: 'column' },
   link: { display: 'inline-block', color: '#1a73e8', fontSize: 14, fontWeight: 500, marginTop: 4 },
-  bonusRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: '#f8fafc', borderRadius: 10, border: '1px solid #e2e8f0' },
+  bonusRow: { display: 'grid', gridTemplateColumns: '160px 1fr 1fr 40px', alignItems: 'center', gap: 12, padding: '12px 16px', background: '#f8fafc', borderRadius: 10, border: '1px solid #e2e8f0' },
   goalBadge: { display: 'flex', alignItems: 'center', gap: 10 },
-  bonusInput: { display: 'flex', alignItems: 'center', gap: 8 },
+  bonusInput: { display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center' },
   numberInput: { width: 72, padding: '6px 10px', border: '1.5px solid #e2e8f0', borderRadius: 8, fontSize: 15, fontWeight: 700, textAlign: 'center', outline: 'none', color: '#1e293b' },
 }

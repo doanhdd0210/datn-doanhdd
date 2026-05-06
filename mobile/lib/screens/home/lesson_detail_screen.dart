@@ -243,7 +243,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                     ),
                   ),
                   Expanded(
-                    child: Text(item.substring(2), style: AppTextStyles.bodyMedium),
+                    child: Text(item.substring(2), style: AppTextStyles.bodyMedium.copyWith(fontSize: 10)),
                   ),
                 ],
               ),
@@ -262,7 +262,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   Widget _buildInlineText(String text) {
     // Basic bold support with **text**
     if (!text.contains('**') && !text.contains('`')) {
-      return Text(text, style: AppTextStyles.bodyMedium);
+      return Text(text, style: AppTextStyles.bodyMedium.copyWith(fontSize: 10));
     }
     return Builder(
       builder: (context) {
@@ -273,14 +273,14 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
           if (match.start > lastEnd) {
             spans.add(TextSpan(
               text: text.substring(lastEnd, match.start),
-              style: AppTextStyles.bodyMedium,
+              style: AppTextStyles.bodyMedium.copyWith(fontSize: 10),
             ));
           }
           if (match.group(1) != null) {
             // Bold
             spans.add(TextSpan(
               text: match.group(1),
-              style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w700),
+              style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w700, fontSize: 10),
             ));
           } else if (match.group(2) != null) {
             // Inline code
@@ -288,7 +288,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
               text: match.group(2),
               style: AppTextStyles.codeStyle.copyWith(
                 backgroundColor: context.surfaceElevatedColor,
-                fontSize: 13,
+                fontSize: 10,
               ),
             ));
           }
@@ -297,7 +297,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
         if (lastEnd < text.length) {
           spans.add(TextSpan(
             text: text.substring(lastEnd),
-            style: AppTextStyles.bodyMedium,
+            style: AppTextStyles.bodyMedium.copyWith(fontSize: 10),
           ));
         }
         return RichText(text: TextSpan(children: spans));
@@ -334,7 +334,7 @@ class _CodeBlock extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const Text('Java', style: TextStyle(color: Color(0xFF4FC3F7), fontSize: 11, fontWeight: FontWeight.w600)),
+                const Text('Java', style: TextStyle(color: Color(0xFF4FC3F7), fontSize: 10, fontWeight: FontWeight.w600)),
                 const Spacer(),
                 GestureDetector(
                   onTap: () async {
@@ -356,7 +356,7 @@ class _CodeBlock extends StatelessWidget {
               code,
               style: const TextStyle(
                 fontFamily: 'monospace',
-                fontSize: 13,
+                fontSize: 10,
                 height: 1.55,
                 color: Colors.white,
               ),
@@ -391,7 +391,7 @@ class _InfoChip extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 10,
               fontWeight: FontWeight.w700,
               color: color,
             ),

@@ -271,7 +271,6 @@ export default function LessonsPage() {
                 <th style={s.th}>Tên bài học</th>
                 <th style={s.th}>Tóm tắt</th>
                 <th style={s.th}>XP</th>
-                <th style={s.th}>Thời gian (phút)</th>
                 <th style={s.th}>Thứ tự</th>
                 <th style={s.th}>Trạng thái</th>
                 <th style={s.th}>Hành động</th>
@@ -295,7 +294,6 @@ export default function LessonsPage() {
                   <td style={{ ...s.td, textAlign: 'center' }}>
                     <span style={{ ...s.badge, background: '#fef9c3', color: '#854d0e' }}>⭐ {l.xpReward ?? 0}</span>
                   </td>
-                  <td style={{ ...s.td, textAlign: 'center', color: '#64748b' }}>{l.estimatedMinutes ?? '—'}</td>
                   <td style={{ ...s.td, textAlign: 'center', color: '#64748b' }}>{l.order ?? 0}</td>
                   <td style={s.td}>
                     <span style={{ ...s.statusBadge, background: l.isActive ? '#dcfce7' : '#f1f5f9', color: l.isActive ? '#16a34a' : '#64748b' }}>
@@ -441,14 +439,10 @@ export default function LessonsPage() {
                 </div>
               )}
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
                   <label style={s.label}>XP Reward</label>
                   <input style={s.input} type="number" value={form.xpReward ?? 10} onChange={e => setForm({ ...form, xpReward: Number(e.target.value) })} />
-                </div>
-                <div>
-                  <label style={s.label}>Thời gian (phút)</label>
-                  <input style={s.input} type="number" value={form.estimatedMinutes ?? 5} onChange={e => setForm({ ...form, estimatedMinutes: Number(e.target.value) })} />
                 </div>
                 <div>
                   <label style={s.label}>Thứ tự</label>

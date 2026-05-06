@@ -1,5 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Users, BookOpen, GraduationCap, HelpCircle, Code2, ShieldCheck, Bell } from 'lucide-react'
+import {
+  Users, BookOpen, GraduationCap, HelpCircle, Code2, ShieldCheck, Bell, Coffee,
+  LayoutDashboard, BarChart2, Library, ClipboardList, MessagesSquare, Trophy, Star,
+  Settings, LogOut,
+} from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { signOut } from '../services/auth'
 import { useAuth } from '../context/AuthContext'
@@ -15,11 +19,6 @@ import QaManagementPage from './QaManagementPage'
 import LeaderboardPage from './LeaderboardPage'
 import AnalyticsPage from './AnalyticsPage'
 import AchievementsPage from './AchievementsPage'
-import {
-  LayoutDashboard, BarChart2, Users, Library, BookOpen,
-  ClipboardList, Code2, MessagesSquare, Trophy, Star,
-  Bell, Settings, LogOut,
-} from 'lucide-react'
 
 const NAV_ITEMS = [
   { id: 'overview',      label: 'Tổng quan',     Icon: LayoutDashboard },
@@ -52,7 +51,7 @@ export default function Dashboard() {
       {/* Sidebar */}
       <aside style={styles.sidebar}>
         <div style={styles.sidebarHeader}>
-          <span style={styles.sidebarIcon}>☕</span>
+          <Coffee size={20} style={styles.sidebarIcon} />
           <span style={styles.sidebarTitle}>JavaUp Admin</span>
         </div>
 

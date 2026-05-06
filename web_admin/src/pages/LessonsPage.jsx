@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Editor from '@monaco-editor/react'
+import { Signal, Battery } from 'lucide-react'
 import { lessonsApi, topicsApi } from '../services/api'
 
 function renderLikeFlutter(content) {
@@ -392,8 +393,8 @@ export default function LessonsPage() {
                               <span style={{ fontSize: 9, fontWeight: 700, color: '#fff', zIndex: 1 }}>6:28</span>
                               <div style={{ display: 'flex', gap: 3, alignItems: 'center', zIndex: 1 }}>
                                 <span style={{ fontSize: 8, color: '#fff', fontWeight: 700 }}>G</span>
-                                <svg width="10" height="8" viewBox="0 0 10 8" fill="#fff"><rect x="0" y="5" width="2" height="3" rx="0.5"/><rect x="2.5" y="3" width="2" height="5" rx="0.5"/><rect x="5" y="1" width="2" height="7" rx="0.5"/><rect x="7.5" y="0" width="2" height="8" rx="0.5"/></svg>
-                                <svg width="14" height="8" viewBox="0 0 14 8" fill="none"><rect x="0.5" y="0.5" width="11" height="7" rx="1.5" stroke="#fff" strokeWidth="1"/><rect x="12" y="2.5" width="1.5" height="3" rx="0.75" fill="#fff"/><rect x="1.5" y="1.5" width="8" height="5" rx="1" fill="#fff"/></svg>
+                                <Signal size={10} color="#fff" />
+                                <Battery size={14} color="#fff" />
                               </div>
                             </div>
                             {/* Content iframe */}

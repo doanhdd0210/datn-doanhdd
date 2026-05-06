@@ -249,7 +249,7 @@ const s = {
   cardTitle: { margin: '0 0 20px', fontSize: 18, fontWeight: 700, color: '#1e293b' },
   label: { display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6, marginTop: 16 },
   input: { width: '100%', padding: '9px 12px', border: '1.5px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none', boxSizing: 'border-box' },
-  select: { width: '100%', padding: '9px 12px', border: '1.5px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none', background: '#fff' },
+  select: { width: '100%', padding: '9px 36px 9px 12px', border: '1.5px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none', background: '#fff' },
   preview: { marginTop: 20, padding: 16, background: '#f8fafc', borderRadius: 10, border: '1px dashed #cbd5e1' },
   previewLabel: { fontSize: 11, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', marginBottom: 10 },
   previewCard: { background: '#fff', borderRadius: 8, padding: '12px 14px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' },

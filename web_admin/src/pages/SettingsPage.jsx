@@ -164,13 +164,18 @@ export default function SettingsPage() {
                       <span style={{ fontSize: 12, fontWeight: 700, color: '#f59e0b', display:'flex', alignItems:'center', gap:2 }}><Zap size={12}/>XP</span>
                     </div>
                     {/* Action */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '14px 8px', borderLeft: `1px solid #f1f5f9` }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, padding: '10px 8px', borderLeft: `1px solid #f1f5f9` }}>
                       {bonusConfigs.length > 1 && (
-                        cfg.usersCount === 0
-                          ? <button onClick={() => setBonusConfigs(prev => prev.filter((_, j) => j !== i))}
-                              style={{ width: 28, height: 28, borderRadius: 7, background: '#fee2e2', border: 'none', cursor: 'pointer', color: '#dc2626', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                              title="Xoá mục tiêu này"><X size={14}/></button>
-                          : <span style={{ fontSize: 11, color: '#94a3b8', textAlign: 'center', lineHeight: 1.3 }}>{cfg.usersCount}<br/>users</span>
+                        <button
+                          onClick={() => cfg.usersCount === 0 && setBonusConfigs(prev => prev.filter((_, j) => j !== i))}
+                          disabled={cfg.usersCount > 0}
+                          style={{ width: 28, height: 28, borderRadius: 7, background: cfg.usersCount > 0 ? '#f1f5f9' : '#fee2e2', border: 'none', cursor: cfg.usersCount > 0 ? 'not-allowed' : 'pointer', color: cfg.usersCount > 0 ? '#94a3b8' : '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          title={cfg.usersCount > 0 ? `${cfg.usersCount} user đang dùng` : 'Xoá mục tiêu này'}>
+                          <X size={14}/>
+                        </button>
+                      )}
+                      {cfg.usersCount > 0 && (
+                        <span style={{ fontSize: 10, color: '#94a3b8', textAlign: 'center', lineHeight: 1.2 }}>{cfg.usersCount}<br/>users</span>
                       )}
                     </div>
                   </div>

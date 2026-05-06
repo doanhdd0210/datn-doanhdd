@@ -243,7 +243,7 @@ export default function NotificationsPage() {
 
 const s = {
   tabs: { display: 'flex', gap: 4, marginBottom: 24, borderBottom: '2px solid #e2e8f0' },
-  tab: { padding: '10px 20px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 14, fontWeight: 500, color: '#64748b', borderBottom: '2px solid transparent', marginBottom: -2 },
+  tab: { padding: '10px 20px', border: 'none', outline: 'none', background: 'transparent', cursor: 'pointer', fontSize: 14, fontWeight: 500, color: '#64748b', borderBottom: '2px solid #e2e8f0', marginBottom: -2 },
   tabActive: { color: '#1a73e8', borderBottomColor: '#1a73e8' },
   card: { background: '#fff', borderRadius: 12, border: '1px solid #e2e8f0', padding: 28, maxWidth: 560 },
   cardTitle: { margin: '0 0 20px', fontSize: 18, fontWeight: 700, color: '#1e293b' },

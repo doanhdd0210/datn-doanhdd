@@ -30,6 +30,8 @@ export default function QaManagementPage() {
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
   const [modal, setModal] = useState(null) // { mode: 'view'|'delete', item }
+  const [modalDetail, setModalDetail] = useState(null) // { post, answers } loaded on open
+  const [modalLoading, setModalLoading] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [toast, setToast] = useState({ msg: '', type: 'success' })
 
@@ -65,9 +67,21 @@ export default function QaManagementPage() {
     return matchSearch && matchStatus
   })
 
-  const openView = (item) => setModal({ mode: 'view', item })
+  const openView = async (item) => {
+    setModal({ mode: 'view', item })
+    setModalDetail(null)
+    setModalLoading(true)
+    try {
+      const res = await qaApi.get(item.id)
+      setModalDetail({ post: res?.post ?? res?.Post, answers: res?.answers ?? res?.Answers ?? [] })
+    } catch {
+      setModalDetail({ post: null, answers: [] })
+    } finally {
+      setModalLoading(false)
+    }
+  }
   const openDelete = (item) => setModal({ mode: 'delete', item })
-  const closeModal = () => setModal(null)
+  const closeModal = () => { setModal(null); setModalDetail(null) }
 
   const handleDelete = async () => {
     setDeleting(true)
@@ -209,24 +223,45 @@ export default function QaManagementPage() {
                 ))}
               </div>
 
-              <div style={{ background: '#f8fafc', borderRadius: 8, padding: 16, marginBottom: 16, color: '#374151', lineHeight: 1.6 }}>
+              <div style={{ background: '#f8fafc', borderRadius: 8, padding: 16, marginBottom: 20, color: '#374151', lineHeight: 1.6 }}>
                 {modal.item.body || modal.item.content || modal.item.question || '(Không có nội dung)'}
               </div>
 
-              {(modal.item.answers ?? []).length > 0 && (
+              {modalLoading ? (
+                <div style={{ textAlign: 'center', padding: '20px 0', color: '#94a3b8', fontSize: 14 }}>⏳ Đang tải bình luận...</div>
+              ) : (
                 <div>
-                  <h4 style={{ margin: '0 0 10px', fontSize: 15, color: '#1e293b' }}>Trả lời ({modal.item.answers.length})</h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    {modal.item.answers.map((ans, i) => (
-                      <div key={i} style={{ background: ans.isAccepted ? '#f0fdf4' : '#f8fafc', border: ans.isAccepted ? '1px solid #86efac' : '1px solid #e2e8f0', borderRadius: 8, padding: '12px 14px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                          <span style={{ fontWeight: 600, fontSize: 13, color: '#374151' }}>{ans.userName || '—'}</span>
-                          {ans.isAccepted && <span style={{ ...s.badge, background: '#dcfce7', color: '#16a34a' }}>✓ Đáp án được chọn</span>}
+                  <h4 style={{ margin: '0 0 12px', fontSize: 15, fontWeight: 700, color: '#1e293b', borderTop: '1px solid #e2e8f0', paddingTop: 16 }}>
+                    💬 Bình luận ({modalDetail?.answers?.length ?? 0})
+                  </h4>
+                  {(modalDetail?.answers ?? []).length === 0 ? (
+                    <div style={{ color: '#94a3b8', fontSize: 13, textAlign: 'center', padding: '12px 0' }}>Chưa có bình luận nào</div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {(modalDetail?.answers ?? []).map((ans, i) => (
+                        <div key={ans.id ?? i} style={{ background: ans.isAccepted ? '#f0fdf4' : '#f8fafc', border: ans.isAccepted ? '1px solid #86efac' : '1px solid #e2e8f0', borderRadius: 8, padding: '12px 14px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, alignItems: 'center' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              {ans.userAvatar ? (
+                                <img src={ans.userAvatar} alt="" style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }} />
+                              ) : (
+                                <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: '#1d4ed8', fontWeight: 700 }}>
+                                  {(ans.userName || '?')[0].toUpperCase()}
+                                </div>
+                              )}
+                              <span style={{ fontWeight: 600, fontSize: 13, color: '#374151' }}>{ans.userName || '—'}</span>
+                              <span style={{ fontSize: 11, color: '#94a3b8' }}>{formatDate(ans.createdAt)}</span>
+                            </div>
+                            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                              {ans.upvoteCount > 0 && <span style={{ fontSize: 12, color: '#64748b' }}>👍 {ans.upvoteCount}</span>}
+                              {ans.isAccepted && <span style={{ ...s.badge, background: '#dcfce7', color: '#16a34a', fontSize: 11 }}>✓ Đáp án được chọn</span>}
+                            </div>
+                          </div>
+                          <div style={{ color: '#475569', fontSize: 14, lineHeight: 1.6 }}>{ans.content || ans.body || '—'}</div>
                         </div>
-                        <div style={{ color: '#475569', fontSize: 14, lineHeight: 1.5 }}>{ans.body || ans.content || '—'}</div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

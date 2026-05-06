@@ -1,7 +1,51 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Editor from '@monaco-editor/react'
-import { marked } from 'marked'
 import { lessonsApi, topicsApi } from '../services/api'
+
+function renderLikeFlutter(content) {
+  const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const inline = text => esc(text)
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/`(.*?)`/g, '<code>$1</code>')
+
+  const parts = []
+  for (const para of content.split('\n\n')) {
+    const t = para.trim()
+    if (!t) continue
+    if (t.startsWith('```')) {
+      const lang = (t.match(/^```([a-zA-Z]*)/) || [])[1] || 'Java'
+      const code = t.replace(/^```[a-z]*\n?/, '').replace(/```\s*$/, '').trim()
+      parts.push(`<div class="cb"><div class="cbh"><span>${esc(lang || 'Java')}</span><button onclick="navigator.clipboard.writeText(this.closest('.cb').querySelector('pre').innerText).then(()=>{this.textContent='✓';setTimeout(()=>this.textContent='⧉',1200)})">⧉</button></div><pre>${esc(code)}</pre></div>`)
+    } else if (t.startsWith('# ')) {
+      parts.push(`<h1>${inline(t.substring(2))}</h1>`)
+    } else if (t.startsWith('## ')) {
+      parts.push(`<h2>${inline(t.substring(3))}</h2>`)
+    } else if (t.split('\n').some(l => l.startsWith('- ') || l.startsWith('* '))) {
+      const items = t.split('\n').filter(l => l.startsWith('- ') || l.startsWith('* '))
+      parts.push(`<ul>${items.map(l => `<li>${inline(l.substring(2))}</li>`).join('')}</ul>`)
+    } else {
+      parts.push(`<p>${t.split('\n').map(inline).join('<br>')}</p>`)
+    }
+  }
+  return parts.join('')
+}
+
+const MOBILE_CSS = `
+  body{background:#181A20;color:#FAFAFA;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:14px 16px;margin:0;font-size:14px;line-height:1.5}
+  h1{font-size:18px;font-weight:700;margin:16px 0 8px}
+  h2{font-size:16px;font-weight:700;margin:12px 0 6px}
+  p{margin:4px 0}
+  ul{list-style:none;padding:0;margin:0}
+  li{display:flex;align-items:flex-start;padding:2px 0}
+  li::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:#304FFE;margin:7px 8px 0 0;flex-shrink:0}
+  strong{font-weight:700}
+  code{background:#35383F;padding:2px 5px;border-radius:4px;font-size:13px;font-family:monospace}
+  .cb{background:#1E1E2E;border-radius:12px;margin:12px 0}
+  .cbh{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;background:#2D2D3F;border-radius:12px 12px 0 0}
+  .cbh span{color:#4FC3F7;font-size:11px;font-weight:600}
+  .cbh button{background:none;border:none;color:#666;cursor:pointer;font-size:14px;padding:0}
+  pre{padding:14px;margin:0;font-family:monospace;font-size:13px;line-height:1.55;color:#fff;white-space:pre-wrap;overflow-x:auto}
+`
 import { exportLessonsExcel, importLessonsExcel, downloadLessonsSampleExcel } from '../utils/importExport'
 
 function Toast({ msg, type }) {
@@ -274,17 +318,19 @@ export default function LessonsPage() {
                       }}
                     />
                   </div>
-                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#fff' }}>
-                    <div style={{ padding: '3px 10px', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', fontSize: 11, color: '#94a3b8', fontWeight: 600, letterSpacing: 1 }}>PREVIEW</div>
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: editorLang === 'markdown' ? '#181A20' : '#fff' }}>
+                    <div style={{ padding: '3px 10px', background: editorLang === 'markdown' ? '#1F222A' : '#f8fafc', borderBottom: `1px solid ${editorLang === 'markdown' ? '#262A35' : '#e2e8f0'}`, fontSize: 11, color: '#94a3b8', fontWeight: 600, letterSpacing: 1 }}>PREVIEW</div>
                     <iframe
                       srcDoc={(() => {
                         const raw = form.content ?? ''
-                        const body = editorLang === 'markdown' ? marked.parse(raw) : raw.replace(/<\/body>|<\/html>/gi, '')
-                        return `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:10px 14px;margin:0;font-size:13px;line-height:1.7;color:#1e293b}h1,h2,h3{margin:0.7em 0 0.3em}pre{background:#f1f5f9;padding:10px;border-radius:6px;overflow-x:auto;font-size:12px}code{background:#f1f5f9;padding:2px 5px;border-radius:4px;font-size:12px}ul,ol{padding-left:1.5em}a{color:#1a73e8}img{max-width:100%}table{border-collapse:collapse;width:100%}th,td{border:1px solid #e2e8f0;padding:6px 10px;font-size:12px}th{background:#f1f5f9;font-weight:600}</style></head><body>${body}</body></html>`
+                        if (editorLang === 'markdown') {
+                          return `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${MOBILE_CSS}</style></head><body>${renderLikeFlutter(raw)}</body></html>`
+                        }
+                        return `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:10px 14px;margin:0;font-size:13px;line-height:1.7;color:#1e293b}h1,h2,h3{margin:0.7em 0 0.3em}pre{background:#f1f5f9;padding:10px;border-radius:6px;overflow-x:auto;font-size:12px}code{background:#f1f5f9;padding:2px 5px;border-radius:4px;font-size:12px}ul,ol{padding-left:1.5em}a{color:#1a73e8}img{max-width:100%}</style></head><body>${raw.replace(/<\/body>|<\/html>/gi, '')}</body></html>`
                       })()}
-                      style={{ flex: 1, border: 'none', background: '#fff' }}
+                      style={{ flex: 1, border: 'none', background: editorLang === 'markdown' ? '#181A20' : '#fff' }}
                       title="HTML Preview"
-                      sandbox="allow-same-origin"
+                      sandbox="allow-same-origin allow-scripts"
                     />
                   </div>
                 </div>

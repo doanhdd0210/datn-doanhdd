@@ -109,11 +109,11 @@ export default function SettingsPage() {
         {health && (
           <div style={{ ...s.statusBox, background: health.ok ? '#f0fdf4' : '#fef2f2', borderColor: health.ok ? '#86efac' : '#fca5a5' }}>
             {health.ok ? (
-              <span style={{ color: '#166534' }}>
-                ✓ Kết nối thành công — Project: <strong>{health.data?.project}</strong>
+              <span style={{ color: '#166534', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <Check size={14} /> Kết nối thành công — Project: <strong>{health.data?.project}</strong>
               </span>
             ) : (
-              <span style={{ color: '#dc2626' }}>✗ Lỗi kết nối: {health.error}</span>
+              <span style={{ color: '#dc2626', display: 'inline-flex', alignItems: 'center', gap: 6 }}><X size={14} /> Lỗi kết nối: {health.error}</span>
             )}
           </div>
         )}
@@ -216,8 +216,8 @@ export default function SettingsPage() {
                 {bonusSaving ? 'Đang lưu...' : 'Lưu cấu hình'}
               </button>
               {bonusMsg && (
-                <span style={{ fontSize: 13, color: bonusMsg.ok ? '#16a34a' : '#dc2626', fontWeight: 500 }}>
-                  {bonusMsg.ok ? '✓' : '✗'} {bonusMsg.text}
+                <span style={{ fontSize: 13, color: bonusMsg.ok ? '#16a34a' : '#dc2626', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                  {bonusMsg.ok ? <Check size={14} /> : <X size={14} />} {bonusMsg.text}
                 </span>
               )}
             </div>

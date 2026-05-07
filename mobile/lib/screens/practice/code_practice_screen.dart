@@ -390,15 +390,18 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
   }
 
   Widget _buildEditor() {
-    return CodeTheme(
-      data: CodeThemeData(styles: vs2015Theme),
-      child: CodeField(
-        controller: _codeController,
-        textStyle: CodeEditorStyle.codeTextStyle,
-        expands: true,
-        background: CodeEditorStyle.bgEditor,
-        gutterStyle: CodeEditorStyle.gutterStyle,
-        decoration: CodeEditorStyle.fieldDecoration,
+    return Theme(
+      data: ThemeData.dark(),
+      child: CodeTheme(
+        data: CodeThemeData(styles: vs2015Theme),
+        child: CodeField(
+          controller: _codeController,
+          textStyle: CodeEditorStyle.codeTextStyle,
+          expands: true,
+          background: CodeEditorStyle.bgEditor,
+          gutterStyle: CodeEditorStyle.gutterStyle,
+          decoration: CodeEditorStyle.fieldDecoration,
+        ),
       ),
     );
   }

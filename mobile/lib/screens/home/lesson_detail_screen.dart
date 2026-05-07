@@ -300,7 +300,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
             style: AppTextStyles.bodyMedium.copyWith(fontSize: 10),
           ));
         }
-        return RichText(text: TextSpan(children: spans));
+        return Text.rich(TextSpan(children: spans));
       },
     );
   }

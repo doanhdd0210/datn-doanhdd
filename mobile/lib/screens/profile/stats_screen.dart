@@ -204,7 +204,7 @@ class _StatsScreenState extends State<StatsScreen> with SingleTickerProviderStat
         children: [
           Text('XP hàng tuần', style: AppTextStyles.heading4),
           const SizedBox(height: 4),
-          Text('7 ngày qua', style: AppTextStyles.bodySmall),
+          Text('7 ngày qua', style: AppTextStyles.bodySmall.copyWith(color: context.textSecondary)),
           const SizedBox(height: 16),
           SizedBox(
             height: 160,
@@ -318,7 +318,7 @@ class _StatsScreenState extends State<StatsScreen> with SingleTickerProviderStat
         children: [
           Text('Lịch hoạt động', style: AppTextStyles.heading4),
           const SizedBox(height: 4),
-          Text('30 ngày qua', style: AppTextStyles.bodySmall),
+          Text('30 ngày qua', style: AppTextStyles.bodySmall.copyWith(color: context.textSecondary)),
           const SizedBox(height: 16),
           Wrap(
             spacing: 4,
@@ -393,7 +393,7 @@ class _StatCard extends StatelessWidget {
           const Spacer(),
           Text(value, style: AppTextStyles.heading3.copyWith(color: color)),
           const SizedBox(height: 2),
-          Text(label, style: AppTextStyles.bodySmall),
+          Text(label, style: AppTextStyles.bodySmall.copyWith(color: context.textSecondary)),
         ],
       ),
     );

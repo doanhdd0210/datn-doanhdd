@@ -164,7 +164,7 @@ class _QuizResultScreenState extends State<QuizResultScreen>
                         ),
                         Text(
                           'đúng',
-                          style: AppTextStyles.bodySmall,
+                          style: AppTextStyles.bodySmall.copyWith(color: context.textSecondary),
                         ),
                       ],
                     ),
@@ -435,7 +435,7 @@ class _StatItem extends StatelessWidget {
           Icon(icon, color: color, size: 28),
           const SizedBox(height: 4),
           Text(value, style: AppTextStyles.heading3.copyWith(color: color)),
-          Text(label, style: AppTextStyles.bodySmall),
+          Text(label, style: AppTextStyles.bodySmall.copyWith(color: context.textSecondary)),
         ],
       ),
     );

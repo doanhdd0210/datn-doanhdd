@@ -172,7 +172,7 @@ class _CodeDemoListScreenState extends State<CodeDemoListScreen> {
           const SizedBox(height: 4),
           Text(
             'Chạy và luyện tập các ví dụ code Java',
-            style: AppTextStyles.bodySmall,
+            style: AppTextStyles.bodySmall.copyWith(color: context.textSecondary),
           ),
         ],
       ),
@@ -300,7 +300,7 @@ class _SnippetCard extends StatelessWidget {
               width: 52,
               height: 52,
               decoration: BoxDecoration(
-                color: const Color(0xFF1E1E2E),
+                color: context.isDark ? const Color(0xFF1E1E2E) : const Color(0xFFEEEFF8),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Center(
@@ -320,12 +320,18 @@ class _SnippetCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1E1E2E),
+                          color: context.isDark
+                              ? const Color(0xFF1E1E2E)
+                              : AppColors.primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
                           snippet.language.toUpperCase(),
-                          style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w700),
+                          style: TextStyle(
+                            color: context.isDark ? Colors.white : AppColors.primary,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
                     ],
@@ -333,7 +339,7 @@ class _SnippetCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     snippet.description,
-                    style: AppTextStyles.bodySmall,
+                    style: AppTextStyles.bodySmall.copyWith(color: context.textSecondary),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),

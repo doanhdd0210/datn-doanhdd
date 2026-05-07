@@ -150,7 +150,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
           const SizedBox(height: 4),
-          Text(user?.email ?? '', style: AppTextStyles.bodySmall),
+          Text(user?.email ?? '', style: AppTextStyles.bodySmall.copyWith(color: context.textSecondary)),
         ],
       ),
     );
@@ -400,9 +400,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             onTap: () => _confirmSignOut(context, authService),
           ),
           const SizedBox(height: 24),
-          const Center(
+          Center(
             child: Text('JavaUp v1.0.0',
-                style: AppTextStyles.bodySmall),
+                style: AppTextStyles.bodySmall.copyWith(color: context.textSecondary)),
           ),
         ],
       ),

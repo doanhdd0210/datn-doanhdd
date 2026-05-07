@@ -466,7 +466,7 @@ class _LessonItem extends StatelessWidget {
                                       const SizedBox(height: 4),
                                       Text(
                                         lesson.summary,
-                                        style: AppTextStyles.bodySmall,
+                                        style: AppTextStyles.bodySmall.copyWith(color: context.textSecondary),
                                         maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
                                       ),

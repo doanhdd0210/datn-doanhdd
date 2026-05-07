@@ -314,7 +314,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          Text('Chọn câu trả lời đúng', style: AppTextStyles.labelGray),
+                          Text('Chọn câu trả lời đúng', style: AppTextStyles.labelGray.copyWith(color: context.textSecondary)),
                         ],
                       ),
                       const SizedBox(height: 18),

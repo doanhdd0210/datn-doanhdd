@@ -273,7 +273,7 @@ class _QaScreenState extends State<QaScreen> {
         children: [
           Text('Q&A Cộng đồng', style: AppTextStyles.heading2),
           const SizedBox(height: 2),
-          Text('Đặt câu hỏi, chia sẻ kiến thức', style: AppTextStyles.bodySmall),
+          Text('Đặt câu hỏi, chia sẻ kiến thức', style: AppTextStyles.bodySmall.copyWith(color: context.textSecondary)),
         ],
       ),
     );
@@ -373,7 +373,7 @@ class _QaScreenState extends State<QaScreen> {
           const SizedBox(height: 6),
           Text(
             isSearch ? 'Thử từ khoá khác' : 'Hãy là người đặt câu hỏi đầu tiên!',
-            style: AppTextStyles.bodySmall,
+            style: AppTextStyles.bodySmall.copyWith(color: context.textSecondary),
           ),
         ],
       ),
@@ -571,13 +571,13 @@ class _QaPostCardState extends State<_QaPostCard> {
             Row(
               children: [
                 Text(post.authorName,
-                    style: AppTextStyles.bodySmall.copyWith(fontWeight: FontWeight.w600)),
+                    style: AppTextStyles.bodySmall.copyWith(color: context.textSecondary, fontWeight: FontWeight.w600)),
                 Text(' · ', style: TextStyle(color: context.textSecondary, fontSize: 12)),
-                Text(_timeAgo(post.createdAt), style: AppTextStyles.bodySmall),
+                Text(_timeAgo(post.createdAt), style: AppTextStyles.bodySmall.copyWith(color: context.textSecondary)),
                 const Spacer(),
                 Icon(Icons.chat_bubble_outline, size: 14, color: context.textSecondary),
                 const SizedBox(width: 3),
-                Text('${post.answerCount}', style: AppTextStyles.bodySmall),
+                Text('${post.answerCount}', style: AppTextStyles.bodySmall.copyWith(color: context.textSecondary)),
               ],
             ),
           ],

@@ -89,7 +89,7 @@ class PracticeResultScreen extends StatelessWidget {
                     '${(matchPercent * 100).round()}%',
                     style: AppTextStyles.heading2.copyWith(color: _resultColor),
                   ),
-                  Text('khớp', style: AppTextStyles.bodySmall),
+                  Text('khớp', style: AppTextStyles.bodySmall.copyWith(color: context.textSecondary)),
                 ],
               ),
             ),

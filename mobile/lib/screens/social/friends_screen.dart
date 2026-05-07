@@ -359,7 +359,7 @@ class _FriendsScreenState extends State<FriendsScreen>
               const SizedBox(height: 12),
               const Text('Không tải được dữ liệu', style: AppTextStyles.heading4),
               const SizedBox(height: 8),
-              Text(_leaderboardError!, style: AppTextStyles.bodySmall, textAlign: TextAlign.center),
+              Text(_leaderboardError!, style: AppTextStyles.bodySmall.copyWith(color: context.textSecondary), textAlign: TextAlign.center),
               const SizedBox(height: 20),
               ElevatedButton.icon(
                 onPressed: _loadLeaderboard,
@@ -396,9 +396,9 @@ class _FriendsScreenState extends State<FriendsScreen>
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'Hoàn thành bài học để xuất hiện trên bảng xếp hạng!',
-                    style: AppTextStyles.bodySmall,
+                    style: AppTextStyles.bodySmall.copyWith(color: context.textSecondary),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -623,7 +623,7 @@ class _FriendsScreenState extends State<FriendsScreen>
                 ),
                 Text(
                   '🔥 ${entry.streak} ngày  ⚡ ${entry.totalXp} XP${entry.lessonsCompleted > 0 ? '  📚 ${entry.lessonsCompleted} bài' : ''}',
-                  style: AppTextStyles.bodySmall,
+                  style: AppTextStyles.bodySmall.copyWith(color: context.textSecondary),
                 ),
               ],
             ),
@@ -652,8 +652,8 @@ class _FriendsScreenState extends State<FriendsScreen>
             const SizedBox(height: 12),
             const Text('Chưa có kết nối nào', style: AppTextStyles.heading4),
             const SizedBox(height: 8),
-            const Text('Theo dõi người khác từ bảng xếp hạng để kết bạn!',
-                style: AppTextStyles.bodySmall, textAlign: TextAlign.center),
+            Text('Theo dõi người khác từ bảng xếp hạng để kết bạn!',
+                style: AppTextStyles.bodySmall.copyWith(color: context.textSecondary), textAlign: TextAlign.center),
             const SizedBox(height: 20),
             TextButton(
               onPressed: () => _tabController.animateTo(0),
@@ -852,7 +852,7 @@ class _FriendsScreenState extends State<FriendsScreen>
                   ],
                 ),
                 Text('⚡ ${user.totalXp} XP  🔥 ${user.streak} ngày',
-                    style: AppTextStyles.bodySmall),
+                    style: AppTextStyles.bodySmall.copyWith(color: context.textSecondary)),
               ],
             ),
           ),
@@ -1322,7 +1322,7 @@ class _FollowListSheetState extends State<_FollowListSheet> {
                               Text(user.name, style: AppTextStyles.labelBold),
                               Text(
                                 '⚡ ${user.totalXp} XP  🔥 ${user.streak} ngày',
-                                style: AppTextStyles.bodySmall,
+                                style: AppTextStyles.bodySmall.copyWith(color: context.textSecondary),
                               ),
                             ],
                           ),

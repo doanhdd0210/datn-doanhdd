@@ -217,7 +217,7 @@ class _QaDetailScreenState extends State<QaDetailScreen> {
                             children: [
                               const Text('💬', style: TextStyle(fontSize: 32)),
                               const SizedBox(height: 8),
-                              Text('Chưa có câu trả lời. Hãy là người đầu tiên!', style: AppTextStyles.bodySmall),
+                              Text('Chưa có câu trả lời. Hãy là người đầu tiên!', style: AppTextStyles.bodySmall.copyWith(color: context.textSecondary)),
                             ],
                           ),
                         ),
@@ -391,9 +391,9 @@ class _QaDetailScreenState extends State<QaDetailScreen> {
                 ),
               ),
               const SizedBox(width: 8),
-              Text(post.authorName, style: AppTextStyles.labelGray.copyWith(fontWeight: FontWeight.w600)),
+              Text(post.authorName, style: AppTextStyles.labelGray.copyWith(color: context.textSecondary, fontWeight: FontWeight.w600)),
               const Spacer(),
-              Text(_timeAgo(post.createdAt), style: AppTextStyles.bodySmall),
+              Text(_timeAgo(post.createdAt), style: AppTextStyles.bodySmall.copyWith(color: context.textSecondary)),
             ],
           ),
         ],
@@ -419,7 +419,7 @@ class _QaDetailScreenState extends State<QaDetailScreen> {
                 minLines: 1,
                 decoration: InputDecoration(
                   hintText: 'Viết câu trả lời của bạn...',
-                  hintStyle: AppTextStyles.labelGray,
+                  hintStyle: AppTextStyles.labelGray.copyWith(color: context.textSecondary),
                   filled: true,
                   fillColor: context.bgColor,
                   border: OutlineInputBorder(
@@ -533,9 +533,9 @@ class _AnswerCard extends StatelessWidget {
                     : null,
               ),
               const SizedBox(width: 6),
-              Text(answer.authorName, style: AppTextStyles.bodySmall.copyWith(fontWeight: FontWeight.w600)),
+              Text(answer.authorName, style: AppTextStyles.bodySmall.copyWith(color: context.textSecondary, fontWeight: FontWeight.w600)),
               Text(' · ', style: TextStyle(color: context.textSecondary, fontSize: 12)),
-              Text(_timeAgo(answer.createdAt), style: AppTextStyles.bodySmall),
+              Text(_timeAgo(answer.createdAt), style: AppTextStyles.bodySmall.copyWith(color: context.textSecondary)),
               const Spacer(),
               if (isPostAuthor && !answer.isAccepted) ...[
                 const SizedBox(width: 10),

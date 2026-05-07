@@ -287,7 +287,7 @@ class _ReviewItemState extends State<_ReviewItem> {
                             ),
                             child: Text(
                               question.explanation,
-                              style: AppTextStyles.bodySmall.copyWith(height: 1.6),
+                              style: AppTextStyles.bodySmall.copyWith(color: context.textSecondary, height: 1.6),
                             ),
                           )
                         : const SizedBox.shrink(),

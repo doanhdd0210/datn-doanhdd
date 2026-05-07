@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter analyze *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(cat)",
+      "Read(//tmp/**)",
+      "Bash(awk -F: '{print $1}')",
+      "Bash(sed -n '402,408p' /Users/doducdoanh/StudioProjects/datn.doanhdd/mobile/lib/screens/profile/profile_screen.dart)",
+      "Bash(sed -n '398,405p' /Users/doducdoanh/StudioProjects/datn.doanhdd/mobile/lib/screens/social/friends_screen.dart)",
+      "Bash(sed -n '653,660p' /Users/doducdoanh/StudioProjects/datn.doanhdd/mobile/lib/screens/social/friends_screen.dart)"
+    ]
+  }
+}

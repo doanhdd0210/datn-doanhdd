@@ -9,6 +9,24 @@ function renderLikeFlutter(content) {
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/`(.*?)`/g, '<code>$1</code>')
 
+  const isSepRow = line => /^\|[\s\-|:]+\|$/.test(line.trim())
+  const parseTable = t => {
+    const allLines = t.split('\n').map(l => l.trim()).filter(Boolean)
+    const rows = allLines.filter(l => !isSepRow(l)).map(l => {
+      const parts = l.split('|')
+      const cells = parts.slice(parts[0].trim() === '' ? 1 : 0)
+      if (cells.length && cells[cells.length - 1].trim() === '') cells.pop()
+      return cells.map(c => c.trim())
+    })
+    if (!rows.length) return ''
+    const looksCode = v => /[=();"]/.test(v)
+    const headerCells = rows[0].map(c => `<th>${inline(c)}</th>`).join('')
+    const bodyRows = rows.slice(1).map(r =>
+      `<tr>${r.map(c => `<td${looksCode(c) ? ' class="tc"' : ''}>${inline(c)}</td>`).join('')}</tr>`
+    ).join('')
+    return `<table><thead><tr>${headerCells}</tr></thead><tbody>${bodyRows}</tbody></table>`
+  }
+
   const parts = []
   for (const para of content.split('\n\n')) {
     const t = para.trim()
@@ -17,10 +35,16 @@ function renderLikeFlutter(content) {
       const lang = (t.match(/^```([a-zA-Z]*)/) || [])[1] || 'Java'
       const code = t.replace(/^```[a-z]*\n?/, '').replace(/```\s*$/, '').trim()
       parts.push(`<div class="cb"><div class="cbh"><span>${esc(lang || 'Java')}</span><button onclick="navigator.clipboard.writeText(this.closest('.cb').querySelector('pre').innerText).then(()=>{this.textContent='✓';setTimeout(()=>this.textContent='⧉',1200)})">⧉</button></div><pre>${esc(code)}</pre></div>`)
-    } else if (t.startsWith('# ')) {
-      parts.push(`<h1>${inline(t.substring(2))}</h1>`)
+    } else if (t.startsWith('#### ')) {
+      parts.push(`<h4>${inline(t.substring(5))}</h4>`)
+    } else if (t.startsWith('### ')) {
+      parts.push(`<h3>${inline(t.substring(4))}</h3>`)
     } else if (t.startsWith('## ')) {
       parts.push(`<h2>${inline(t.substring(3))}</h2>`)
+    } else if (t.startsWith('# ')) {
+      parts.push(`<h1>${inline(t.substring(2))}</h1>`)
+    } else if (t.trimStart().startsWith('|') && t.includes('\n')) {
+      parts.push(parseTable(t))
     } else if (t.split('\n').some(l => l.startsWith('- ') || l.startsWith('* '))) {
       const items = t.split('\n').filter(l => l.startsWith('- ') || l.startsWith('* '))
       parts.push(`<ul>${items.map(l => `<li>${inline(l.substring(2))}</li>`).join('')}</ul>`)
@@ -33,19 +57,27 @@ function renderLikeFlutter(content) {
 
 const MOBILE_CSS = `
   body{background:#181A20;color:#FAFAFA;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:14px 16px;margin:0;font-size:14px;line-height:1.5}
-  h1{font-size:18px;font-weight:700;margin:16px 0 8px}
-  h2{font-size:16px;font-weight:700;margin:12px 0 6px}
+  h1{font-size:17px;font-weight:700;margin:16px 0 8px}
+  h2{font-size:15px;font-weight:700;margin:12px 0 6px}
+  h3{font-size:14px;font-weight:700;margin:14px 0 6px}
+  h4{font-size:13px;font-weight:700;margin:10px 0 4px}
   p{margin:4px 0}
   ul{list-style:none;padding:0;margin:0}
   li{display:flex;align-items:flex-start;padding:2px 0}
   li::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:#304FFE;margin:7px 8px 0 0;flex-shrink:0}
   strong{font-weight:700}
-  code{background:#35383F;padding:2px 5px;border-radius:4px;font-size:13px;font-family:monospace}
+  code{background:#35383F;padding:2px 5px;border-radius:4px;font-size:12px;font-family:monospace}
+  table{border-collapse:collapse;width:100%;margin:10px 0;border:1px solid #35383F;border-radius:8px;overflow:hidden}
+  th{background:#2D3038;padding:7px 10px;font-size:12px;font-weight:700;color:#FAFAFA;text-align:left;border-bottom:1px solid #35383F}
+  td{padding:6px 10px;font-size:12px;color:#CFCFCF;border-bottom:1px solid #2A2D34}
+  td.tc{font-family:monospace}
+  tr:last-child td{border-bottom:none}
+  tr:nth-child(even){background:#1F2229}
   .cb{background:#1E1E2E;border-radius:12px;margin:12px 0}
   .cbh{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;background:#2D2D3F;border-radius:12px 12px 0 0}
   .cbh span{color:#4FC3F7;font-size:11px;font-weight:600}
   .cbh button{background:none;border:none;color:#666;cursor:pointer;font-size:14px;padding:0}
-  pre{padding:14px;margin:0;font-family:monospace;font-size:13px;line-height:1.55;color:#fff;white-space:pre-wrap;overflow-x:auto}
+  pre{padding:14px;margin:0;font-family:monospace;font-size:12px;line-height:1.55;color:#fff;white-space:pre-wrap;overflow-x:auto}
 `
 function buildMobilePreviewDoc(content, title, summary, xpReward, topicTitle) {
   const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -67,12 +99,20 @@ body{background:#181A20;color:#FAFAFA;font-family:-apple-system,BlinkMacSystemFo
 .content{padding:3px 10px 60px}
 h1{font-size:12px;font-weight:700;margin:9px 0 4px}
 h2{font-size:11px;font-weight:700;margin:7px 0 3px}
+h3{font-size:10px;font-weight:700;margin:8px 0 3px}
+h4{font-size:9px;font-weight:700;margin:6px 0 2px}
 p{margin:2px 0}
 ul{list-style:none;padding:0;margin:2px 0}
 li{display:flex;align-items:flex-start;padding:1px 0}
 li::before{content:'';display:inline-block;width:4px;height:4px;border-radius:50%;background:#304FFE;margin:5px 5px 0 0;flex-shrink:0}
 strong{font-weight:700}
 code{background:#35383F;padding:1px 3px;border-radius:3px;font-size:8px;font-family:monospace}
+table{border-collapse:collapse;width:100%;margin:6px 0;border:1px solid #35383F;border-radius:6px;overflow:hidden}
+th{background:#2D3038;padding:4px 7px;font-size:8px;font-weight:700;color:#FAFAFA;text-align:left;border-bottom:1px solid #35383F}
+td{padding:3px 7px;font-size:8px;color:#CFCFCF;border-bottom:1px solid #2A2D34}
+td.tc{font-family:monospace}
+tr:last-child td{border-bottom:none}
+tr:nth-child(even){background:#1F2229}
 .cb{background:#1E1E2E;border-radius:8px;margin:6px 0}
 .cbh{display:flex;justify-content:space-between;align-items:center;padding:4px 9px;background:#2D2D3F;border-radius:8px 8px 0 0}
 .cbh span{color:#4FC3F7;font-size:8px;font-weight:600}
@@ -124,6 +164,19 @@ export default function LessonsPage() {
   const [importProgress, setImportProgress] = useState('')
   const [editorLang, setEditorLang] = useState('markdown')
   const importRef = useRef()
+  const editorRef = useRef()
+
+  const insertSnippet = (snippet, selectPlaceholder) => {
+    const editor = editorRef.current
+    if (!editor) return
+    const sel = editor.getSelection()
+    const selectedText = editor.getModel().getValueInRange(sel)
+    const text = selectedText
+      ? snippet.replace('{{sel}}', selectedText)
+      : snippet.replace('{{sel}}', selectPlaceholder || '')
+    editor.executeEdits('toolbar', [{ identifier: { major: 1, minor: 1 }, range: sel, text, forceMoveMarkers: true }])
+    editor.focus()
+  }
 
   const showToast = (msg, type = 'success') => {
     setToast({ msg, type })
@@ -343,6 +396,7 @@ export default function LessonsPage() {
 
               <label style={s.label}>Nội dung (Markdown)</label>
               <div style={{ border: '1.5px solid #e2e8f0', borderRadius: 8, overflow: 'hidden' }}>
+                {/* Top bar: mode switcher */}
                 <div style={{ display: 'flex', alignItems: 'center', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', padding: '5px 10px', gap: 6 }}>
                   <span style={{ fontSize: 12, color: '#64748b', fontWeight: 500, marginRight: 4 }}>Chế độ:</span>
                   {[['markdown', 'MARKDOWN'], ['raw', 'RAW']].map(([lang, label]) => (
@@ -354,6 +408,48 @@ export default function LessonsPage() {
                   ))}
                   <span style={{ marginLeft: 'auto', fontSize: 11, color: '#94a3b8' }}>Editor · Preview</span>
                 </div>
+                {/* Insert toolbar */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 4, background: '#f1f5f9', borderBottom: '1px solid #e2e8f0', padding: '5px 10px' }}>
+                  {[
+                    { label: 'H1', title: 'Heading 1', snippet: '\n\n# {{sel}}\n\n', ph: 'Tiêu đề lớn' },
+                    { label: 'H2', title: 'Heading 2', snippet: '\n\n## {{sel}}\n\n', ph: 'Tiêu đề nhỏ' },
+                    { label: 'H3', title: 'Heading 3', snippet: '\n\n### {{sel}}\n\n', ph: 'Tiêu đề 3' },
+                  ].map(({ label, title, snippet, ph }) => (
+                    <button key={label} type="button" title={title}
+                      onClick={() => insertSnippet(snippet, ph)}
+                      style={{ padding: '2px 8px', borderRadius: 5, border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#1e40af', fontFamily: 'monospace' }}>
+                      {label}
+                    </button>
+                  ))}
+                  <div style={{ width: 1, height: 18, background: '#cbd5e1', margin: '0 2px' }} />
+                  {[
+                    { label: 'B', title: 'In đậm (bôi chọn text trước)', snippet: '**{{sel}}**', ph: 'in đậm', style: { fontWeight: 900 } },
+                    { label: '<>', title: 'Inline code', snippet: '`{{sel}}`', ph: 'code', style: { fontFamily: 'monospace' } },
+                  ].map(({ label, title, snippet, ph, style }) => (
+                    <button key={label} type="button" title={title}
+                      onClick={() => insertSnippet(snippet, ph)}
+                      style={{ padding: '2px 8px', borderRadius: 5, border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer', fontSize: 12, color: '#374151', ...style }}>
+                      {label}
+                    </button>
+                  ))}
+                  <div style={{ width: 1, height: 18, background: '#cbd5e1', margin: '0 2px' }} />
+                  <button type="button" title="Bullet list"
+                    onClick={() => insertSnippet('\n\n- {{sel}}\n- mục 2\n- mục 3\n\n', 'mục 1')}
+                    style={{ padding: '2px 8px', borderRadius: 5, border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer', fontSize: 12, color: '#374151' }}>
+                    • List
+                  </button>
+                  <button type="button" title="Khối code"
+                    onClick={() => insertSnippet('\n\n```java\n{{sel}}\n```\n\n', '// code ở đây')}
+                    style={{ padding: '2px 8px', borderRadius: 5, border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer', fontSize: 12, color: '#374151', fontFamily: 'monospace' }}>
+                    {'```java'}
+                  </button>
+                  <button type="button" title="Chèn bảng"
+                    onClick={() => insertSnippet('\n\n| Cột 1 | Cột 2 | Cột 3 |\n|---|---|---|\n| A | B | C |\n| D | E | F |\n\n', '')}
+                    style={{ padding: '2px 8px', borderRadius: 5, border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer', fontSize: 12, color: '#374151' }}>
+                    ▦ Bảng
+                  </button>
+                  <span style={{ marginLeft: 'auto', fontSize: 10, color: '#94a3b8', fontStyle: 'italic' }}>Bôi chọn text trước khi bấm để wrap</span>
+                </div>
                 <div style={{ display: 'flex', height: 480 }}>
                   <div style={{ flex: 1, overflow: 'hidden', borderRight: '1px solid #e2e8f0' }}>
                     <Editor
@@ -361,6 +457,7 @@ export default function LessonsPage() {
                       language="markdown"
                       value={form.content ?? ''}
                       onChange={val => setForm(f => ({ ...f, content: val ?? '' }))}
+                      onMount={editor => { editorRef.current = editor }}
                       options={{
                         minimap: { enabled: false },
                         fontSize: 13,
@@ -427,21 +524,21 @@ export default function LessonsPage() {
                   <div style={{ fontWeight: 700, marginBottom: 8 }}>📝 Cú pháp Markdown được hỗ trợ trên mobile:</div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 20px', fontFamily: 'monospace' }}>
                     {[
-                      ['# Tiêu đề lớn', 'Heading cỡ lớn (18px)'],
-                      ['## Tiêu đề nhỏ', 'Heading cỡ nhỏ (16px)'],
+                      ['# Tiêu đề lớn', 'Heading cỡ lớn (17px)'],
+                      ['## Tiêu đề nhỏ', 'Heading cỡ nhỏ (15px)'],
+                      ['### Tiêu đề 3', 'Heading nhỏ hơn (14px)'],
+                      ['#### Tiêu đề 4', 'Heading nhỏ nhất (13px)'],
                       ['**in đậm**', 'Chữ in đậm'],
                       ['`inline code`', 'Code nội tuyến'],
                       ['- mục 1', 'Danh sách bullet'],
                       ['```java\\ncode\\n```', 'Khối code (có nút copy)'],
+                      ['| Cột 1 | Cột 2 |\\n|---|---|\\n| A | B |', 'Bảng markdown'],
                     ].map(([syntax, desc]) => (
                       <div key={syntax} style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
                         <span style={{ color: '#1d4ed8', minWidth: 150, flexShrink: 0 }}>{syntax}</span>
                         <span style={{ color: '#64748b', fontFamily: 'sans-serif' }}>→ {desc}</span>
                       </div>
                     ))}
-                  </div>
-                  <div style={{ marginTop: 8, color: '#64748b', fontFamily: 'sans-serif' }}>
-                    ⚠️ <strong>Không hỗ trợ:</strong> ### heading, bảng <code>|col|</code> — sẽ hiển thị dạng text thô.
                   </div>
                 </div>
               )}

@@ -222,17 +222,17 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
         } else if (p.startsWith('### ')) {
           return Padding(
             padding: const EdgeInsets.only(top: 14, bottom: 6),
-            child: Text(p.substring(4), style: AppTextStyles.heading4),
+            child: Text(p.substring(4), style: AppTextStyles.heading4.copyWith(fontSize: 14)),
           );
         } else if (p.startsWith('## ')) {
           return Padding(
             padding: const EdgeInsets.only(top: 12, bottom: 6),
-            child: Text(p.substring(3), style: AppTextStyles.heading4),
+            child: Text(p.substring(3), style: AppTextStyles.heading4.copyWith(fontSize: 15)),
           );
         } else if (p.startsWith('# ')) {
           return Padding(
             padding: const EdgeInsets.only(top: 16, bottom: 8),
-            child: Text(p.substring(2), style: AppTextStyles.heading3),
+            child: Text(p.substring(2), style: AppTextStyles.heading3.copyWith(fontSize: 17)),
           );
         } else if (p.contains('\n') && p.trimLeft().startsWith('|')) {
           return _buildMarkdownTable(p);
@@ -254,7 +254,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                     ),
                   ),
                   Expanded(
-                    child: Text(item.substring(2), style: AppTextStyles.bodyMedium.copyWith(fontSize: 10)),
+                    child: Text(item.substring(2), style: AppTextStyles.bodyMedium.copyWith(fontSize: 13)),
                   ),
                 ],
               ),
@@ -332,7 +332,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                 child: Text(
                   cell,
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 12,
                     fontWeight: FontWeight.w700,
                     color: context.textDark,
                   ),
@@ -351,7 +351,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                 child: Text(
                   cell,
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 12,
                     color: context.textPrimary,
                     fontFamily: looksLikeCode(cell) ? 'monospace' : null,
                   ),
@@ -367,7 +367,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   Widget _buildInlineText(String text) {
     // Basic bold support with **text**
     if (!text.contains('**') && !text.contains('`')) {
-      return Text(text, style: AppTextStyles.bodyMedium.copyWith(fontSize: 10));
+      return Text(text, style: AppTextStyles.bodyMedium.copyWith(fontSize: 13));
     }
     return Builder(
       builder: (context) {
@@ -378,14 +378,14 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
           if (match.start > lastEnd) {
             spans.add(TextSpan(
               text: text.substring(lastEnd, match.start),
-              style: AppTextStyles.bodyMedium.copyWith(fontSize: 10),
+              style: AppTextStyles.bodyMedium.copyWith(fontSize: 13),
             ));
           }
           if (match.group(1) != null) {
             // Bold
             spans.add(TextSpan(
               text: match.group(1),
-              style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w700, fontSize: 10),
+              style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w700, fontSize: 13),
             ));
           } else if (match.group(2) != null) {
             // Inline code
@@ -393,7 +393,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
               text: match.group(2),
               style: AppTextStyles.codeStyle.copyWith(
                 backgroundColor: context.surfaceElevatedColor,
-                fontSize: 10,
+                fontSize: 12,
               ),
             ));
           }
@@ -402,7 +402,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
         if (lastEnd < text.length) {
           spans.add(TextSpan(
             text: text.substring(lastEnd),
-            style: AppTextStyles.bodyMedium.copyWith(fontSize: 10),
+            style: AppTextStyles.bodyMedium.copyWith(fontSize: 13),
           ));
         }
         return Text.rich(TextSpan(children: spans));
@@ -461,7 +461,7 @@ class _CodeBlock extends StatelessWidget {
               code,
               style: const TextStyle(
                 fontFamily: 'monospace',
-                fontSize: 10,
+                fontSize: 12,
                 height: 1.55,
                 color: Colors.white,
               ),
@@ -496,7 +496,7 @@ class _InfoChip extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              fontSize: 10,
+              fontSize: 12,
               fontWeight: FontWeight.w700,
               color: color,
             ),

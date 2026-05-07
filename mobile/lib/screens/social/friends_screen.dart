@@ -499,7 +499,7 @@ class _FriendsScreenState extends State<FriendsScreen>
                   style: TextStyle(
                     fontWeight: FontWeight.w800,
                     fontSize: isCenter ? 13 : 11,
-                    color: AppColors.textDark,
+                    color: context.textDark,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),

@@ -9,6 +9,7 @@ import 'package:highlight/languages/javascript.dart';
 import 'package:highlight/languages/cs.dart';
 import 'package:highlight/languages/cpp.dart';
 import '../../constants/app_colors.dart';
+import '../../constants/app_theme.dart';
 import '../../constants/app_text_styles.dart';
 import '../../models/api_code_snippet.dart';
 import '../../services/api_service.dart';
@@ -246,7 +247,7 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
         backgroundColor: AppColors.surface,
-        foregroundColor: AppColors.textDark,
+        foregroundColor: context.textDark,
         elevation: 0,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

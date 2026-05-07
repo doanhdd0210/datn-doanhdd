@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
+import '../constants/app_theme.dart';
 import '../services/auth_service.dart';
 import '../widgets/app_snackbar.dart';
 
@@ -108,14 +109,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 32),
                   // Title
-                  const Text(
+                  Text(
                     'JavaUp',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontFamily: 'Nunito',
                       fontSize: 36,
                       fontWeight: FontWeight.w900,
-                      color: AppColors.textDark,
+                      color: context.textDark,
                       letterSpacing: -1,
                     ),
                   ),
@@ -236,11 +237,11 @@ class _FeatureBullet extends StatelessWidget {
         const SizedBox(width: 16),
         Text(
           text,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Nunito',
             fontSize: 15,
             fontWeight: FontWeight.w600,
-            color: AppColors.textDark,
+            color: context.textDark,
           ),
         ),
       ],
@@ -273,16 +274,16 @@ class _GoogleSignInButton extends StatelessWidget {
               height: 22,
               width: 22,
               errorBuilder: (_, __, ___) =>
-                  const Icon(Icons.login, size: 22, color: AppColors.textDark),
+                  Icon(Icons.login, size: 22, color: context.textDark),
             ),
             const SizedBox(width: 12),
-            const Text(
+            Text(
               'Đăng nhập với Google',
               style: TextStyle(
                 fontFamily: 'Nunito',
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
-                color: AppColors.textDark,
+                color: context.textDark,
               ),
             ),
           ],

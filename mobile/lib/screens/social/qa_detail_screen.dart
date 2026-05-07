@@ -173,7 +173,7 @@ class _QaDetailScreenState extends State<QaDetailScreen> {
     return Scaffold(
       backgroundColor: context.bgColor,
       appBar: AppBar(
-        foregroundColor: AppColors.textDark,
+        foregroundColor: context.textDark,
         elevation: 0,
         title: const Text('Câu hỏi', style: AppTextStyles.heading4),
         bottom: PreferredSize(
@@ -338,7 +338,7 @@ class _QaDetailScreenState extends State<QaDetailScreen> {
                 color: const Color(0xFF1A237E).withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Text(_aiAnswer!, style: const TextStyle(fontSize: 13, height: 1.5, color: AppColors.textDark)),
+              child: Text(_aiAnswer!, style: TextStyle(fontSize: 13, height: 1.5, color: context.textDark)),
             ),
             const SizedBox(height: 8),
             const Text('⚠️ Đây là gợi ý từ AI, hãy xác minh lại trước khi áp dụng.',

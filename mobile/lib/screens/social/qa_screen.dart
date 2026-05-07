@@ -285,7 +285,7 @@ class _QaScreenState extends State<QaScreen> {
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
       child: TextField(
         controller: _searchController,
-        style: const TextStyle(color: AppColors.textDark, fontSize: 14),
+        style: TextStyle(color: context.textDark, fontSize: 14),
         decoration: InputDecoration(
           hintText: 'Tìm kiếm câu hỏi, tag...',
           hintStyle: const TextStyle(color: AppColors.textGray, fontSize: 14),

@@ -32,6 +32,8 @@ extension AppThemeX on BuildContext {
       isDark ? AppColors.textGray : _Light.textGray;
   Color get textTertiary =>
       isDark ? AppColors.textLight : _Light.textLight;
+  Color get textDark =>
+      isDark ? AppColors.textDark : _Light.textDark;
   Color get navBgColor =>
       isDark ? AppColors.navBackground : _Light.navBackground;
   Color get navBorderColor =>

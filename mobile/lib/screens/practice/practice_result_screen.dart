@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:provider/provider.dart';
 import '../../constants/app_colors.dart';
+import '../../constants/app_theme.dart';
 import '../../constants/app_text_styles.dart';
 import '../../models/api_code_snippet.dart';
 import '../../providers/user_provider.dart';
@@ -54,7 +55,7 @@ class PracticeResultScreen extends StatelessWidget {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.background,
-        foregroundColor: AppColors.textDark,
+        foregroundColor: context.textDark,
         elevation: 0,
         title: const Text('Kết quả thực hành', style: AppTextStyles.heading4),
         automaticallyImplyLeading: false,

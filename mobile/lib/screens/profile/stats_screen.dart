@@ -97,7 +97,7 @@ class _StatsScreenState extends State<StatsScreen> with SingleTickerProviderStat
     return Scaffold(
       backgroundColor: context.bgColor,
       appBar: AppBar(
-        foregroundColor: AppColors.textDark,
+        foregroundColor: context.textDark,
         elevation: 0,
         title: const Text('Tiến độ học tập', style: AppTextStyles.heading4),
         bottom: PreferredSize(

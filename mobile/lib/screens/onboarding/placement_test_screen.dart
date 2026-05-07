@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../constants/app_colors.dart';
+import '../../constants/app_theme.dart';
 import '../../constants/level_config.dart';
 import '../../providers/user_provider.dart';
 import '../../../main.dart' show onboardingDoneKey;
@@ -284,10 +285,10 @@ class _PlacementTestScreenState extends State<PlacementTestScreen>
                   // Question
                   Text(
                     q.text,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.textDark,
+                      color: context.textDark,
                       height: 1.4,
                     ),
                   ),
@@ -306,7 +307,7 @@ class _PlacementTestScreenState extends State<PlacementTestScreen>
                     Color bottomBorder = AppColors.borderDark;
                     Color labelBg = AppColors.surfaceElevated;
                     Color labelText = AppColors.textGray;
-                    Color textColor = AppColors.textDark;
+                    Color textColor = context.textDark;
 
                     if (_hasAnswered) {
                       if (isCorrect) {

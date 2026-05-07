@@ -71,7 +71,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
     return Scaffold(
       backgroundColor: context.bgColor,
       appBar: AppBar(
-        foregroundColor: AppColors.textDark,
+        foregroundColor: context.textDark,
         elevation: 0,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -81,10 +81,10 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
               style: AppTextStyles.bodySmall.copyWith(color: _topicColor),
             ),
             Text(widget.lesson.title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textDark,
+                  color: context.textDark,
                 )),
           ],
         ),

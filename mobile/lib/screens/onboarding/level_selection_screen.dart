@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../constants/app_colors.dart';
+import '../../constants/app_theme.dart';
 import '../../constants/level_config.dart';
 import '../../providers/user_provider.dart';
 import '../../../main.dart' show onboardingDoneKey;
@@ -61,19 +62,19 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
         child: Column(
           children: [
             // Header
-            const Padding(
-              padding: EdgeInsets.fromLTRB(24, 32, 24, 8),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 32, 24, 8),
               child: Column(
                 children: [
-                  Text('🎯', style: TextStyle(fontSize: 48)),
-                  SizedBox(height: 16),
+                  const Text('🎯', style: TextStyle(fontSize: 48)),
+                  const SizedBox(height: 16),
                   Text(
                     'Trình độ Java của bạn?',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.w900,
-                      color: AppColors.textDark,
+                      color: context.textDark,
                       height: 1.2,
                     ),
                   ),
@@ -165,15 +166,15 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: AppColors.border),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text('📝', style: TextStyle(fontSize: 16)),
-                          SizedBox(width: 8),
+                          const Text('📝', style: TextStyle(fontSize: 16)),
+                          const SizedBox(width: 8),
                           Text(
                             'Làm bài kiểm tra xếp lớp',
                             style: TextStyle(
-                              color: AppColors.textDark,
+                              color: context.textDark,
                               fontWeight: FontWeight.w700,
                               fontSize: 14,
                             ),
@@ -253,7 +254,7 @@ class _LevelCard extends StatelessWidget {
                         style: TextStyle(
                           fontWeight: FontWeight.w900,
                           fontSize: 18,
-                          color: isSelected ? level.color : AppColors.textDark,
+                          color: isSelected ? level.color : context.textDark,
                         ),
                       ),
                       const SizedBox(width: 8),

@@ -246,7 +246,7 @@ class _TopicsScreenState extends State<TopicsScreen> {
         } else {
           headerText = '🎯 Mục tiêu hôm nay';
         }
-        final headerColor = (reached || claimed) ? AppColors.correct : AppColors.textDark;
+        final headerColor = (reached || claimed) ? AppColors.correct : context.textDark;
         return GestureDetector(
           onTap: () => _showGoalPicker(context, provider),
           child: Container(
@@ -316,8 +316,8 @@ class _TopicsScreenState extends State<TopicsScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Chọn mục tiêu hằng ngày',
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppColors.textDark)),
+            Text('Chọn mục tiêu hằng ngày',
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: context.textDark)),
             if (provider.isDailyGoalReached || provider.dailyGoalBonusClaimedToday) ...[
               const SizedBox(height: 6),
               Text(
@@ -359,7 +359,7 @@ class _TopicsScreenState extends State<TopicsScreen> {
                                 style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14,
                                     color: disabled
                                         ? AppColors.textGray
-                                        : isSelected ? AppColors.primary : AppColors.textDark)),
+                                        : isSelected ? AppColors.primary : context.textDark)),
                             if (bonus > 0)
                               Text('Thưởng khi đạt: +$bonus XP',
                                   style: TextStyle(fontSize: 11,

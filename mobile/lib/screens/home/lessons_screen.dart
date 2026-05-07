@@ -455,7 +455,7 @@ class _LessonItem extends StatelessWidget {
                                         style: AppTextStyles.labelBold.copyWith(
                                           color: isCompleted
                                               ? AppColors.textGray
-                                              : AppColors.textDark,
+                                              : context.textDark,
                                           decoration: isCompleted
                                               ? TextDecoration.none
                                               : null,

@@ -4,6 +4,7 @@ import 'package:flutter_code_editor/flutter_code_editor.dart';
 import 'package:flutter_highlight/themes/vs2015.dart';
 import 'package:highlight/languages/java.dart';
 import '../../constants/app_colors.dart';
+import '../../constants/app_theme.dart';
 import '../../constants/app_text_styles.dart';
 import '../../models/api_code_snippet.dart';
 import '../../services/compiler_service.dart';
@@ -86,7 +87,7 @@ class _CodeDemoDetailScreenState extends State<CodeDemoDetailScreen>
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.background,
-        foregroundColor: AppColors.textDark,
+        foregroundColor: context.textDark,
         elevation: 0,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

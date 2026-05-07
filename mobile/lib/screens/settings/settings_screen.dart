@@ -66,7 +66,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Hủy', style: TextStyle(color: AppColors.textGray)),
+            child: Text('Hủy', style: TextStyle(color: context.textSecondary)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -227,10 +227,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           padding: const EdgeInsets.only(left: 4, bottom: 8),
           child: Text(
             title.toUpperCase(),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w700,
-              color: AppColors.textGray,
+              color: context.textSecondary,
               letterSpacing: 1,
             ),
           ),
@@ -240,7 +240,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             color: context.surfaceColor,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: context.isDark ? AppColors.borderDark : context.borderColor,
+              color: context.borderColor,
             ),
           ),
           child: Column(
@@ -251,7 +251,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   if (i < children.length - 1)
                     Divider(
                       height: 1,
-                      color: context.isDark ? AppColors.borderDark : context.borderColor,
+                      color: context.borderColor,
                       indent: 56,
                     ),
                 ],
@@ -285,7 +285,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ? Text(value, style: AppTextStyles.bodyMedium.copyWith(color: context.textSecondary))
           : null,
       trailing: onTap != null
-          ? const Icon(Icons.chevron_right, color: AppColors.textGray)
+          ? Icon(Icons.chevron_right, color: context.textSecondary)
           : null,
       onTap: onTap,
     );
@@ -388,7 +388,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Icon(
                 icon,
                 size: 22,
-                color: isSelected ? AppColors.primary : AppColors.textGray,
+                color: isSelected ? AppColors.primary : context.textSecondary,
               ),
               const SizedBox(height: 4),
               Text(
@@ -396,7 +396,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
-                  color: isSelected ? AppColors.primary : AppColors.textGray,
+                  color: isSelected ? AppColors.primary : context.textSecondary,
                 ),
               ),
             ],
@@ -463,7 +463,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   style: const TextStyle(fontSize: 13),
                   decoration: InputDecoration(
                     hintText: 'https://...',
-                    hintStyle: const TextStyle(color: AppColors.textGray),
+                    hintStyle: TextStyle(color: context.textSecondary),
                     filled: true,
                     fillColor: context.bgColor,
                     border: OutlineInputBorder(
@@ -555,8 +555,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     child: OutlinedButton(
                       onPressed: () => Navigator.pop(ctx),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.textGray,
-                        side: const BorderSide(color: AppColors.textGray),
+                        foregroundColor: context.textSecondary,
+                        side: BorderSide(color: context.borderColor),
                         minimumSize: Size.zero,
                         padding: const EdgeInsets.symmetric(vertical: 13),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),

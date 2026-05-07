@@ -57,7 +57,7 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.bgColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -84,7 +84,7 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 15,
-                      color: AppColors.textGray,
+                      color: context.textSecondary,
                       height: 1.4,
                     ),
                   ),
@@ -162,9 +162,9 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       decoration: BoxDecoration(
-                        color: AppColors.surfaceLight,
+                        color: context.surfaceColor,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.border),
+                        border: Border.all(color: context.borderColor),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -217,10 +217,10 @@ class _LevelCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: isSelected ? level.color.withValues(alpha: 0.12) : AppColors.surface,
+          color: isSelected ? level.color.withValues(alpha: 0.12) : context.surfaceColor,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? level.color : AppColors.border,
+            color: isSelected ? level.color : context.borderColor,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -232,7 +232,7 @@ class _LevelCard extends StatelessWidget {
               width: 60,
               height: 60,
               decoration: BoxDecoration(
-                color: isSelected ? level.color : AppColors.surfaceLight,
+                color: isSelected ? level.color : context.surfaceElevatedColor,
                 shape: BoxShape.circle,
               ),
               child: Center(
@@ -279,9 +279,9 @@ class _LevelCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     level.description,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
-                      color: AppColors.textGray,
+                      color: context.textSecondary,
                       height: 1.4,
                     ),
                   ),
@@ -297,9 +297,9 @@ class _LevelCard extends StatelessWidget {
                       key: const ValueKey('checked'),
                       color: level.color,
                       size: 26)
-                  : const Icon(Icons.circle_outlined,
+                  : Icon(Icons.circle_outlined,
                       key: ValueKey('unchecked'),
-                      color: AppColors.border,
+                      color: context.borderColor,
                       size: 26),
             ),
           ],

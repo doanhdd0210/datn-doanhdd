@@ -84,9 +84,9 @@ class _CodeDemoDetailScreenState extends State<CodeDemoDetailScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.bgColor,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: context.bgColor,
         foregroundColor: context.textDark,
         elevation: 0,
         title: Column(
@@ -94,12 +94,12 @@ class _CodeDemoDetailScreenState extends State<CodeDemoDetailScreen>
           children: [
             Text(widget.snippet.title, style: AppTextStyles.heading4),
             Text(widget.snippet.language.toUpperCase(),
-                style: const TextStyle(fontSize: 11, color: AppColors.textGray)),
+                style: TextStyle(fontSize: 11, color: context.textSecondary)),
           ],
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: AppColors.border),
+          child: Container(height: 1, color: context.borderColor),
         ),
         actions: [
           IconButton(
@@ -115,7 +115,7 @@ class _CodeDemoDetailScreenState extends State<CodeDemoDetailScreen>
         children: [
           // Info section
           Container(
-            color: AppColors.surface,
+            color: context.surfaceColor,
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
             child: Row(
               children: [
@@ -335,9 +335,9 @@ class _CodeDemoDetailScreenState extends State<CodeDemoDetailScreen>
           // Practice button
           Container(
             padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
-            decoration: const BoxDecoration(
-              color: AppColors.background,
-              border: Border(top: BorderSide(color: AppColors.border)),
+            decoration: BoxDecoration(
+              color: context.bgColor,
+              border: Border(top: BorderSide(color: context.borderColor)),
             ),
             child: SafeArea(
               child: SizedBox(

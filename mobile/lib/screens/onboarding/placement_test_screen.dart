@@ -181,7 +181,7 @@ class _PlacementTestScreenState extends State<PlacementTestScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.surfaceLight,
+      backgroundColor: context.surfaceColor,
       body: SafeArea(
         child: _finished ? _buildResult() : _buildTest(),
       ),
@@ -197,7 +197,7 @@ class _PlacementTestScreenState extends State<PlacementTestScreen>
       children: [
         // Header
         Container(
-          color: AppColors.background,
+          color: context.bgColor,
           padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
           child: Column(
             children: [
@@ -209,11 +209,11 @@ class _PlacementTestScreenState extends State<PlacementTestScreen>
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        color: AppColors.surfaceLight,
+                        color: context.surfaceColor,
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(Icons.close_rounded,
-                          color: AppColors.textGray, size: 20),
+                      child: Icon(Icons.close_rounded,
+                          color: context.textSecondary, size: 20),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -222,7 +222,7 @@ class _PlacementTestScreenState extends State<PlacementTestScreen>
                       borderRadius: BorderRadius.circular(8),
                       child: LinearProgressIndicator(
                         value: progress,
-                        backgroundColor: AppColors.border,
+                        backgroundColor: context.borderColor,
                         valueColor: AlwaysStoppedAnimation(diffColor),
                         minHeight: 12,
                       ),
@@ -231,9 +231,9 @@ class _PlacementTestScreenState extends State<PlacementTestScreen>
                   const SizedBox(width: 12),
                   Text(
                     '${_currentIndex + 1}/${_questions.length}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textGray,
+                      color: context.textSecondary,
                     ),
                   ),
                 ],
@@ -275,9 +275,9 @@ class _PlacementTestScreenState extends State<PlacementTestScreen>
                         ),
                       ),
                       const SizedBox(width: 8),
-                      const Text('Chọn đáp án đúng',
+                      Text('Chọn đáp án đúng',
                           style: TextStyle(
-                              color: AppColors.textGray, fontSize: 13)),
+                              color: context.textSecondary, fontSize: 13)),
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -302,11 +302,11 @@ class _PlacementTestScreenState extends State<PlacementTestScreen>
                     final isCorrect = i == q.correct;
                     const labels = ['A', 'B', 'C', 'D'];
 
-                    Color bgColor = AppColors.surface;
-                    Color borderColor = AppColors.border;
-                    Color bottomBorder = AppColors.borderDark;
-                    Color labelBg = AppColors.surfaceElevated;
-                    Color labelText = AppColors.textGray;
+                    Color bgColor = context.surfaceColor;
+                    Color borderColor = context.borderColor;
+                    Color bottomBorder = context.borderColor;
+                    Color labelBg = context.surfaceElevatedColor;
+                    Color labelText = context.textSecondary;
                     Color textColor = context.textDark;
 
                     if (_hasAnswered) {
@@ -325,8 +325,8 @@ class _PlacementTestScreenState extends State<PlacementTestScreen>
                         labelText = Colors.white;
                         textColor = Colors.white;
                       } else {
-                        textColor = AppColors.textLight;
-                        labelText = AppColors.textLight;
+                        textColor = context.textTertiary;
+                        labelText = context.textTertiary;
                       }
                     } else if (isSelected) {
                       bgColor = const Color(0xFFEEF9FF);

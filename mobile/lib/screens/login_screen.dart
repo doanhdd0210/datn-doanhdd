@@ -40,7 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.bgColor,
       body: Stack(
         children: [
           // Background gradient glow
@@ -121,14 +121,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  const Text(
+                  Text(
                     'Học lập trình Java\nmọi lúc, mọi nơi',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontFamily: 'Nunito',
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.textGray,
+                      color: context.textSecondary,
                       height: 1.5,
                     ),
                   ),
@@ -196,7 +196,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     style: TextStyle(
                       fontFamily: 'Nunito',
                       fontSize: 11,
-                      color: AppColors.textLight.withValues(alpha: 0.7),
+                      color: context.textTertiary.withValues(alpha: 0.7),
                     ),
                   ),
                   const SizedBox(height: 32),
@@ -262,9 +262,9 @@ class _GoogleSignInButton extends StatelessWidget {
         width: double.infinity,
         height: 56,
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: context.surfaceColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border, width: 1.5),
+          border: Border.all(color: context.borderColor, width: 1.5),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,

@@ -82,8 +82,8 @@ class _QaDetailScreenState extends State<QaDetailScreen> {
                     child: OutlinedButton(
                       onPressed: () => Navigator.pop(ctx, false),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.textGray,
-                        side: const BorderSide(color: AppColors.textGray, width: 1.5),
+                        foregroundColor: context.textSecondary,
+                        side: BorderSide(color: context.borderColor, width: 1.5),
                         fixedSize: const Size.fromHeight(48),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
@@ -287,13 +287,13 @@ class _QaDetailScreenState extends State<QaDetailScreen> {
                         exhausted
                             ? 'Đã hết lượt AI hôm nay.'
                             : 'AI có thể gợi ý câu trả lời cho câu hỏi này.',
-                        style: const TextStyle(fontSize: 12, color: AppColors.textGray),
+                        style: TextStyle(fontSize: 12, color: context.textSecondary),
                       ),
                       if (aiUsage.loaded) ...[
                         const Spacer(),
                         Text(
                           '${aiUsage.used}/${aiUsage.limit} lượt',
-                          style: const TextStyle(fontSize: 11, color: AppColors.textGray),
+                          style: TextStyle(fontSize: 11, color: context.textSecondary),
                         ),
                       ],
                     ],
@@ -341,8 +341,8 @@ class _QaDetailScreenState extends State<QaDetailScreen> {
               child: Text(_aiAnswer!, style: TextStyle(fontSize: 13, height: 1.5, color: context.textDark)),
             ),
             const SizedBox(height: 8),
-            const Text('⚠️ Đây là gợi ý từ AI, hãy xác minh lại trước khi áp dụng.',
-                style: TextStyle(fontSize: 10, color: AppColors.textGray, fontStyle: FontStyle.italic)),
+            Text('⚠️ Đây là gợi ý từ AI, hãy xác minh lại trước khi áp dụng.',
+                style: TextStyle(fontSize: 10, color: context.textSecondary, fontStyle: FontStyle.italic)),
           ],
         ],
       ),
@@ -534,7 +534,7 @@ class _AnswerCard extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               Text(answer.authorName, style: AppTextStyles.bodySmall.copyWith(fontWeight: FontWeight.w600)),
-              const Text(' · ', style: TextStyle(color: AppColors.textGray, fontSize: 12)),
+              Text(' · ', style: TextStyle(color: context.textSecondary, fontSize: 12)),
               Text(_timeAgo(answer.createdAt), style: AppTextStyles.bodySmall),
               const Spacer(),
               if (isPostAuthor && !answer.isAccepted) ...[

@@ -246,7 +246,7 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
       backgroundColor: const Color(0xFF1E1E1E),
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: context.surfaceColor,
         foregroundColor: context.textDark,
         elevation: 0,
         title: Column(
@@ -262,19 +262,19 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: AppColors.border),
+          child: Container(height: 1, color: context.borderColor),
         ),
         actions: [
           IconButton(
             onPressed: _showReferenceSheet,
-            icon: const Icon(Icons.remove_red_eye_outlined, size: 20,
-                color: AppColors.textGray),
+            icon: Icon(Icons.remove_red_eye_outlined, size: 20,
+                color: context.textSecondary),
             tooltip: 'Tham khảo',
           ),
           IconButton(
             onPressed: () => setState(() => _showHint = !_showHint),
             icon: Icon(Icons.lightbulb_outline, size: 20,
-                color: _showHint ? AppColors.orange : AppColors.textGray),
+                color: _showHint ? AppColors.orange : context.textSecondary),
             tooltip: 'Gợi ý',
           ),
         ],
@@ -534,7 +534,7 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
   Widget _buildActionBar() {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-      color: AppColors.surface,
+      color: context.surfaceColor,
       child: SafeArea(
         top: false,
         child: IntrinsicHeight(

@@ -791,14 +791,14 @@ class _FeedbackBarState extends State<_FeedbackBar> {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: context.borderColor),
         ),
-        child: const Row(
+        child: Row(
           children: [
-            SizedBox(
+            const SizedBox(
               width: 16, height: 16,
               child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
             ),
-            SizedBox(width: 10),
-            Text('AI đang phân tích...', style: TextStyle(fontSize: 13, color: AppColors.textGray)),
+            const SizedBox(width: 10),
+            Text('AI đang phân tích...', style: TextStyle(fontSize: 13, color: context.textSecondary)),
           ],
         ),
       );
@@ -825,7 +825,7 @@ class _FeedbackBarState extends State<_FeedbackBar> {
                 const Spacer(),
                 GestureDetector(
                   onTap: () => setState(() { _aiHint = null; _aiRequested = false; }),
-                  child: const Icon(Icons.close_rounded, size: 16, color: AppColors.textGray),
+                  child: Icon(Icons.close_rounded, size: 16, color: context.textSecondary),
                 ),
               ],
             ),

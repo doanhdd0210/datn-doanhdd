@@ -265,7 +265,7 @@ class _FilterChip extends StatelessWidget {
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? Colors.white : AppColors.textGray,
+            color: isSelected ? Colors.white : context.textSecondary,
             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
             fontSize: 13,
           ),
@@ -374,7 +374,7 @@ class _SnippetCard extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: AppColors.textGray),
+            Icon(Icons.chevron_right, color: context.textSecondary),
           ],
         ),
       ),

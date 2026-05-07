@@ -314,13 +314,13 @@ class _LessonsScreenState extends State<LessonsScreen> {
         child: Column(
           children: [
             const SizedBox(height: 40),
-            const Icon(Icons.wifi_off_rounded, size: 52, color: AppColors.textGray),
+            Icon(Icons.wifi_off_rounded, size: 52, color: context.textSecondary),
             const SizedBox(height: 16),
             Text('Không thể tải bài học', style: AppTextStyles.heading4),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Kiểm tra kết nối mạng và thử lại',
-              style: TextStyle(color: AppColors.textGray, fontSize: 13),
+              style: TextStyle(color: context.textSecondary, fontSize: 13),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
@@ -454,7 +454,7 @@ class _LessonItem extends StatelessWidget {
                                         lesson.title,
                                         style: AppTextStyles.labelBold.copyWith(
                                           color: isCompleted
-                                              ? AppColors.textGray
+                                              ? context.textSecondary
                                               : context.textDark,
                                           decoration: isCompleted
                                               ? TextDecoration.none
@@ -497,7 +497,7 @@ class _LessonItem extends StatelessWidget {
                                   size: 20,
                                   color: isCompleted
                                       ? AppColors.correct.withValues(alpha: 0.6)
-                                      : AppColors.textGray,
+                                      : context.textSecondary,
                                 ),
                               ],
                             ),

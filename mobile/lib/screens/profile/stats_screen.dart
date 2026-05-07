@@ -240,7 +240,7 @@ class _StatsScreenState extends State<StatsScreen> with SingleTickerProviderStat
                           padding: const EdgeInsets.only(top: 4),
                           child: Text(
                             DateFormat('E').format(dp.date),
-                            style: const TextStyle(fontSize: 10, color: AppColors.textGray),
+                            style: TextStyle(fontSize: 10, color: context.textSecondary),
                           ),
                         );
                       },
@@ -254,7 +254,7 @@ class _StatsScreenState extends State<StatsScreen> with SingleTickerProviderStat
                         if (value == 0) return const Text('');
                         return Text(
                           value.toInt().toString(),
-                          style: const TextStyle(fontSize: 9, color: AppColors.textGray),
+                          style: TextStyle(fontSize: 9, color: context.textSecondary),
                         );
                       },
                     ),
@@ -344,7 +344,7 @@ class _StatsScreenState extends State<StatsScreen> with SingleTickerProviderStat
           const SizedBox(height: 12),
           Row(
             children: [
-              const Text('Ít', style: TextStyle(fontSize: 10, color: AppColors.textGray)),
+              Text('Ít', style: TextStyle(fontSize: 10, color: context.textSecondary)),
               const SizedBox(width: 6),
               ...List.generate(5, (i) {
                 final opacity = 0.15 + i * 0.2;
@@ -359,7 +359,7 @@ class _StatsScreenState extends State<StatsScreen> with SingleTickerProviderStat
                 );
               }),
               const SizedBox(width: 6),
-              const Text('Nhiều', style: TextStyle(fontSize: 10, color: AppColors.textGray)),
+              Text('Nhiều', style: TextStyle(fontSize: 10, color: context.textSecondary)),
             ],
           ),
         ],

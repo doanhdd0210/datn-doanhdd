@@ -220,8 +220,8 @@ class _TopicsScreenState extends State<TopicsScreen> {
                   children: [
                     Text('${provider.streak} ngày liên tiếp!',
                         style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppColors.accentGold)),
-                    const Text('Duy trì nhé — quay lại vào ngày mai!',
-                        style: TextStyle(fontSize: 12, color: AppColors.textGray)),
+                    Text('Duy trì nhé — quay lại vào ngày mai!',
+                        style: TextStyle(fontSize: 12, color: context.textSecondary)),
                   ],
                 ),
               ),
@@ -324,7 +324,7 @@ class _TopicsScreenState extends State<TopicsScreen> {
                 provider.dailyGoalBonusClaimedToday
                     ? 'Bạn đã nhận thưởng hôm nay. Thưởng tiếp theo vào ngày mai.'
                     : 'Bạn đã đạt mục tiêu hôm nay. Có thể đổi mục tiêu từ ngày mai.',
-                style: const TextStyle(fontSize: 12, color: AppColors.textGray),
+                style: TextStyle(fontSize: 12, color: context.textSecondary),
               ),
             ],
             const SizedBox(height: 16),
@@ -358,19 +358,19 @@ class _TopicsScreenState extends State<TopicsScreen> {
                             Text('⚡ $g XP / ngày',
                                 style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14,
                                     color: disabled
-                                        ? AppColors.textGray
+                                        ? context.textSecondary
                                         : isSelected ? AppColors.primary : context.textDark)),
                             if (bonus > 0)
                               Text('Thưởng khi đạt: +$bonus XP',
                                   style: TextStyle(fontSize: 11,
-                                      color: disabled ? AppColors.textGray : AppColors.xpGold)),
+                                      color: disabled ? context.textSecondary : AppColors.xpGold)),
                           ],
                         ),
                       ),
                       if (isSelected && !disabled)
                         const Icon(Icons.check_circle_rounded, color: AppColors.primary, size: 20),
                       if (isSelected && disabled)
-                        const Icon(Icons.check_circle_rounded, color: AppColors.textGray, size: 20),
+                        Icon(Icons.check_circle_rounded, color: context.textSecondary, size: 20),
                     ],
                   ),
                 ),

@@ -169,7 +169,7 @@ class _FriendsScreenState extends State<FriendsScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Hủy', style: TextStyle(color: AppColors.textGray)),
+            child: Text('Hủy', style: TextStyle(color: context.textSecondary)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -318,7 +318,7 @@ class _FriendsScreenState extends State<FriendsScreen>
                     indicatorColor: AppColors.primary,
                     indicatorWeight: 3,
                     labelColor: AppColors.primary,
-                    unselectedLabelColor: AppColors.textGray,
+                    unselectedLabelColor: context.textSecondary,
                     labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
                     unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
                     dividerColor: context.borderColor,
@@ -515,10 +515,10 @@ class _FriendsScreenState extends State<FriendsScreen>
                 if (entry.streak > 0)
                   Text(
                     '🔥 ${entry.streak} ngày',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 10,
-                      color: AppColors.textGray,
+                      color: context.textSecondary,
                     ),
                   ),
                 const SizedBox(height: 8),
@@ -575,7 +575,7 @@ class _FriendsScreenState extends State<FriendsScreen>
               style: TextStyle(
                 fontWeight: FontWeight.w800,
                 fontSize: 13,
-                color: isMe ? AppColors.primary : AppColors.textGray,
+                color: isMe ? AppColors.primary : context.textSecondary,
               ),
             ),
           ),
@@ -628,7 +628,7 @@ class _FriendsScreenState extends State<FriendsScreen>
               ],
             ),
           ),
-          const Icon(Icons.chevron_right_rounded, color: AppColors.textGray, size: 18),
+          Icon(Icons.chevron_right_rounded, color: context.textSecondary, size: 18),
         ],
       ),
     ),
@@ -877,7 +877,7 @@ class _FriendsScreenState extends State<FriendsScreen>
                       width: 14, height: 14,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: isFollower ? Colors.white : AppColors.textGray,
+                        color: isFollower ? Colors.white : context.textSecondary,
                       ),
                     )
                   : Text(
@@ -885,7 +885,7 @@ class _FriendsScreenState extends State<FriendsScreen>
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: isFollower ? Colors.white : AppColors.textGray,
+                        color: isFollower ? Colors.white : context.textSecondary,
                       ),
                     ),
             ),
@@ -1363,7 +1363,7 @@ class _FollowListSheetState extends State<_FollowListSheet> {
                                     height: 14,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
-                                      color: isFollowing ? AppColors.textGray : Colors.white,
+                                      color: isFollowing ? context.textSecondary : Colors.white,
                                     ),
                                   )
                                 : Text(
@@ -1371,7 +1371,7 @@ class _FollowListSheetState extends State<_FollowListSheet> {
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w700,
-                                      color: isFollowing ? AppColors.textGray : Colors.white,
+                                      color: isFollowing ? context.textSecondary : Colors.white,
                                     ),
                                   ),
                           ),
@@ -1416,7 +1416,7 @@ class _ToggleTab extends StatelessWidget {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
-                color: active ? Colors.white : AppColors.textGray,
+                color: active ? Colors.white : context.textSecondary,
               ),
             ),
           ),

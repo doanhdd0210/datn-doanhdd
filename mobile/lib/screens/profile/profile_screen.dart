@@ -71,8 +71,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: context.borderColor),
                   ),
-                  child: const Icon(Icons.settings_rounded,
-                      size: 20, color: AppColors.textGray),
+                  child: Icon(Icons.settings_rounded,
+                      size: 20, color: context.textSecondary),
                 ),
               ),
             ],
@@ -145,7 +145,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   style: AppTextStyles.heading3,
                 ),
                 const SizedBox(width: 6),
-                const Icon(Icons.edit_rounded, size: 14, color: AppColors.textGray),
+                Icon(Icons.edit_rounded, size: 14, color: context.textSecondary),
               ],
             ),
           ),
@@ -276,7 +276,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ? Colors.white
                                 : isToday
                                     ? AppColors.streakOrange
-                                    : AppColors.textLight,
+                                    : context.textTertiary,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -429,7 +429,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Huỷ', style: TextStyle(color: AppColors.textGray)),
+            child: Text('Huỷ', style: TextStyle(color: context.textSecondary)),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -535,10 +535,10 @@ class _StatCard extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textGray,
+                color: context.textSecondary,
               ),
               textAlign: TextAlign.center,
             ),
@@ -559,10 +559,10 @@ class _SectionLabel extends StatelessWidget {
       padding: const EdgeInsets.only(left: 4, bottom: 10),
       child: Text(
         label,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w800,
-          color: AppColors.textGray,
+          color: context.textSecondary,
           letterSpacing: 1.0,
         ),
       ),
@@ -608,8 +608,8 @@ class _MenuItem extends StatelessWidget {
           label,
           style: AppTextStyles.labelBold.copyWith(color: textColor),
         ),
-        trailing: const Icon(Icons.chevron_right_rounded,
-            color: AppColors.textGray, size: 20),
+        trailing: Icon(Icons.chevron_right_rounded,
+            color: context.textSecondary, size: 20),
         onTap: onTap,
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
@@ -714,7 +714,7 @@ class _AchievementBadge extends StatelessWidget {
             style: TextStyle(
               fontSize: 9,
               fontWeight: FontWeight.w600,
-              color: isUnlocked ? AppColors.textLight : AppColors.textGray,
+              color: isUnlocked ? context.textTertiary : context.textSecondary,
             ),
             textAlign: TextAlign.center,
             maxLines: 2,

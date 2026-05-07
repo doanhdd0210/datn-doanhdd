@@ -288,15 +288,15 @@ class _QaScreenState extends State<QaScreen> {
         style: TextStyle(color: context.textDark, fontSize: 14),
         decoration: InputDecoration(
           hintText: 'Tìm kiếm câu hỏi, tag...',
-          hintStyle: const TextStyle(color: AppColors.textGray, fontSize: 14),
-          prefixIcon: const Icon(Icons.search_rounded, color: AppColors.textGray, size: 20),
+          hintStyle: TextStyle(color: context.textSecondary, fontSize: 14),
+          prefixIcon: Icon(Icons.search_rounded, color: context.textSecondary, size: 20),
           suffixIcon: _searchQuery.isNotEmpty
               ? GestureDetector(
                   onTap: () {
                     _searchController.clear();
                     setState(() => _searchQuery = '');
                   },
-                  child: const Icon(Icons.close_rounded, color: AppColors.textGray, size: 18),
+                  child: Icon(Icons.close_rounded, color: context.textSecondary, size: 18),
                 )
               : null,
           filled: true,
@@ -346,7 +346,7 @@ class _QaScreenState extends State<QaScreen> {
               child: Text(
                 f.$2,
                 style: TextStyle(
-                  color: isSelected ? Colors.white : AppColors.textGray,
+                  color: isSelected ? Colors.white : context.textSecondary,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                   fontSize: 13,
                 ),
@@ -572,10 +572,10 @@ class _QaPostCardState extends State<_QaPostCard> {
               children: [
                 Text(post.authorName,
                     style: AppTextStyles.bodySmall.copyWith(fontWeight: FontWeight.w600)),
-                const Text(' · ', style: TextStyle(color: AppColors.textGray, fontSize: 12)),
+                Text(' · ', style: TextStyle(color: context.textSecondary, fontSize: 12)),
                 Text(_timeAgo(post.createdAt), style: AppTextStyles.bodySmall),
                 const Spacer(),
-                Icon(Icons.chat_bubble_outline, size: 14, color: AppColors.textGray),
+                Icon(Icons.chat_bubble_outline, size: 14, color: context.textSecondary),
                 const SizedBox(width: 3),
                 Text('${post.answerCount}', style: AppTextStyles.bodySmall),
               ],

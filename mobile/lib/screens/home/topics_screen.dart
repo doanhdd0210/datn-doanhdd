@@ -718,16 +718,21 @@ class _NodeCircle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isActive = isDone || isCurrent;
-    // Slightly darker bg for locked topic vs upcoming lesson
+    final isDarkMode = context.isDark;
     final bg = isActive
         ? color
         : isLocked
-            ? const Color(0xFF252535)
-            : const Color(0xFF2E2E42);
-    final iconColor = isActive ? Colors.white : context.textTertiary;
+            ? (isDarkMode ? const Color(0xFF252535) : const Color(0xFFE2E5F0))
+            : (isDarkMode ? const Color(0xFF2E2E42) : const Color(0xFFD4D9EA));
+    final iconColor = isActive
+        ? Colors.white
+        : (isDarkMode ? context.textTertiary : context.textSecondary);
     final shadowColor = isActive
-        ? Color.lerp(color, Colors.black, 0.38)!
-        : Colors.black.withValues(alpha: 0.45);
+        ? Color.lerp(color, Colors.black, isDarkMode ? 0.38 : 0.25)!
+        : Colors.black.withValues(alpha: isDarkMode ? 0.45 : 0.10);
+    final borderColor = isDarkMode
+        ? Colors.white.withValues(alpha: 0.7)
+        : color.withValues(alpha: 0.8);
 
     return Container(
       width: size,
@@ -736,8 +741,10 @@ class _NodeCircle extends StatelessWidget {
         shape: BoxShape.circle,
         color: bg,
         border: isCurrent
-            ? Border.all(color: Colors.white.withValues(alpha: 0.7), width: 3.5)
-            : null,
+            ? Border.all(color: borderColor, width: 3.5)
+            : (!isActive && !isDarkMode)
+                ? Border.all(color: const Color(0xFFCBD0E0), width: 1.5)
+                : null,
         boxShadow: [
           BoxShadow(
             color: shadowColor,

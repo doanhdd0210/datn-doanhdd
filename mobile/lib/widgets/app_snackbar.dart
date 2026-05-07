@@ -16,7 +16,8 @@ class AppSnackBar {
     VoidCallback? onAction,
   }) {
     final overlay = Overlay.of(context, rootOverlay: true);
-    final cfg = _config(type);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cfg = _config(type, isDark);
     late OverlayEntry entry;
     entry = OverlayEntry(
       builder: (_) => _TopBanner(
@@ -24,9 +25,11 @@ class AppSnackBar {
         icon: cfg.icon,
         iconColor: cfg.iconColor,
         bgColor: cfg.bgColor,
+        textColor: cfg.textColor,
         actionLabel: actionLabel,
         onAction: onAction,
         duration: duration,
+        isDark: isDark,
         onDismiss: () {
           if (entry.mounted) entry.remove();
         },
@@ -43,7 +46,8 @@ class AppSnackBar {
     String? actionLabel,
     VoidCallback? onAction,
   }) {
-    final cfg = _config(type);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cfg = _config(type, isDark);
 
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
@@ -60,6 +64,8 @@ class AppSnackBar {
             icon: cfg.icon,
             iconColor: cfg.iconColor,
             bgColor: cfg.bgColor,
+            textColor: cfg.textColor,
+            isDark: isDark,
             actionLabel: actionLabel,
             onAction: onAction,
           ),
@@ -88,31 +94,35 @@ class AppSnackBar {
   static void warning(BuildContext context, String message) =>
       show(context, message, type: SnackType.warning);
 
-  static _SnackConfig _config(SnackType type) {
+  static _SnackConfig _config(SnackType type, bool isDark) {
     switch (type) {
       case SnackType.success:
         return _SnackConfig(
           icon: Icons.check_circle_rounded,
           iconColor: const Color(0xFF4CAF50),
-          bgColor: const Color(0xFF1C2A1E),
+          bgColor: isDark ? const Color(0xFF1C2A1E) : const Color(0xFFEDF7ED),
+          textColor: isDark ? Colors.white : const Color(0xFF1A1A2E),
         );
       case SnackType.error:
         return _SnackConfig(
           icon: Icons.error_rounded,
           iconColor: AppColors.red,
-          bgColor: const Color(0xFF2A1C1C),
+          bgColor: isDark ? const Color(0xFF2A1C1C) : const Color(0xFFFDECEC),
+          textColor: isDark ? Colors.white : const Color(0xFF1A1A2E),
         );
       case SnackType.warning:
         return _SnackConfig(
           icon: Icons.warning_rounded,
           iconColor: const Color(0xFFFFC107),
-          bgColor: const Color(0xFF2A2518),
+          bgColor: isDark ? const Color(0xFF2A2518) : const Color(0xFFFFF3E0),
+          textColor: isDark ? Colors.white : const Color(0xFF1A1A2E),
         );
       case SnackType.info:
         return _SnackConfig(
           icon: Icons.info_rounded,
           iconColor: AppColors.blue,
-          bgColor: const Color(0xFF1A2230),
+          bgColor: isDark ? const Color(0xFF1A2230) : const Color(0xFFE3F2FD),
+          textColor: isDark ? Colors.white : const Color(0xFF1A1A2E),
         );
     }
   }
@@ -122,10 +132,12 @@ class _SnackConfig {
   final IconData icon;
   final Color iconColor;
   final Color bgColor;
+  final Color textColor;
   const _SnackConfig({
     required this.icon,
     required this.iconColor,
     required this.bgColor,
+    required this.textColor,
   });
 }
 
@@ -134,6 +146,8 @@ class _TopBanner extends StatefulWidget {
   final IconData icon;
   final Color iconColor;
   final Color bgColor;
+  final Color textColor;
+  final bool isDark;
   final String? actionLabel;
   final VoidCallback? onAction;
   final Duration duration;
@@ -144,6 +158,8 @@ class _TopBanner extends StatefulWidget {
     required this.icon,
     required this.iconColor,
     required this.bgColor,
+    required this.textColor,
+    required this.isDark,
     required this.duration,
     required this.onDismiss,
     this.actionLabel,
@@ -212,7 +228,7 @@ class _TopBannerState extends State<_TopBanner>
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.45),
+                      color: Colors.black.withValues(alpha: widget.isDark ? 0.45 : 0.12),
                       blurRadius: 20,
                       offset: const Offset(0, 6),
                     ),
@@ -234,8 +250,8 @@ class _TopBannerState extends State<_TopBanner>
                     Expanded(
                       child: Text(
                         widget.message,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: widget.textColor,
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                           height: 1.3,
@@ -275,6 +291,8 @@ class _SnackContent extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
   final Color bgColor;
+  final Color textColor;
+  final bool isDark;
   final String? actionLabel;
   final VoidCallback? onAction;
 
@@ -283,6 +301,8 @@ class _SnackContent extends StatelessWidget {
     required this.icon,
     required this.iconColor,
     required this.bgColor,
+    required this.textColor,
+    required this.isDark,
     this.actionLabel,
     this.onAction,
   });
@@ -299,7 +319,7 @@ class _SnackContent extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.35),
+            color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.10),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -322,8 +342,8 @@ class _SnackContent extends StatelessWidget {
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: textColor,
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 height: 1.3,

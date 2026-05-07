@@ -205,28 +205,39 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   }
 
   Widget _buildContent(String content) {
-    // Simple content renderer that supports basic markdown-like patterns
     final paragraphs = content.split('\n\n');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: paragraphs.map((para) {
-        if (para.startsWith('```')) {
-          // Code block
-          final code = para.replaceAll(RegExp(r'^```[a-z]*\n?'), '').replaceAll('```', '').trim();
+        final p = para.trim();
+        if (p.startsWith('```')) {
+          final code = p.replaceAll(RegExp(r'^```[a-z]*\n?'), '').replaceAll('```', '').trim();
           return _CodeBlock(code: code);
-        } else if (para.startsWith('# ')) {
+        } else if (p.startsWith('#### ')) {
           return Padding(
-            padding: const EdgeInsets.only(top: 16, bottom: 8),
-            child: Text(para.substring(2), style: AppTextStyles.heading3),
+            padding: const EdgeInsets.only(top: 10, bottom: 4),
+            child: Text(p.substring(5), style: AppTextStyles.heading4.copyWith(fontSize: 13)),
           );
-        } else if (para.startsWith('## ')) {
+        } else if (p.startsWith('### ')) {
+          return Padding(
+            padding: const EdgeInsets.only(top: 14, bottom: 6),
+            child: Text(p.substring(4), style: AppTextStyles.heading4),
+          );
+        } else if (p.startsWith('## ')) {
           return Padding(
             padding: const EdgeInsets.only(top: 12, bottom: 6),
-            child: Text(para.substring(3), style: AppTextStyles.heading4),
+            child: Text(p.substring(3), style: AppTextStyles.heading4),
           );
-        } else if (para.startsWith('- ') || para.startsWith('* ')) {
-          final items = para.split('\n').where((l) => l.startsWith('- ') || l.startsWith('* ')).toList();
+        } else if (p.startsWith('# ')) {
+          return Padding(
+            padding: const EdgeInsets.only(top: 16, bottom: 8),
+            child: Text(p.substring(2), style: AppTextStyles.heading3),
+          );
+        } else if (p.contains('\n') && p.trimLeft().startsWith('|')) {
+          return _buildMarkdownTable(p);
+        } else if (p.startsWith('- ') || p.startsWith('* ')) {
+          final items = p.split('\n').where((l) => l.startsWith('- ') || l.startsWith('* ')).toList();
           return Column(
             children: items.map((item) => Padding(
               padding: const EdgeInsets.symmetric(vertical: 2),
@@ -252,10 +263,104 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
         } else {
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 4),
-            child: _buildInlineText(para),
+            child: _buildInlineText(p),
           );
         }
       }).toList(),
+    );
+  }
+
+  static final _separatorRow = RegExp(r'^\|[\s\-\|:]+\|$');
+
+  Widget _buildMarkdownTable(String tableText) {
+    final allLines = tableText
+        .split('\n')
+        .map((l) => l.trim())
+        .where((l) => l.isNotEmpty)
+        .toList();
+
+    // Parse rows, skip separator lines like |---|---|
+    List<List<String>> rows = [];
+    for (final line in allLines) {
+      if (_separatorRow.hasMatch(line)) continue;
+      final parts = line.split('|');
+      // Strip leading/trailing empty strings from surrounding |
+      final cells = parts
+          .skip(parts.isNotEmpty && parts.first.trim().isEmpty ? 1 : 0)
+          .toList();
+      if (cells.isNotEmpty && cells.last.trim().isEmpty) cells.removeLast();
+      rows.add(cells.map((c) => c.trim()).toList());
+    }
+
+    if (rows.isEmpty) return const SizedBox.shrink();
+
+    final colCount = rows.fold(0, (m, r) => r.length > m ? r.length : m);
+    if (colCount == 0) return const SizedBox.shrink();
+
+    // Pad all rows to equal column count
+    final paddedRows = rows.map((r) {
+      if (r.length < colCount) return [...r, ...List.filled(colCount - r.length, '')];
+      return r;
+    }).toList();
+
+    final header = paddedRows.first;
+    final dataRows = paddedRows.length > 1 ? paddedRows.sublist(1) : <List<String>>[];
+
+    bool looksLikeCode(String v) =>
+        v.contains('=') || v.contains('(') || v.contains(';') || v.contains('"');
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 10),
+      decoration: BoxDecoration(
+        border: Border.all(color: context.borderColor),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Table(
+          border: TableBorder(
+            horizontalInside: BorderSide(color: context.borderColor, width: 0.5),
+            verticalInside: BorderSide(color: context.borderColor, width: 0.5),
+          ),
+          defaultColumnWidth: const IntrinsicColumnWidth(),
+          children: [
+            // Header row
+            TableRow(
+              decoration: BoxDecoration(color: context.surfaceElevatedColor),
+              children: header.map((cell) => Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                child: Text(
+                  cell,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: context.textDark,
+                  ),
+                ),
+              )).toList(),
+            ),
+            // Data rows
+            ...dataRows.asMap().entries.map((entry) => TableRow(
+              decoration: BoxDecoration(
+                color: entry.key.isOdd
+                    ? context.surfaceElevatedColor.withValues(alpha: 0.5)
+                    : context.surfaceColor,
+              ),
+              children: entry.value.map((cell) => Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                child: Text(
+                  cell,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: context.textPrimary,
+                    fontFamily: looksLikeCode(cell) ? 'monospace' : null,
+                  ),
+                ),
+              )).toList(),
+            )),
+          ],
+        ),
+      ),
     );
   }
 

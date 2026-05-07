@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import {
   Users, BookOpen, GraduationCap, HelpCircle, Code2, ShieldCheck, Bell, X,
   LayoutDashboard, BarChart2, Library, ClipboardList, MessagesSquare, Trophy, Star,
-  Settings, LogOut,
+  Settings, LogOut, Bot,
 } from 'lucide-react'
 import logo from '../assets/logo.png'
 import { useNavigate } from 'react-router-dom'
@@ -20,6 +20,7 @@ import QaManagementPage from './QaManagementPage'
 import LeaderboardPage from './LeaderboardPage'
 import AnalyticsPage from './AnalyticsPage'
 import AchievementsPage from './AchievementsPage'
+import AiSettingsPage from './AiSettingsPage'
 
 const NAV_ITEMS = [
   { id: 'overview',      label: 'Tổng quan',     Icon: LayoutDashboard },
@@ -33,6 +34,7 @@ const NAV_ITEMS = [
   { id: 'leaderboard',   label: 'Bảng xếp hạng', Icon: Trophy },
   { id: 'achievements',  label: 'Thành tích',    Icon: Star },
   { id: 'notifications', label: 'Thông báo',     Icon: Bell },
+  { id: 'ai',            label: 'Cài đặt AI',    Icon: Bot },
   { id: 'settings',      label: 'Cài đặt',       Icon: Settings },
 ]
 
@@ -114,6 +116,7 @@ export default function Dashboard() {
           {activeNav === 'leaderboard'   && <LeaderboardPage />}
           {activeNav === 'achievements'  && <AchievementsPage />}
           {activeNav === 'notifications' && <NotificationsPage />}
+          {activeNav === 'ai'            && <AiSettingsPage />}
           {activeNav === 'settings'      && <SettingsPage />}
         </div>
       </main>

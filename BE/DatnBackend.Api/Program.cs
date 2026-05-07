@@ -78,6 +78,7 @@ builder.Services.AddScoped<FriendsService>();
 builder.Services.AddScoped<AchievementsService>();
 builder.Services.AddScoped<SettingsService>();
 builder.Services.AddHttpClient<AiService>();
+builder.Services.AddScoped<AiUsageService>();
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
@@ -230,6 +231,25 @@ using (var scope = app.Services.CreateScope())
             ('dailyGoalBonus:20',  '5'),
             ('dailyGoalBonus:50',  '15'),
             ('dailyGoalBonus:100', '35')
+        ON CONFLICT (""Key"") DO NOTHING;
+    ");
+
+    // Tạo bảng AI usage tracking
+    await db.Database.ExecuteSqlRawAsync(@"
+        CREATE TABLE IF NOT EXISTS ""UserAiUsages"" (
+            ""UserId"" text NOT NULL,
+            ""Date"" date NOT NULL,
+            ""Count"" integer NOT NULL DEFAULT 0,
+            PRIMARY KEY (""UserId"", ""Date"")
+        );
+
+        CREATE TABLE IF NOT EXISTS ""UserAiLimits"" (
+            ""UserId"" text NOT NULL PRIMARY KEY,
+            ""DailyLimit"" integer NOT NULL DEFAULT 10
+        );
+
+        INSERT INTO ""AppSettings"" (""Key"", ""Value"") VALUES
+            ('ai:default_daily_limit', '10')
         ON CONFLICT (""Key"") DO NOTHING;
     ");
 

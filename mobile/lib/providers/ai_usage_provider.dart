@@ -1,0 +1,39 @@
+import 'package:flutter/foundation.dart';
+import '../services/ai_service.dart';
+
+class AiUsageProvider extends ChangeNotifier {
+  int _used = 0;
+  int _limit = 10;
+  bool _loaded = false;
+
+  int get used => _used;
+  int get limit => _limit;
+  bool get loaded => _loaded;
+  bool get isExhausted => _loaded && _used >= _limit;
+
+  Future<void> load() async {
+    try {
+      final info = await AiService().getUsage();
+      _used = info['used'] as int;
+      _limit = info['limit'] as int;
+      _loaded = true;
+      notifyListeners();
+    } catch (_) {
+      // Không chặn UI nếu network lỗi
+    }
+  }
+
+  void increment() {
+    if (_used < _limit) {
+      _used++;
+      notifyListeners();
+    }
+  }
+
+  void reset() {
+    _used = 0;
+    _limit = 10;
+    _loaded = false;
+    notifyListeners();
+  }
+}

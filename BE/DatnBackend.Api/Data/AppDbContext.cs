@@ -26,6 +26,8 @@ public class AppDbContext : DbContext
     public DbSet<DailyGoalBonusClaim> DailyGoalBonusClaims => Set<DailyGoalBonusClaim>();
     public DbSet<UserNotification> UserNotifications => Set<UserNotification>();
     public DbSet<UserAchievement> UserAchievements => Set<UserAchievement>();
+    public DbSet<UserAiUsage> UserAiUsages => Set<UserAiUsage>();
+    public DbSet<UserAiLimit> UserAiLimits => Set<UserAiLimit>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -141,6 +143,16 @@ public class AppDbContext : DbContext
         {
             e.HasKey(ua => ua.Id);
             e.HasIndex(ua => new { ua.UserId, ua.AchievementId }).IsUnique();
+        });
+
+        modelBuilder.Entity<UserAiUsage>(e =>
+        {
+            e.HasKey(u => new { u.UserId, u.Date });
+        });
+
+        modelBuilder.Entity<UserAiLimit>(e =>
+        {
+            e.HasKey(u => u.UserId);
         });
     }
 }

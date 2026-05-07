@@ -3,6 +3,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 import 'api_service.dart';
 
+class AiLimitException implements Exception {
+  final String message;
+  AiLimitException(this.message);
+}
+
 class AiService {
   static final AiService _instance = AiService._internal();
   factory AiService() => _instance;
@@ -18,7 +23,6 @@ class AiService {
 
   Future<String> _post(String path, Map<String, dynamic> body) async {
     final url = '${ApiService.baseUrl}$path';
-    print('[AI] POST $url');
     try {
       final res = await http
           .post(
@@ -28,19 +32,43 @@ class AiService {
           )
           .timeout(const Duration(seconds: 60));
 
-      print('[AI] status=${res.statusCode} body=${res.body.substring(0, res.body.length.clamp(0, 200))}');
       final json = jsonDecode(res.body);
+
+      if (res.statusCode == 429) {
+        final msg = json['error']?.toString() ?? 'Đã đạt giới hạn AI trong ngày.';
+        throw AiLimitException(msg);
+      }
+
       if (json is Map && json['success'] == true) {
         return json['data']?.toString() ?? '';
       }
       if (json is Map && json['message'] != null) {
         return json['message'].toString();
       }
-      return 'Lỗi ${res.statusCode}: ${res.body.substring(0, res.body.length.clamp(0, 100))}';
+      return 'Lỗi ${res.statusCode}';
+    } on AiLimitException {
+      rethrow;
     } on Exception catch (e) {
-      print('[AI] exception: $e');
       return 'Lỗi: $e';
     }
+  }
+
+  Future<Map<String, dynamic>> getUsage() async {
+    final url = '${ApiService.baseUrl}/ai/usage';
+    try {
+      final res = await http
+          .get(Uri.parse(url), headers: await _headers())
+          .timeout(const Duration(seconds: 15));
+      final json = jsonDecode(res.body);
+      if (json['success'] == true && json['data'] != null) {
+        return {
+          'used': json['data']['used'] as int,
+          'limit': json['data']['limit'] as int,
+          'resetAt': json['data']['resetAt'] as String,
+        };
+      }
+    } catch (_) {}
+    return {'used': 0, 'limit': 10, 'resetAt': ''};
   }
 
   Future<String> explainCodeError({

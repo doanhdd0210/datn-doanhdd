@@ -2,6 +2,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import '../../providers/ai_usage_provider.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_text_styles.dart';
 import '../../constants/app_theme.dart';
@@ -123,11 +125,19 @@ class _QaDetailScreenState extends State<QaDetailScreen> {
   Future<void> _askAi() async {
     if (_aiLoading) return;
     setState(() { _aiLoading = true; _aiAnswer = null; });
-    final result = await _aiService.suggestQaAnswer(
-      title: widget.post.title,
-      body: widget.post.content,
-    );
-    if (mounted) setState(() { _aiLoading = false; _aiAnswer = result; });
+    try {
+      final result = await _aiService.suggestQaAnswer(
+        title: widget.post.title,
+        body: widget.post.content,
+      );
+      if (!mounted) return;
+      context.read<AiUsageProvider>().increment();
+      setState(() { _aiLoading = false; _aiAnswer = result; });
+    } on AiLimitException catch (e) {
+      if (!mounted) return;
+      setState(() => _aiLoading = false);
+      AppSnackBar.error(context, e.message);
+    }
   }
 
   Future<void> _submitAnswer() async {
@@ -265,22 +275,48 @@ class _QaDetailScreenState extends State<QaDetailScreen> {
           ),
           if (_aiAnswer == null && !_aiLoading) ...[
             const SizedBox(height: 8),
-            const Text('AI có thể gợi ý câu trả lời cho câu hỏi này.',
-                style: TextStyle(fontSize: 12, color: AppColors.textGray)),
-            const SizedBox(height: 10),
-            GestureDetector(
-              onTap: _askAi,
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 9),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF3949AB),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Center(
-                  child: Text('Hỏi AI', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13)),
-                ),
-              ),
-            ),
+            Builder(builder: (ctx) {
+              final aiUsage = ctx.watch<AiUsageProvider>();
+              final exhausted = aiUsage.isExhausted;
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        exhausted
+                            ? 'Đã hết lượt AI hôm nay.'
+                            : 'AI có thể gợi ý câu trả lời cho câu hỏi này.',
+                        style: const TextStyle(fontSize: 12, color: AppColors.textGray),
+                      ),
+                      if (aiUsage.loaded) ...[
+                        const Spacer(),
+                        Text(
+                          '${aiUsage.used}/${aiUsage.limit} lượt',
+                          style: const TextStyle(fontSize: 11, color: AppColors.textGray),
+                        ),
+                      ],
+                    ],
+                  ),
+                  if (!exhausted) ...[
+                    const SizedBox(height: 10),
+                    GestureDetector(
+                      onTap: _askAi,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 9),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF3949AB),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Center(
+                          child: Text('Hỏi AI', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13)),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              );
+            }),
           ],
           if (_aiLoading)
             const Padding(

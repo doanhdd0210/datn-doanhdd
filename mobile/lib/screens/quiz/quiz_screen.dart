@@ -6,6 +6,7 @@ import '../../constants/app_text_styles.dart';
 import '../../constants/app_theme.dart';
 import '../../models/question.dart';
 import '../../models/quiz_result.dart';
+import '../../providers/ai_usage_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../services/api_service.dart';
 import '../../services/ai_service.dart';
@@ -649,13 +650,22 @@ class _FeedbackBarState extends State<_FeedbackBar> {
 
   Future<void> _askAiHint() async {
     setState(() { _aiLoading = true; _aiRequested = true; });
-    final hint = await _aiService.generateQuizHint(
-      question: widget.question.questionText,
-      options: widget.question.options,
-      correctIndex: widget.question.correctAnswerIndex,
-    );
-    if (!mounted) return;
-    setState(() { _aiLoading = false; _aiHint = hint; });
+    try {
+      final hint = await _aiService.generateQuizHint(
+        question: widget.question.questionText,
+        options: widget.question.options,
+        correctIndex: widget.question.correctAnswerIndex,
+      );
+      if (!mounted) return;
+      context.read<AiUsageProvider>().increment();
+      setState(() { _aiLoading = false; _aiHint = hint; });
+    } on AiLimitException catch (e) {
+      if (!mounted) return;
+      setState(() { _aiLoading = false; _aiRequested = false; });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message), duration: const Duration(seconds: 5)),
+      );
+    }
   }
 
   @override
@@ -828,28 +838,48 @@ class _FeedbackBarState extends State<_FeedbackBar> {
 
     // Nút gọi AI
     if (!_aiRequested) {
+      final aiUsage = context.watch<AiUsageProvider>();
+      final exhausted = aiUsage.isExhausted;
       return GestureDetector(
-        onTap: _askAiHint,
+        onTap: exhausted ? null : _askAiHint,
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
           decoration: BoxDecoration(
-            color: context.surfaceElevatedColor,
+            color: exhausted
+                ? context.surfaceElevatedColor.withValues(alpha: 0.5)
+                : context.surfaceElevatedColor,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: context.borderColor),
+            border: Border.all(
+              color: exhausted
+                  ? context.borderColor.withValues(alpha: 0.4)
+                  : context.borderColor,
+            ),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('🤖', style: TextStyle(fontSize: 14)),
+              Text('🤖', style: TextStyle(fontSize: 14, color: exhausted ? null : null)),
               const SizedBox(width: 8),
-              Text('Hỏi AI tại sao sai?',
+              Expanded(
+                child: Text(
+                  exhausted ? 'Hết lượt AI hôm nay' : 'Hỏi AI tại sao sai?',
                   style: TextStyle(
-                    color: context.textPrimary,
+                    color: exhausted ? context.textSecondary : context.textPrimary,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                  )),
+                  ),
+                ),
+              ),
               const SizedBox(width: 6),
-              Icon(Icons.arrow_forward_ios_rounded, size: 12, color: context.textSecondary),
+              if (aiUsage.loaded)
+                Text(
+                  '${aiUsage.used}/${aiUsage.limit}',
+                  style: TextStyle(fontSize: 11, color: context.textSecondary),
+                ),
+              if (!exhausted) ...[
+                const SizedBox(width: 4),
+                Icon(Icons.arrow_forward_ios_rounded, size: 12, color: context.textSecondary),
+              ],
             ],
           ),
         ),

@@ -126,3 +126,13 @@ export const settingsApi = {
   getDailyGoalBonuses: () => request('GET', '/api/settings/daily-goal-bonuses'),
   updateDailyGoalBonuses: (configs) => request('PUT', '/api/settings/daily-goal-bonuses', configs),
 }
+
+// ─── AI ──────────────────────────────────────────────────────────────────────
+export const aiAdminApi = {
+  getSettings: () => request('GET', '/api/admin/ai/settings'),
+  updateSettings: (defaultDailyLimit) => request('PUT', '/api/admin/ai/settings', { defaultDailyLimit }),
+  getTodayUsage: () => request('GET', '/api/admin/ai/usage'),
+  getUserLimit: (uid) => request('GET', `/api/admin/ai/limit/${uid}`),
+  setUserLimit: (uid, dailyLimit) => request('PUT', `/api/admin/ai/limit/${uid}`, { dailyLimit }),
+  deleteUserLimit: (uid) => request('DELETE', `/api/admin/ai/limit/${uid}`),
+}

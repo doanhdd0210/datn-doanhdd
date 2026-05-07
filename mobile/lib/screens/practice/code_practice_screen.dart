@@ -15,6 +15,7 @@ import '../../services/api_service.dart';
 import '../../services/ai_service.dart';
 import '../../services/compiler_service.dart';
 import 'package:provider/provider.dart';
+import '../../providers/ai_usage_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../constants/code_editor_style.dart';
 import '../../widgets/app_snackbar.dart';
@@ -220,14 +221,22 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
       return;
     }
     setState(() { _aiExplaining = true; _aiExplanation = null; });
-    final result = await _aiService.explainCodeError(
-      referenceCode: widget.snippet.code,
-      userCode: userCode,
-      actualOutput: '',
-      expectedOutput: widget.snippet.expectedOutput,
-      language: widget.snippet.language,
-    );
-    if (mounted) setState(() { _aiExplaining = false; _aiExplanation = result; });
+    try {
+      final result = await _aiService.explainCodeError(
+        referenceCode: widget.snippet.code,
+        userCode: userCode,
+        actualOutput: '',
+        expectedOutput: widget.snippet.expectedOutput,
+        language: widget.snippet.language,
+      );
+      if (!mounted) return;
+      context.read<AiUsageProvider>().increment();
+      setState(() { _aiExplaining = false; _aiExplanation = result; });
+    } on AiLimitException catch (e) {
+      if (!mounted) return;
+      setState(() => _aiExplaining = false);
+      AppSnackBar.error(context, e.message);
+    }
   }
 
   @override
@@ -615,27 +624,50 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
             const SizedBox(height: 8),
 
             if (_aiExplanation == null && !_aiExplaining)
-              GestureDetector(
-                onTap: _askAi,
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 14),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1565C0).withValues(alpha: 0.25),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFF1565C0).withValues(alpha: 0.5)),
+              Builder(builder: (ctx) {
+                final aiUsage = ctx.watch<AiUsageProvider>();
+                final exhausted = aiUsage.isExhausted;
+                return GestureDetector(
+                  onTap: exhausted ? null : _askAi,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 14),
+                    decoration: BoxDecoration(
+                      color: exhausted
+                          ? const Color(0xFF2D2D2D)
+                          : const Color(0xFF1565C0).withValues(alpha: 0.25),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: exhausted
+                            ? const Color(0xFF444444)
+                            : const Color(0xFF1565C0).withValues(alpha: 0.5),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text('🤖', style: TextStyle(fontSize: 14)),
+                        const SizedBox(width: 6),
+                        Text(
+                          exhausted ? 'Hết lượt AI hôm nay' : 'AI phân tích lỗi của tôi',
+                          style: TextStyle(
+                            color: exhausted ? const Color(0xFF666666) : const Color(0xFF90CAF9),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        if (aiUsage.loaded) ...[
+                          const Spacer(),
+                          Text(
+                            '${aiUsage.used}/${aiUsage.limit}',
+                            style: const TextStyle(fontSize: 10, color: Color(0xFF666666)),
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text('🤖', style: TextStyle(fontSize: 14)),
-                      SizedBox(width: 6),
-                      Text('AI phân tích lỗi của tôi',
-                          style: TextStyle(color: Color(0xFF90CAF9), fontSize: 12, fontWeight: FontWeight.w600)),
-                    ],
-                  ),
-                ),
-              ),
+                );
+              }),
 
             if (_aiExplaining)
               const Center(

@@ -1,4 +1,4 @@
-package com.example.mobile
+package doanhdd.javaup.mobile
 
 import android.app.NotificationChannel
 import android.app.NotificationManager

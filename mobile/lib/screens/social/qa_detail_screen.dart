@@ -131,7 +131,7 @@ class _QaDetailScreenState extends State<QaDetailScreen> {
         body: widget.post.content,
       );
       if (!mounted) return;
-      context.read<AiUsageProvider>().increment();
+      context.read<AiUsageProvider>().load();
       setState(() { _aiLoading = false; _aiAnswer = result; });
     } on AiLimitException catch (e) {
       if (!mounted) return;

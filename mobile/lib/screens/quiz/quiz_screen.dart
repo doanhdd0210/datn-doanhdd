@@ -657,7 +657,7 @@ class _FeedbackBarState extends State<_FeedbackBar> {
         correctIndex: widget.question.correctAnswerIndex,
       );
       if (!mounted) return;
-      context.read<AiUsageProvider>().increment();
+      context.read<AiUsageProvider>().load();
       setState(() { _aiLoading = false; _aiHint = hint; });
     } on AiLimitException catch (e) {
       if (!mounted) return;

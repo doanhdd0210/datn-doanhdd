@@ -231,7 +231,7 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
         language: widget.snippet.language,
       );
       if (!mounted) return;
-      context.read<AiUsageProvider>().increment();
+      context.read<AiUsageProvider>().load();
       setState(() { _aiExplaining = false; _aiExplanation = result; });
     } on AiLimitException catch (e) {
       if (!mounted) return;

@@ -10,7 +10,11 @@
       "Bash(awk -F: '{print $1}')",
       "Bash(sed -n '402,408p' /Users/doducdoanh/StudioProjects/datn.doanhdd/mobile/lib/screens/profile/profile_screen.dart)",
       "Bash(sed -n '398,405p' /Users/doducdoanh/StudioProjects/datn.doanhdd/mobile/lib/screens/social/friends_screen.dart)",
-      "Bash(sed -n '653,660p' /Users/doducdoanh/StudioProjects/datn.doanhdd/mobile/lib/screens/social/friends_screen.dart)"
+      "Bash(sed -n '653,660p' /Users/doducdoanh/StudioProjects/datn.doanhdd/mobile/lib/screens/social/friends_screen.dart)",
+      "Bash(npx --yes tsc --noEmit)",
+      "Bash(npm run *)",
+      "Bash(node --input-type=module --eval ' *)",
+      "Bash(node -e ' *)"
     ]
   }
 }

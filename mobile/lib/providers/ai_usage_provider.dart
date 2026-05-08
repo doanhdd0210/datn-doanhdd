@@ -23,13 +23,6 @@ class AiUsageProvider extends ChangeNotifier {
     }
   }
 
-  void increment() {
-    if (_used < _limit) {
-      _used++;
-      notifyListeners();
-    }
-  }
-
   void reset() {
     _used = 0;
     _limit = 10;

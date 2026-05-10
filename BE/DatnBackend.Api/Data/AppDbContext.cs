@@ -28,6 +28,7 @@ public class AppDbContext : DbContext
     public DbSet<UserAchievement> UserAchievements => Set<UserAchievement>();
     public DbSet<UserAiUsage> UserAiUsages => Set<UserAiUsage>();
     public DbSet<UserAiLimit> UserAiLimits => Set<UserAiLimit>();
+    public DbSet<UserSubscription> UserSubscriptions => Set<UserSubscription>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -151,6 +152,11 @@ public class AppDbContext : DbContext
         });
 
         modelBuilder.Entity<UserAiLimit>(e =>
+        {
+            e.HasKey(u => u.UserId);
+        });
+
+        modelBuilder.Entity<UserSubscription>(e =>
         {
             e.HasKey(u => u.UserId);
         });

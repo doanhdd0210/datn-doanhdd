@@ -19,6 +19,7 @@ import 'package:provider/provider.dart';
 import '../../providers/ai_usage_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../constants/code_editor_style.dart';
+import '../../widgets/ai_limit_dialog.dart';
 import '../../widgets/app_snackbar.dart';
 import 'practice_result_screen.dart';
 
@@ -236,7 +237,7 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
     } on AiLimitException catch (e) {
       if (!mounted) return;
       setState(() => _aiExplaining = false);
-      AppSnackBar.error(context, e.message);
+      showAiLimitDialog(context, e.message);
     }
   }
 

@@ -10,6 +10,7 @@ import '../../providers/ai_usage_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../services/api_service.dart';
 import '../../services/ai_service.dart';
+import '../../widgets/ai_limit_dialog.dart';
 import 'quiz_result_screen.dart';
 
 /// Câu hỏi đã được shuffle đáp án
@@ -662,9 +663,7 @@ class _FeedbackBarState extends State<_FeedbackBar> {
     } on AiLimitException catch (e) {
       if (!mounted) return;
       setState(() { _aiLoading = false; _aiRequested = false; });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message), duration: const Duration(seconds: 5)),
-      );
+      showAiLimitDialog(context, e.message);
     }
   }
 

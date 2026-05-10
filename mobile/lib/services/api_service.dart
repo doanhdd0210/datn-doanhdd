@@ -670,6 +670,43 @@ class ApiService {
       return [];
     } catch (_) { return []; }
   }
+
+  // ── Subscription (VIP) ────────────────────────────────────────────────────
+
+  /// Public — không cần auth. Trả về config gói từ admin.
+  Future<Map<String, dynamic>?> getSubscriptionPlans() async {
+    try {
+      final data = await _get('/subscriptions/plans');
+      final inner = data is Map ? (data['data'] ?? data) : null;
+      return inner is Map<String, dynamic> ? inner : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>?> getMySubscription() async {
+    try {
+      final data = await _get('/subscriptions/me');
+      final inner = data is Map ? (data['data'] ?? data) : null;
+      return inner is Map<String, dynamic> ? inner : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>> verifySubscription({
+    required String purchaseToken,
+    required String productId,
+    required String orderId,
+    String productType = 'subscription',
+  }) async {
+    return await _post('/subscriptions/verify', {
+      'purchaseToken': purchaseToken,
+      'productId': productId,
+      'orderId': orderId,
+      'productType': productType,
+    });
+  }
 }
 
 class ApiException implements Exception {

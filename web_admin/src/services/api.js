@@ -136,3 +136,11 @@ export const aiAdminApi = {
   setUserLimit: (uid, dailyLimit) => request('PUT', `/api/admin/ai/limit/${uid}`, { dailyLimit }),
   deleteUserLimit: (uid) => request('DELETE', `/api/admin/ai/limit/${uid}`),
 }
+
+// ─── Subscription (VIP) ───────────────────────────────────────────────────────
+export const subscriptionAdminApi = {
+  getAll: () => request('GET', '/api/admin/subscriptions'),
+  getPlans: () => request('GET', '/api/admin/subscriptions/plans'),
+  updatePlans: (config) => request('PUT', '/api/admin/subscriptions/plans', config),
+  revoke: (userId) => request('DELETE', `/api/admin/subscriptions/${userId}`),
+}

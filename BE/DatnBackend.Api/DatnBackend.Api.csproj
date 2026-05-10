@@ -22,6 +22,8 @@
     </PackageReference>
 <!-- Swagger UI -->
     <PackageReference Include="Swashbuckle.AspNetCore" Version="7.2.0" />
+    <!-- Google Play Developer API (verify purchase tokens) -->
+    <PackageReference Include="Google.Apis.AndroidPublisher.v3" Version="1.68.0.3699" />
   </ItemGroup>
 
 </Project>

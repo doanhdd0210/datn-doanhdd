@@ -14,6 +14,7 @@ public class FirebaseAuthMiddleware
         "/health",
         "/",
         "/favicon.ico",
+        "/api/subscriptions/plans", // public — app dùng để hiển thị gói VIP
     ];
 
     // API paths that require authentication but NOT admin

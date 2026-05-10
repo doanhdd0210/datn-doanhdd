@@ -7,6 +7,7 @@ import 'constants/app_colors.dart';
 import 'constants/app_theme.dart';
 import 'firebase_options.dart';
 import 'providers/ai_usage_provider.dart';
+import 'providers/subscription_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/user_provider.dart';
 import 'screens/login_screen.dart';
@@ -39,6 +40,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => AiUsageProvider()),
+        ChangeNotifierProvider(create: (_) => SubscriptionProvider()),
       ],
       child: Consumer<ThemeProvider>(
         builder: (_, themeProvider, __) => MaterialApp(
@@ -76,6 +78,7 @@ class AuthWrapper extends StatelessWidget {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             context.read<UserProvider>().refreshStats();
             context.read<AiUsageProvider>().load();
+            context.read<SubscriptionProvider>().load();
             // Re-sync FCM token now that the user is confirmed authenticated
             NotificationService().syncToken();
           });
@@ -87,6 +90,7 @@ class AuthWrapper extends StatelessWidget {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           context.read<UserProvider>().reset();
           context.read<AiUsageProvider>().reset();
+          context.read<SubscriptionProvider>().clear();
         });
         return const LoginScreen();
       },

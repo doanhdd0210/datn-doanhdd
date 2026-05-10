@@ -6,14 +6,16 @@ namespace DatnBackend.Api.Services;
 
 public class AiUsageService
 {
+    private SubscriptionService? _subscriptionService;
     private static readonly TimeZoneInfo VietnamTz =
         TimeZoneInfo.FindSystemTimeZoneById("Asia/Ho_Chi_Minh");
 
     private readonly AppDbContext _db;
 
-    public AiUsageService(AppDbContext db)
+    public AiUsageService(AppDbContext db, SubscriptionService subscriptionService)
     {
         _db = db;
+        _subscriptionService = subscriptionService;
     }
 
     private static DateOnly TodayVietnam() =>
@@ -28,6 +30,15 @@ public class AiUsageService
 
     public async Task<int> GetLimitAsync(string userId)
     {
+        // 1. Subscription plan takes highest priority
+        if (_subscriptionService is not null)
+        {
+            var subLimit = await _subscriptionService.GetAiLimitFromSubscriptionAsync(userId);
+            if (subLimit.HasValue)
+                return subLimit.Value;
+        }
+
+        // 2. Per-user admin override
         var userOverride = await _db.UserAiLimits
             .Where(l => l.UserId == userId)
             .Select(l => (int?)l.DailyLimit)
@@ -36,6 +47,7 @@ public class AiUsageService
         if (userOverride.HasValue)
             return userOverride.Value;
 
+        // 3. Global default
         var setting = await _db.AppSettings
             .Where(s => s.Key == "ai:default_daily_limit")
             .Select(s => s.Value)
@@ -99,11 +111,19 @@ public class AiUsageService
         var used = await GetTodayCountAsync(userId);
         var limit = await GetLimitAsync(userId);
         var resetAt = NextResetUtc();
-        return new AiUsageInfo(used, limit, resetAt);
+
+        string? planType = null;
+        if (_subscriptionService is not null)
+        {
+            var sub = await _subscriptionService.GetActiveSubscriptionAsync(userId);
+            planType = sub?.PlanType;
+        }
+
+        return new AiUsageInfo(used, limit, resetAt, planType);
     }
 }
 
-public record AiUsageInfo(int Used, int Limit, DateTime ResetAt);
+public record AiUsageInfo(int Used, int Limit, DateTime ResetAt, string? PlanType = null);
 
 public class AiLimitExceededException : Exception
 {

@@ -9,7 +9,9 @@ import '../../models/achievement.dart';
 import '../../providers/user_provider.dart';
 import '../../services/auth_service.dart';
 import '../settings/settings_screen.dart';
+import '../subscription/vip_subscription_screen.dart';
 import 'stats_screen.dart';
+import '../../providers/subscription_provider.dart';
 import '../../widgets/app_snackbar.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -49,6 +51,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildHero(
       BuildContext context, User? user, UserProvider provider) {
+    final subProvider = context.watch<SubscriptionProvider>();
     return Container(
       color: context.surfaceColor,
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
@@ -84,13 +87,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               Container(
                 padding: const EdgeInsets.all(4),
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    colors: [AppColors.primary, AppColors.secondary],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  gradient: subProvider.isMax
+                      ? const LinearGradient(
+                          colors: [Color(0xFF7C3AED), Color(0xFF4F46E5)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        )
+                      : subProvider.isStandard
+                          ? const LinearGradient(
+                              colors: [Color(0xFFD97706), Color(0xFFFBBF24)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            )
+                          : const LinearGradient(
+                              colors: [AppColors.primary, AppColors.secondary],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
                 ),
                 child: CircleAvatar(
                   radius: 46,
@@ -132,6 +147,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
               ),
+              // VIP crown badge (top-left)
+              if (subProvider.isPremium)
+                Positioned(
+                  top: 0, left: 0,
+                  child: Container(
+                    width: 26, height: 26,
+                    decoration: BoxDecoration(
+                      color: subProvider.isMax
+                          ? const Color(0xFF7C3AED)
+                          : const Color(0xFFD97706),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    child: Center(
+                      child: Text(
+                        subProvider.isMax ? '👑' : '⭐',
+                        style: const TextStyle(fontSize: 11),
+                      ),
+                    ),
+                  ),
+                ),
             ],
           ),
           const SizedBox(height: 14),
@@ -382,6 +418,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           const SizedBox(height: 16),
           const _SectionLabel(label: 'TÀI KHOẢN'),
+          _VipMenuItem(),
           _MenuItem(
             icon: Icons.settings_rounded,
             label: 'Cài đặt',
@@ -541,6 +578,90 @@ class _StatCard extends StatelessWidget {
                 color: context.textSecondary,
               ),
               textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _VipMenuItem extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final sub = context.watch<SubscriptionProvider>().subscription;
+    final isPremium = sub != null && sub.isActive;
+    final isMax = sub?.isMax ?? false;
+
+    return GestureDetector(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const VipSubscriptionScreen()),
+      ),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          gradient: isPremium
+              ? LinearGradient(
+                  colors: isMax
+                      ? [const Color(0xFF7C3AED), const Color(0xFF4F46E5)]
+                      : [const Color(0xFFD97706), const Color(0xFFF59E0B)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : null,
+          color: isPremium ? null : context.surfaceColor,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isPremium
+                ? Colors.transparent
+                : const Color(0xFFFFD700).withValues(alpha: 0.5),
+            width: 1.5,
+          ),
+          boxShadow: isPremium
+              ? [BoxShadow(
+                  color: (isMax ? const Color(0xFF7C3AED) : const Color(0xFFD97706))
+                      .withValues(alpha: 0.25),
+                  blurRadius: 12, spreadRadius: 1, offset: const Offset(0, 3))]
+              : [],
+        ),
+        child: Row(
+          children: [
+            Text(isMax ? '👑' : '⭐', style: const TextStyle(fontSize: 20)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    isPremium
+                        ? (isMax ? 'Gói Max đang hoạt động' : 'Gói Standard đang hoạt động')
+                        : 'Nâng cấp VIP',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      color: isPremium ? Colors.white : context.textPrimary,
+                    ),
+                  ),
+                  Text(
+                    isPremium
+                        ? (isMax ? 'AI không giới hạn 🚀' : '100 lượt AI mỗi ngày')
+                        : 'Mở khoá tính năng AI không giới hạn',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isPremium
+                          ? Colors.white.withValues(alpha: 0.85)
+                          : context.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              isPremium ? Icons.check_circle_rounded : Icons.arrow_forward_ios_rounded,
+              color: isPremium ? Colors.white : const Color(0xFFFFD700),
+              size: isPremium ? 20 : 14,
             ),
           ],
         ),

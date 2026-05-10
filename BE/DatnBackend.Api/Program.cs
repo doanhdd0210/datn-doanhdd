@@ -79,6 +79,7 @@ builder.Services.AddScoped<AchievementsService>();
 builder.Services.AddScoped<SettingsService>();
 builder.Services.AddHttpClient<AiService>();
 builder.Services.AddScoped<AiUsageService>();
+builder.Services.AddScoped<SubscriptionService>();
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
@@ -232,6 +233,30 @@ using (var scope = app.Services.CreateScope())
             ('dailyGoalBonus:50',  '15'),
             ('dailyGoalBonus:100', '35')
         ON CONFLICT (""Key"") DO NOTHING;
+    ");
+
+    // Tạo bảng UserSubscriptions
+    await db.Database.ExecuteSqlRawAsync(@"
+        CREATE TABLE IF NOT EXISTS ""UserSubscriptions"" (
+            ""UserId""        text NOT NULL PRIMARY KEY,
+            ""PlanType""      text NOT NULL DEFAULT '',
+            ""ProductId""     text NOT NULL DEFAULT '',
+            ""PurchaseToken"" text NOT NULL DEFAULT '',
+            ""OrderId""       text NOT NULL DEFAULT '',
+            ""Platform""      text NOT NULL DEFAULT 'google_play',
+            ""IsActive""      boolean NOT NULL DEFAULT true,
+            ""PurchasedAt""   timestamp with time zone NOT NULL DEFAULT now(),
+            ""ExpiresAt""     timestamp with time zone,
+            ""UpdatedAt""     timestamp with time zone NOT NULL DEFAULT now()
+        );
+
+        INSERT INTO ""AppSettings"" (""Key"", ""Value"") VALUES
+            ('subscription:package_name',        'doanhdd.javaup.mobile'),
+            ('subscription:standard_product_id', 'vip_standard'),
+            ('subscription:max_product_id',      'vip_max')
+        ON CONFLICT (""Key"") DO UPDATE
+            SET ""Value"" = EXCLUDED.""Value""
+            WHERE ""AppSettings"".""Value"" = '';
     ");
 
     // Tạo bảng AI usage tracking

@@ -11,6 +11,7 @@ import '../../models/qa_post.dart';
 import '../../models/qa_answer.dart';
 import '../../services/api_service.dart';
 import '../../services/ai_service.dart';
+import '../../widgets/ai_limit_dialog.dart';
 import '../../widgets/app_loading.dart';
 import '../../widgets/app_snackbar.dart';
 
@@ -136,7 +137,7 @@ class _QaDetailScreenState extends State<QaDetailScreen> {
     } on AiLimitException catch (e) {
       if (!mounted) return;
       setState(() => _aiLoading = false);
-      AppSnackBar.error(context, e.message);
+      showAiLimitDialog(context, e.message);
     }
   }
 

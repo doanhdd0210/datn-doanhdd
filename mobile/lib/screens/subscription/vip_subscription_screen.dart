@@ -324,7 +324,7 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
 
   Widget _buildPlanCard(SubscriptionPlan plan) {
     final isMax = plan.id == 'max';
-    final color = isMax ? AppColors.secondary : const Color(0xFFFFC107);
+    final color = isMax ? const Color(0xFFFFC107) : AppColors.secondary;
 
     final playProduct = _playProducts.where((p) => p.id == plan.productId).firstOrNull;
     final priceText = playProduct?.price ??

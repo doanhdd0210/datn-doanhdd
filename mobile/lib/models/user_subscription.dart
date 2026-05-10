@@ -3,6 +3,7 @@ class UserSubscription {
   final String planType; // "standard" | "max"
   final String productId;
   final bool isActive;
+  final bool isTrial;
   final DateTime purchasedAt;
   final DateTime? expiresAt;
   final int? dailyAiLimit; // null = unlimited
@@ -12,6 +13,7 @@ class UserSubscription {
     required this.planType,
     required this.productId,
     required this.isActive,
+    this.isTrial = false,
     required this.purchasedAt,
     this.expiresAt,
     this.dailyAiLimit,
@@ -27,6 +29,7 @@ class UserSubscription {
       planType: json['planType'] as String? ?? '',
       productId: json['productId'] as String? ?? '',
       isActive: json['isActive'] as bool? ?? false,
+      isTrial: json['isTrial'] as bool? ?? false,
       purchasedAt: DateTime.parse(json['purchasedAt'] as String),
       expiresAt: json['expiresAt'] != null
           ? DateTime.parse(json['expiresAt'] as String)

@@ -254,17 +254,29 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.check_circle_rounded, color: AppColors.primary, size: 20),
+          Icon(
+            sub.isTrial ? Icons.hourglass_top_rounded : Icons.check_circle_rounded,
+            color: sub.isTrial ? Colors.orange : AppColors.primary,
+            size: 20,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Bạn đang dùng gói ${sub.isMax ? "Max 👑" : "Standard ⭐"}',
-                    style: AppTextStyles.labelBold),
+                Text(
+                  sub.isTrial
+                      ? 'Đang dùng thử gói ${sub.isMax ? "Max 👑" : "Standard ⭐"}'
+                      : 'Bạn đang dùng gói ${sub.isMax ? "Max 👑" : "Standard ⭐"}',
+                  style: AppTextStyles.labelBold,
+                ),
                 if (sub.expiresAt != null)
-                  Text('Hết hạn: ${_formatDate(sub.expiresAt!)}',
-                      style: AppTextStyles.bodySmall),
+                  Text(
+                    sub.isTrial
+                        ? 'Dùng thử đến: ${_formatDate(sub.expiresAt!)}'
+                        : 'Hết hạn: ${_formatDate(sub.expiresAt!)}',
+                    style: AppTextStyles.bodySmall,
+                  ),
               ],
             ),
           ),
@@ -352,11 +364,34 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(plan.icon, style: const TextStyle(fontSize: 22)),
-                      const SizedBox(width: 8),
-                      Text(plan.title, style: AppTextStyles.heading3.copyWith(color: color)),
+                      Row(
+                        children: [
+                          Text(plan.icon, style: const TextStyle(fontSize: 22)),
+                          const SizedBox(width: 8),
+                          Text(plan.title, style: AppTextStyles.heading3.copyWith(color: color)),
+                        ],
+                      ),
+                      if (plan.trialDays > 0) ...[
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF16A34A).withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: const Color(0xFF16A34A).withValues(alpha: 0.3)),
+                          ),
+                          child: Text(
+                            'Thử miễn phí ${plan.trialDays} ngày',
+                            style: const TextStyle(
+                              fontSize: 11, fontWeight: FontWeight.w600,
+                              color: Color(0xFF15803D),
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                   Column(

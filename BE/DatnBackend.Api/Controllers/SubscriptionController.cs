@@ -40,6 +40,8 @@ public class SubscriptionController : ControllerBase
         var maxId           = Get("subscription:max_product_id") ?? "";
         var standardPrice   = Get("subscription:standard_price") ?? "";
         var maxPrice        = Get("subscription:max_price") ?? "";
+        var trialDaysStr    = Get("subscription:trial_days") ?? "0";
+        int.TryParse(trialDaysStr, out var trialDays);
 
         var plans = new PublicPlansDto(
             PackageName: packageName,
@@ -53,6 +55,7 @@ public class SubscriptionController : ControllerBase
                     DisplayPrice: standardPrice,
                     DailyAiLimit: SubscriptionService.LimitStandard,
                     IsUnlimited: false,
+                    TrialDays: trialDays,
                     Features: new List<string>
                     {
                         "100 lượt AI mỗi ngày",
@@ -68,6 +71,7 @@ public class SubscriptionController : ControllerBase
                     DisplayPrice: maxPrice,
                     DailyAiLimit: null,
                     IsUnlimited: true,
+                    TrialDays: trialDays,
                     Features: new List<string>
                     {
                         "Không giới hạn AI",
@@ -124,6 +128,7 @@ public class SubscriptionController : ControllerBase
         s.PlanType,
         s.ProductId,
         s.IsActive,
+        s.IsTrial,
         s.PurchasedAt,
         s.ExpiresAt,
         s.PlanType == SubscriptionService.PlanMax
@@ -142,6 +147,7 @@ public record SubscriptionDto(
     string PlanType,
     string ProductId,
     bool IsActive,
+    bool IsTrial,
     DateTime PurchasedAt,
     DateTime? ExpiresAt,
     int? DailyAiLimit); // null = unlimited
@@ -158,4 +164,5 @@ public record PlanInfoDto(
     string DisplayPrice,
     int? DailyAiLimit,
     bool IsUnlimited,
+    int TrialDays,
     List<string> Features);

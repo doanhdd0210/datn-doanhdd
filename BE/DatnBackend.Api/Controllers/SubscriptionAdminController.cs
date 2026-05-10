@@ -48,12 +48,15 @@ public class SubscriptionAdminController : ControllerBase
 
         string? Get(string key) => settings.FirstOrDefault(s => s.Key == key)?.Value;
 
+        int.TryParse(Get("subscription:trial_days") ?? "7", out var trialDays);
+
         return Ok(ApiResponse<SubscriptionPlansConfig>.Ok(new SubscriptionPlansConfig(
             Get("subscription:package_name") ?? "",
             Get("subscription:standard_product_id") ?? "",
             Get("subscription:max_product_id") ?? "",
             Get("subscription:standard_price") ?? "",
             Get("subscription:max_price") ?? "",
+            trialDays,
             SubscriptionService.LimitStandard)));
     }
 
@@ -69,6 +72,7 @@ public class SubscriptionAdminController : ControllerBase
         await UpsertSetting("subscription:max_product_id", config.MaxProductId);
         await UpsertSetting("subscription:standard_price", config.StandardPrice);
         await UpsertSetting("subscription:max_price", config.MaxPrice);
+        await UpsertSetting("subscription:trial_days", config.TrialDays.ToString());
         await _db.SaveChangesAsync();
 
         return Ok(ApiResponse<SubscriptionPlansConfig>.Ok(config, "Đã lưu cấu hình gói VIP."));
@@ -109,4 +113,5 @@ public record SubscriptionPlansConfig(
     string MaxProductId,
     string StandardPrice,
     string MaxPrice,
+    int TrialDays,
     int StandardAiLimit);

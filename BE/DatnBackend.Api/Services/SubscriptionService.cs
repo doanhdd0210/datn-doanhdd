@@ -85,6 +85,7 @@ public class SubscriptionService
             ?? throw new InvalidOperationException($"Product ID '{productId}' không hợp lệ. Kiểm tra cấu hình gói VIP trong Admin.");
 
         DateTime? expiresAt = null;
+        bool isTrial = false;
 
         try
         {
@@ -101,8 +102,11 @@ public class SubscriptionService
                     .Get(packageName, productId, purchaseToken)
                     .ExecuteAsync();
 
+                // paymentState: 0=pending, 1=received, 2=free trial, 3=pending deferred upgrade
                 if (result.PaymentState != 1 && result.PaymentState != 2)
                     throw new InvalidOperationException("Giao dịch chưa được thanh toán.");
+
+                isTrial = result.PaymentState == 2;
 
                 if (result.ExpiryTimeMillis.HasValue)
                     expiresAt = DateTimeOffset.FromUnixTimeMilliseconds(result.ExpiryTimeMillis.Value).UtcDateTime;
@@ -136,6 +140,7 @@ public class SubscriptionService
                 PurchaseToken = purchaseToken,
                 OrderId = orderId,
                 IsActive = true,
+                IsTrial = isTrial,
                 PurchasedAt = DateTime.UtcNow,
                 ExpiresAt = expiresAt,
                 UpdatedAt = DateTime.UtcNow,
@@ -151,6 +156,7 @@ public class SubscriptionService
             existing.PurchaseToken = purchaseToken;
             existing.OrderId = orderId;
             existing.IsActive = true;
+            existing.IsTrial = isTrial;
             existing.ExpiresAt = expiresAt;
             existing.UpdatedAt = DateTime.UtcNow;
             await _db.SaveChangesAsync();

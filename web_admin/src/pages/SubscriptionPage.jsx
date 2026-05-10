@@ -85,6 +85,7 @@ export default function SubscriptionPage() {
     packageName: '',
     standardProductId: '', maxProductId: '',
     standardPrice: '', maxPrice: '',
+    trialDays: 7,
     standardAiLimit: 100,
   })
   const [subscribers, setSubscribers] = useState([])
@@ -170,6 +171,34 @@ export default function SubscriptionPage() {
             onBlur={() => setPkgFocused(false)}
           />
           <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 3 }}>Phải trùng với package name trong Google Play Console</div>
+        </div>
+
+        {/* Trial days */}
+        <div style={{ marginBottom: 18 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: '#64748b', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.4 }}>Số ngày dùng thử miễn phí</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <input
+              type="number"
+              min={0}
+              style={{ ...inp, maxWidth: 100 }}
+              value={config.trialDays}
+              onChange={e => setConfig(c => ({ ...c, trialDays: parseInt(e.target.value) || 0 }))}
+            />
+            <span style={{ fontSize: 13, color: '#64748b' }}>ngày</span>
+            {config.trialDays > 0 && (
+              <span style={{ fontSize: 12, background: '#dcfce7', color: '#15803d', padding: '2px 10px', borderRadius: 20, fontWeight: 600 }}>
+                Đang bật — thử miễn phí {config.trialDays} ngày
+              </span>
+            )}
+            {config.trialDays === 0 && (
+              <span style={{ fontSize: 12, background: '#f1f5f9', color: '#64748b', padding: '2px 10px', borderRadius: 20 }}>
+                Tắt
+              </span>
+            )}
+          </div>
+          <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 3 }}>
+            Cấu hình period thực tế trong Google Play Console → Subscription → Free trial. Số ngày ở đây chỉ để hiển thị trong app.
+          </div>
         </div>
 
         {/* Plan cards */}

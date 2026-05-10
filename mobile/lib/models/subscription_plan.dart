@@ -6,6 +6,7 @@ class SubscriptionPlan {
   final String displayPrice; // e.g. "29.000đ / tháng"
   final int? dailyAiLimit; // null = unlimited
   final bool isUnlimited;
+  final int trialDays; // 0 = no trial
   final List<String> features;
 
   const SubscriptionPlan({
@@ -16,6 +17,7 @@ class SubscriptionPlan {
     required this.displayPrice,
     this.dailyAiLimit,
     required this.isUnlimited,
+    this.trialDays = 0,
     required this.features,
   });
 
@@ -28,6 +30,7 @@ class SubscriptionPlan {
       displayPrice: json['displayPrice'] as String? ?? '',
       dailyAiLimit: json['dailyAiLimit'] as int?,
       isUnlimited: json['isUnlimited'] as bool? ?? false,
+      trialDays: json['trialDays'] as int? ?? 0,
       features: (json['features'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??

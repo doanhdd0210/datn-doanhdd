@@ -245,17 +245,20 @@ using (var scope = app.Services.CreateScope())
             ""OrderId""       text NOT NULL DEFAULT '',
             ""Platform""      text NOT NULL DEFAULT 'google_play',
             ""IsActive""      boolean NOT NULL DEFAULT true,
+            ""IsTrial""       boolean NOT NULL DEFAULT false,
             ""PurchasedAt""   timestamp with time zone NOT NULL DEFAULT now(),
             ""ExpiresAt""     timestamp with time zone,
             ""UpdatedAt""     timestamp with time zone NOT NULL DEFAULT now()
         );
+        ALTER TABLE ""UserSubscriptions"" ADD COLUMN IF NOT EXISTS ""IsTrial"" boolean NOT NULL DEFAULT false;
 
         INSERT INTO ""AppSettings"" (""Key"", ""Value"") VALUES
             ('subscription:package_name',        'doanhdd.javaup.mobile'),
             ('subscription:standard_product_id', 'vip_standard'),
             ('subscription:max_product_id',      'vip_max'),
             ('subscription:standard_price',      '29.000đ / tháng'),
-            ('subscription:max_price',           '59.000đ / tháng')
+            ('subscription:max_price',           '59.000đ / tháng'),
+            ('subscription:trial_days',          '7')
         ON CONFLICT (""Key"") DO UPDATE
             SET ""Value"" = EXCLUDED.""Value""
             WHERE ""AppSettings"".""Value"" = '';

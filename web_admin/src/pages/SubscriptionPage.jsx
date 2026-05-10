@@ -44,6 +44,38 @@ function FocusInput({ value, onChange, placeholder, style }) {
   )
 }
 
+const parsePrice = (str) => parseInt((str || '').replace(/[^\d]/g, '')) || 0
+const formatVND = (num) => num > 0
+  ? new Intl.NumberFormat('vi-VN').format(num) + 'đ / tháng'
+  : ''
+
+function PriceInput({ value, onChange }) {
+  const [focused, setFocused] = useState(false)
+  const numVal = parsePrice(value)
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <input
+          type="number"
+          min={0}
+          style={focused ? { ...inpFocus, maxWidth: 160 } : { ...inp, maxWidth: 160 }}
+          value={numVal || ''}
+          placeholder="29000"
+          onChange={e => onChange(formatVND(parseInt(e.target.value) || 0))}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+        />
+        {numVal > 0 && (
+          <span style={{ fontSize: 13, color: '#6366f1', fontWeight: 600 }}>
+            {formatVND(numVal)}
+          </span>
+        )}
+      </div>
+      <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 3 }}>Hiển thị trong app khi Play Store chưa load giá</div>
+    </div>
+  )
+}
+
 function PlanCard({ icon, title, accentColor, borderColor, aiLimit, fields, onChange }) {
   return (
     <div style={{
@@ -68,12 +100,10 @@ function PlanCard({ icon, title, accentColor, borderColor, aiLimit, fields, onCh
         </div>
         <div>
           <div style={{ fontSize: 11, fontWeight: 600, color: '#64748b', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.4 }}>Giá hiển thị</div>
-          <FocusInput
+          <PriceInput
             value={fields.price}
-            placeholder="29.000đ / tháng"
-            onChange={e => onChange('price', e.target.value)}
+            onChange={val => onChange('price', val)}
           />
-          <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 3 }}>Hiển thị trong app khi Play Store chưa load giá</div>
         </div>
       </div>
     </div>

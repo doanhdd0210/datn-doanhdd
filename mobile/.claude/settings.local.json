@@ -14,7 +14,27 @@
       "Bash(npx --yes tsc --noEmit)",
       "Bash(npm run *)",
       "Bash(node --input-type=module --eval ' *)",
-      "Bash(node -e ' *)"
+      "Bash(node -e ' *)",
+      "Bash(git status *)",
+      "Bash(git -C /Users/doducdoanh/StudioProjects/datn.doanhdd rev-parse --show-toplevel)",
+      "Bash(git -C /Users/doducdoanh/StudioProjects/datn.doanhdd status --short)",
+      "Bash(git -C /Users/doducdoanh/StudioProjects/datn.doanhdd diff --stat HEAD)",
+      "Bash(git -C /Users/doducdoanh/StudioProjects/datn.doanhdd show HEAD:mobile/android/app/build.gradle.kts)",
+      "Bash(git -C /Users/doducdoanh/StudioProjects/datn.doanhdd show HEAD:mobile/lib/providers/ai_usage_provider.dart)",
+      "Bash(git -C /Users/doducdoanh/StudioProjects/datn.doanhdd show HEAD:mobile/android/app/google-services.json)",
+      "Bash(git -C /Users/doducdoanh/StudioProjects/datn.doanhdd add mobile/web/privacy.html)",
+      "Bash(git -C /Users/doducdoanh/StudioProjects/datn.doanhdd commit -m ' *)",
+      "Bash(git -C /Users/doducdoanh/StudioProjects/datn.doanhdd add web_admin/privacy.html web_admin/vercel.json)",
+      "Bash(git -C /Users/doducdoanh/StudioProjects/datn.doanhdd push)",
+      "Bash(git -C /Users/doducdoanh/StudioProjects/datn.doanhdd add web_admin/privacy.html web_admin/logo.png)",
+      "Bash(git -C /Users/doducdoanh/StudioProjects/datn.doanhdd add web_admin/public/privacy.html web_admin/public/logo.png web_admin/vercel.json)",
+      "Bash(git -C /Users/doducdoanh/StudioProjects/datn.doanhdd rm --cached web_admin/privacy.html web_admin/logo.png)",
+      "Bash(identify /Users/doducdoanh/StudioProjects/datn.doanhdd/mobile/assets/icon/app_icon_new.png)",
+      "Bash(sips -g pixelWidth -g pixelHeight /Users/doducdoanh/StudioProjects/datn.doanhdd/mobile/assets/icon/app_icon_new.png)",
+      "Bash(sips -z 512 512 /Users/doducdoanh/StudioProjects/datn.doanhdd/mobile/assets/icon/app_icon_new.png --out /Users/doducdoanh/Downloads/javaup_icon_512.png)",
+      "Bash('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' --headless=new --disable-gpu --screenshot=/Users/doducdoanh/Downloads/feature_graphic.png --window-size=1024,500 --hide-scrollbars file:///Users/doducdoanh/Downloads/feature_graphic.html)",
+      "Bash(sips -g pixelWidth -g pixelHeight /Users/doducdoanh/Downloads/feature_graphic.png)",
+      "Bash(keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android)"
     ]
   }
 }

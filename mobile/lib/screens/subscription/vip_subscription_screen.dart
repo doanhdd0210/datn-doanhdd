@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:in_app_purchase_android/in_app_purchase_android.dart';
 import 'package:provider/provider.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_text_styles.dart';
@@ -145,7 +147,18 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
   Future<void> _buy(ProductDetails product) async {
     if (_purchasingId != null || _verifying) return;
     setState(() => _purchasingId = product.id);
-    final param = PurchaseParam(productDetails: product);
+
+    PurchaseParam param;
+    if (Platform.isAndroid && product is GooglePlayProductDetails) {
+      // Android Billing Library 5+ requires specifying the offer token for subscriptions
+      param = GooglePlayPurchaseParam(
+        productDetails: product,
+        offerToken: product.offerToken,
+      );
+    } else {
+      param = PurchaseParam(productDetails: product);
+    }
+
     await _iap.buyNonConsumable(purchaseParam: param);
   }
 
@@ -333,10 +346,11 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
             : (plan.productId.isEmpty ? 'Chưa cấu hình' : '---'));
 
     final currentSub = context.watch<SubscriptionProvider>().subscription;
-    final isCurrent = currentSub?.productId == plan.productId && (currentSub?.isActive ?? false);
+    final hasActiveSub = currentSub != null && (currentSub.isActive);
+    final isCurrent = currentSub?.productId == plan.productId && hasActiveSub;
     final isPurchasing = _purchasingId == plan.productId;
-    // Can buy only if Play Store has the product AND IAP is available
-    final canBuy = playProduct != null && _iapAvailable && !isCurrent && !isPurchasing && !_verifying;
+    // Block purchase if user already has any active subscription (must cancel first in Google Play)
+    final canBuy = playProduct != null && _iapAvailable && !hasActiveSub && !isPurchasing && !_verifying;
     // Play Store loaded but product missing — show informative note
     final playLoadedButMissing = _iapAvailable && _playProducts.isNotEmpty &&
         plan.productId.isNotEmpty && playProduct == null;
@@ -458,7 +472,11 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
                             width: 20, height: 20,
                             child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                         : Text(
-                            isCurrent ? 'Đang sử dụng' : 'Đăng ký ngay',
+                            isCurrent
+                                ? 'Đang sử dụng'
+                                : hasActiveSub
+                                    ? 'Huỷ gói hiện tại trước'
+                                    : 'Đăng ký ngay',
                             style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
                   ),
                 ),

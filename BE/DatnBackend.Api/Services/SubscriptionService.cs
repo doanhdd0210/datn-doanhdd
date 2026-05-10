@@ -87,6 +87,10 @@ public class SubscriptionService
         DateTime? expiresAt = null;
         bool isTrial = false;
 
+        // Skip Google Play API verification if not configured (dev/test mode)
+        var skipVerify = _config["Subscription:SkipPlayVerify"] == "true";
+
+        if (!skipVerify)
         try
         {
             var credential = await GetGoogleCredentialAsync();

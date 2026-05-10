@@ -253,7 +253,9 @@ using (var scope = app.Services.CreateScope())
         INSERT INTO ""AppSettings"" (""Key"", ""Value"") VALUES
             ('subscription:package_name',        'doanhdd.javaup.mobile'),
             ('subscription:standard_product_id', 'vip_standard'),
-            ('subscription:max_product_id',      'vip_max')
+            ('subscription:max_product_id',      'vip_max'),
+            ('subscription:standard_price',      '29.000đ / tháng'),
+            ('subscription:max_price',           '59.000đ / tháng')
         ON CONFLICT (""Key"") DO UPDATE
             SET ""Value"" = EXCLUDED.""Value""
             WHERE ""AppSettings"".""Value"" = '';

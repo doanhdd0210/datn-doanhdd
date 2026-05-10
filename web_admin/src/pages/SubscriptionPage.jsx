@@ -11,7 +11,7 @@ const s = {
   sectionSub: { fontSize: 12, color: '#94a3b8', marginBottom: 16 },
   row: { display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 },
   label: { fontSize: 13, color: '#374151', fontWeight: 500, minWidth: 200 },
-  input: { padding: '7px 12px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 14, flex: 1, outline: 'none', maxWidth: 320 },
+  input: { padding: '7px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 14, flex: 1, outline: 'none', maxWidth: 320, background: '#fff', color: '#1e293b' },
   btn: { padding: '7px 18px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 },
   btnPrimary: { background: '#6366f1', color: '#fff' },
   btnDanger: { background: '#fee2e2', color: '#dc2626' },
@@ -34,7 +34,7 @@ const s = {
 }
 
 export default function SubscriptionPage() {
-  const [config, setConfig] = useState({ packageName: '', standardProductId: '', maxProductId: '', standardAiLimit: 100 })
+  const [config, setConfig] = useState({ packageName: '', standardProductId: '', maxProductId: '', standardPrice: '', maxPrice: '', standardAiLimit: 100 })
   const [subscribers, setSubscribers] = useState([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -85,11 +85,13 @@ export default function SubscriptionPage() {
       <div style={{ display: 'flex', gap: 16, marginBottom: 20 }}>
         <div style={s.planCard}>
           <div style={s.planTitle}><span>⭐</span> Gói Standard</div>
+          <div style={s.planDetail}>Giá: <b>{config.standardPrice || '(chưa cấu hình)'}</b></div>
           <div style={s.planDetail}>AI limit: <b>100 lượt / ngày</b></div>
           <div style={s.planDetail}>Product ID: <code style={{ fontSize: 11, background: '#f1f5f9', padding: '1px 6px', borderRadius: 4 }}>{config.standardProductId || '(chưa cấu hình)'}</code></div>
         </div>
         <div style={{ ...s.planCard, borderColor: '#a855f7' }}>
           <div style={{ ...s.planTitle, color: '#7c3aed' }}><span>👑</span> Gói Max</div>
+          <div style={s.planDetail}>Giá: <b>{config.maxPrice || '(chưa cấu hình)'}</b></div>
           <div style={s.planDetail}>AI limit: <b>Không giới hạn</b></div>
           <div style={s.planDetail}>Product ID: <code style={{ fontSize: 11, background: '#f1f5f9', padding: '1px 6px', borderRadius: 4 }}>{config.maxProductId || '(chưa cấu hình)'}</code></div>
         </div>
@@ -122,6 +124,18 @@ export default function SubscriptionPage() {
           <input style={s.input} value={config.maxProductId}
             placeholder="vip_max"
             onChange={e => setConfig(c => ({ ...c, maxProductId: e.target.value }))} />
+        </div>
+        <div style={s.row}>
+          <span style={s.label}>Giá hiển thị — Gói Standard</span>
+          <input style={s.input} value={config.standardPrice}
+            placeholder="29.000đ / tháng"
+            onChange={e => setConfig(c => ({ ...c, standardPrice: e.target.value }))} />
+        </div>
+        <div style={s.row}>
+          <span style={s.label}>Giá hiển thị — Gói Max</span>
+          <input style={s.input} value={config.maxPrice}
+            placeholder="59.000đ / tháng"
+            onChange={e => setConfig(c => ({ ...c, maxPrice: e.target.value }))} />
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', marginTop: 8 }}>

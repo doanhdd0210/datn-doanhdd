@@ -36,7 +36,7 @@ public class SubscriptionAdminController : ControllerBase
             .ToList()));
     }
 
-    /// <summary>Lấy cấu hình gói VIP (product IDs, package name).</summary>
+    /// <summary>Lấy cấu hình gói VIP (product IDs, package name, prices).</summary>
     [HttpGet("plans")]
     public async Task<ActionResult<ApiResponse<SubscriptionPlansConfig>>> GetPlans()
     {
@@ -52,6 +52,8 @@ public class SubscriptionAdminController : ControllerBase
             Get("subscription:package_name") ?? "",
             Get("subscription:standard_product_id") ?? "",
             Get("subscription:max_product_id") ?? "",
+            Get("subscription:standard_price") ?? "",
+            Get("subscription:max_price") ?? "",
             SubscriptionService.LimitStandard)));
     }
 
@@ -65,6 +67,8 @@ public class SubscriptionAdminController : ControllerBase
         await UpsertSetting("subscription:package_name", config.PackageName);
         await UpsertSetting("subscription:standard_product_id", config.StandardProductId);
         await UpsertSetting("subscription:max_product_id", config.MaxProductId);
+        await UpsertSetting("subscription:standard_price", config.StandardPrice);
+        await UpsertSetting("subscription:max_price", config.MaxPrice);
         await _db.SaveChangesAsync();
 
         return Ok(ApiResponse<SubscriptionPlansConfig>.Ok(config, "Đã lưu cấu hình gói VIP."));
@@ -103,4 +107,6 @@ public record SubscriptionPlansConfig(
     string PackageName,
     string StandardProductId,
     string MaxProductId,
+    string StandardPrice,
+    string MaxPrice,
     int StandardAiLimit);

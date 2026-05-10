@@ -38,6 +38,8 @@ public class SubscriptionController : ControllerBase
         var packageName     = Get("subscription:package_name") ?? "";
         var standardId      = Get("subscription:standard_product_id") ?? "";
         var maxId           = Get("subscription:max_product_id") ?? "";
+        var standardPrice   = Get("subscription:standard_price") ?? "";
+        var maxPrice        = Get("subscription:max_price") ?? "";
 
         var plans = new PublicPlansDto(
             PackageName: packageName,
@@ -48,6 +50,7 @@ public class SubscriptionController : ControllerBase
                     ProductId: standardId,
                     Title: "Standard",
                     Icon: "⭐",
+                    DisplayPrice: standardPrice,
                     DailyAiLimit: SubscriptionService.LimitStandard,
                     IsUnlimited: false,
                     Features: new List<string>
@@ -62,6 +65,7 @@ public class SubscriptionController : ControllerBase
                     ProductId: maxId,
                     Title: "Max",
                     Icon: "👑",
+                    DisplayPrice: maxPrice,
                     DailyAiLimit: null,
                     IsUnlimited: true,
                     Features: new List<string>
@@ -151,6 +155,7 @@ public record PlanInfoDto(
     string ProductId,
     string Title,
     string Icon,
+    string DisplayPrice,
     int? DailyAiLimit,
     bool IsUnlimited,
     List<string> Features);

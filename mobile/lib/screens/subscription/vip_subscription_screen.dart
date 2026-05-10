@@ -328,7 +328,7 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
     final color = isMax ? AppColors.secondary : const Color(0xFFFFC107);
 
     final playProduct = _playProducts.where((p) => p.id == plan.productId).firstOrNull;
-    final priceText = playProduct?.price ?? (plan.productId.isEmpty ? 'Chưa cấu hình' : '---');
+    final priceText = playProduct?.price ?? (plan.displayPrice.isNotEmpty ? plan.displayPrice : (plan.productId.isEmpty ? 'Chưa cấu hình' : '---'));
 
     final currentSub = context.watch<SubscriptionProvider>().subscription;
     final isCurrent = currentSub?.productId == plan.productId && (currentSub?.isActive ?? false);

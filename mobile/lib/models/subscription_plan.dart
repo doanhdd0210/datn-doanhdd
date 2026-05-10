@@ -3,6 +3,7 @@ class SubscriptionPlan {
   final String productId; // Google Play product ID
   final String title;
   final String icon;
+  final String displayPrice; // e.g. "29.000đ / tháng"
   final int? dailyAiLimit; // null = unlimited
   final bool isUnlimited;
   final List<String> features;
@@ -12,6 +13,7 @@ class SubscriptionPlan {
     required this.productId,
     required this.title,
     required this.icon,
+    required this.displayPrice,
     this.dailyAiLimit,
     required this.isUnlimited,
     required this.features,
@@ -23,6 +25,7 @@ class SubscriptionPlan {
       productId: json['productId'] as String? ?? '',
       title: json['title'] as String? ?? '',
       icon: json['icon'] as String? ?? '',
+      displayPrice: json['displayPrice'] as String? ?? '',
       dailyAiLimit: json['dailyAiLimit'] as int?,
       isUnlimited: json['isUnlimited'] as bool? ?? false,
       features: (json['features'] as List<dynamic>?)

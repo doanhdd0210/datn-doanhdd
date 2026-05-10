@@ -278,24 +278,11 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
       return _buildConfigNote('Chưa cấu hình gói VIP.\nAdmin cần thiết lập trên trang quản trị.');
     }
 
-    final noneFromPlay = _iapAvailable &&
-        _config!.plans.every((p) =>
-            p.productId.isNotEmpty &&
-            !_playProducts.any((pd) => pd.id == p.productId));
-
     return Column(
       children: [
         for (int i = 0; i < _config!.plans.length; i++) ...[
           if (i > 0) const SizedBox(height: 12),
           _buildPlanCard(_config!.plans[i]),
-        ],
-        // Ghi chú nếu Play Store chưa có product
-        if (noneFromPlay) ...[
-          const SizedBox(height: 12),
-          _buildConfigNote(
-            'Sản phẩm chưa được tạo trên Google Play Console.\n'
-            'Product ID: ${_config!.plans.map((p) => p.productId).join(', ')}',
-          ),
         ],
       ],
     );
@@ -328,12 +315,19 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
     final color = isMax ? AppColors.secondary : const Color(0xFFFFC107);
 
     final playProduct = _playProducts.where((p) => p.id == plan.productId).firstOrNull;
-    final priceText = playProduct?.price ?? (plan.displayPrice.isNotEmpty ? plan.displayPrice : (plan.productId.isEmpty ? 'Chưa cấu hình' : '---'));
+    final priceText = playProduct?.price ??
+        (plan.displayPrice.isNotEmpty
+            ? plan.displayPrice
+            : (plan.productId.isEmpty ? 'Chưa cấu hình' : '---'));
 
     final currentSub = context.watch<SubscriptionProvider>().subscription;
     final isCurrent = currentSub?.productId == plan.productId && (currentSub?.isActive ?? false);
     final isPurchasing = _purchasingId == plan.productId;
+    // Can buy only if Play Store has the product AND IAP is available
     final canBuy = playProduct != null && _iapAvailable && !isCurrent && !isPurchasing && !_verifying;
+    // Play Store loaded but product missing — show informative note
+    final playLoadedButMissing = _iapAvailable && _playProducts.isNotEmpty &&
+        plan.productId.isNotEmpty && playProduct == null;
 
     return Stack(
       clipBehavior: Clip.none,
@@ -387,30 +381,53 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
                     ),
                   )),
               const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: canBuy ? () => _buy(playProduct!) : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: isCurrent ? Colors.grey.shade300 : color,
-                    foregroundColor: Colors.white,
-                    disabledBackgroundColor: isCurrent
-                        ? Colors.grey.shade300
-                        : color.withValues(alpha: 0.4),
-                    disabledForegroundColor: Colors.white70,
-                    padding: const EdgeInsets.symmetric(vertical: 13),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    elevation: 0,
+              if (playLoadedButMissing) ...[
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  child: isPurchasing
-                      ? const SizedBox(
-                          width: 20, height: 20,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : Text(
-                          isCurrent ? 'Đang sử dụng' : 'Đăng ký ngay',
-                          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline_rounded, size: 14, color: Colors.orange.shade700),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          'Sản phẩm chưa có trên Google Play Console',
+                          style: AppTextStyles.bodySmall.copyWith(
+                              fontSize: 12, color: Colors.orange.shade800),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+              ] else ...[
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: canBuy ? () => _buy(playProduct!) : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isCurrent ? Colors.grey.shade300 : color,
+                      foregroundColor: Colors.white,
+                      disabledBackgroundColor: isCurrent
+                          ? Colors.grey.shade300
+                          : color.withValues(alpha: 0.4),
+                      disabledForegroundColor: Colors.white70,
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      elevation: 0,
+                    ),
+                    child: isPurchasing
+                        ? const SizedBox(
+                            width: 20, height: 20,
+                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        : Text(
+                            isCurrent ? 'Đang sử dụng' : 'Đăng ký ngay',
+                            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                  ),
+                ),
+              ],
             ],
           ),
         ),

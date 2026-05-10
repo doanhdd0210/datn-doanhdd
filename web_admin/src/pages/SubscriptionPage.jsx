@@ -1,21 +1,24 @@
 import { useState, useEffect } from 'react'
-import { Crown, Save, Trash2, RefreshCw, Package, Users } from 'lucide-react'
+import { Crown, Save, Trash2, RefreshCw, Users } from 'lucide-react'
 import { subscriptionAdminApi } from '../services/api'
 
+const inp = {
+  padding: '6px 10px', borderRadius: 7, border: '1px solid #cbd5e1',
+  fontSize: 13, width: '100%', outline: 'none', background: '#f8fafc',
+  color: '#1e293b', boxSizing: 'border-box',
+}
+const inpFocus = { ...inp, border: '1px solid #6366f1', background: '#fff' }
+
 const s = {
-  page: { padding: '28px 32px', maxWidth: 960, margin: '0 auto' },
+  page: { padding: '28px 32px', maxWidth: 980, margin: '0 auto' },
   heading: { fontSize: 22, fontWeight: 700, color: '#0f172a', marginBottom: 4 },
-  sub: { fontSize: 13, color: '#64748b', marginBottom: 28 },
+  sub: { fontSize: 13, color: '#64748b', marginBottom: 24 },
   section: { background: '#fff', borderRadius: 14, border: '1px solid #e2e8f0', padding: '22px 24px', marginBottom: 20 },
-  sectionTitle: { fontSize: 15, fontWeight: 700, color: '#1e293b', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 8 },
+  sectionTitle: { fontSize: 15, fontWeight: 700, color: '#1e293b', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 },
   sectionSub: { fontSize: 12, color: '#94a3b8', marginBottom: 16 },
-  row: { display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 },
-  label: { fontSize: 13, color: '#374151', fontWeight: 500, minWidth: 200 },
-  input: { padding: '7px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 14, flex: 1, outline: 'none', maxWidth: 320, background: '#fff', color: '#1e293b' },
   btn: { padding: '7px 18px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 },
   btnPrimary: { background: '#6366f1', color: '#fff' },
   btnDanger: { background: '#fee2e2', color: '#dc2626' },
-  msg: { fontSize: 12, marginLeft: 8 },
   table: { width: '100%', borderCollapse: 'collapse', fontSize: 13 },
   th: { textAlign: 'left', padding: '8px 12px', color: '#94a3b8', fontWeight: 600, borderBottom: '1px solid #f1f5f9', fontSize: 12 },
   td: { padding: '10px 12px', borderBottom: '1px solid #f8fafc', color: '#374151', verticalAlign: 'middle' },
@@ -25,25 +28,75 @@ const s = {
     background: color === 'gold' ? '#fef3c7' : color === 'purple' ? '#ede9fe' : '#f1f5f9',
     color: color === 'gold' ? '#92400e' : color === 'purple' ? '#6d28d9' : '#64748b',
   }),
-  planCard: {
-    border: '1px solid #e2e8f0', borderRadius: 12, padding: '16px 20px',
-    display: 'flex', flexDirection: 'column', gap: 6, flex: 1,
-  },
-  planTitle: { fontSize: 15, fontWeight: 700, color: '#1e293b', display: 'flex', alignItems: 'center', gap: 6 },
-  planDetail: { fontSize: 12, color: '#64748b' },
+}
+
+function FocusInput({ value, onChange, placeholder, style }) {
+  const [focused, setFocused] = useState(false)
+  return (
+    <input
+      style={focused ? { ...inpFocus, ...style } : { ...inp, ...style }}
+      value={value}
+      placeholder={placeholder}
+      onChange={onChange}
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
+    />
+  )
+}
+
+function PlanCard({ icon, title, accentColor, borderColor, aiLimit, fields, onChange }) {
+  return (
+    <div style={{
+      flex: 1, border: `2px solid ${borderColor}`, borderRadius: 14,
+      padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 14,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{ fontSize: 22 }}>{icon}</span>
+        <div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: accentColor }}>{title}</div>
+          <div style={{ fontSize: 11, color: '#94a3b8' }}>AI limit: {aiLimit}</div>
+        </div>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 600, color: '#64748b', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.4 }}>Product ID</div>
+          <FocusInput
+            value={fields.productId}
+            placeholder="vip_standard"
+            onChange={e => onChange('productId', e.target.value)}
+          />
+        </div>
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 600, color: '#64748b', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.4 }}>Giá hiển thị</div>
+          <FocusInput
+            value={fields.price}
+            placeholder="29.000đ / tháng"
+            onChange={e => onChange('price', e.target.value)}
+          />
+          <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 3 }}>Hiển thị trong app khi Play Store chưa load giá</div>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export default function SubscriptionPage() {
-  const [config, setConfig] = useState({ packageName: '', standardProductId: '', maxProductId: '', standardPrice: '', maxPrice: '', standardAiLimit: 100 })
+  const [config, setConfig] = useState({
+    packageName: '',
+    standardProductId: '', maxProductId: '',
+    standardPrice: '', maxPrice: '',
+    standardAiLimit: 100,
+  })
   const [subscribers, setSubscribers] = useState([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState(null)
   const [revoking, setRevoking] = useState(null)
+  const [pkgFocused, setPkgFocused] = useState(false)
 
   useEffect(() => {
     Promise.all([
-      subscriptionAdminApi.getPlans().then(d => setConfig(d)).catch(() => {}),
+      subscriptionAdminApi.getPlans().then(d => setConfig(prev => ({ ...prev, ...d }))).catch(() => {}),
       subscriptionAdminApi.getAll().then(d => setSubscribers(Array.isArray(d) ? d : [])).catch(() => {}),
     ]).finally(() => setLoading(false))
   }, [])
@@ -81,69 +134,78 @@ export default function SubscriptionPage() {
       <h1 style={s.heading}>Quản lý gói VIP</h1>
       <p style={s.sub}>Cấu hình sản phẩm Google Play và theo dõi subscriber</p>
 
-      {/* Plan overview cards */}
-      <div style={{ display: 'flex', gap: 16, marginBottom: 20 }}>
-        <div style={s.planCard}>
-          <div style={s.planTitle}><span>⭐</span> Gói Standard</div>
-          <div style={s.planDetail}>Giá: <b>{config.standardPrice || '(chưa cấu hình)'}</b></div>
-          <div style={s.planDetail}>AI limit: <b>100 lượt / ngày</b></div>
-          <div style={s.planDetail}>Product ID: <code style={{ fontSize: 11, background: '#f1f5f9', padding: '1px 6px', borderRadius: 4 }}>{config.standardProductId || '(chưa cấu hình)'}</code></div>
+      {/* Stats bar */}
+      <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
+        <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, padding: '12px 20px', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <Users size={16} color="#16a34a" />
+          <div>
+            <div style={{ fontSize: 20, fontWeight: 800, color: '#16a34a', lineHeight: 1 }}>{activeCount}</div>
+            <div style={{ fontSize: 11, color: '#166534' }}>subscriber active</div>
+          </div>
         </div>
-        <div style={{ ...s.planCard, borderColor: '#a855f7' }}>
-          <div style={{ ...s.planTitle, color: '#7c3aed' }}><span>👑</span> Gói Max</div>
-          <div style={s.planDetail}>Giá: <b>{config.maxPrice || '(chưa cấu hình)'}</b></div>
-          <div style={s.planDetail}>AI limit: <b>Không giới hạn</b></div>
-          <div style={s.planDetail}>Product ID: <code style={{ fontSize: 11, background: '#f1f5f9', padding: '1px 6px', borderRadius: 4 }}>{config.maxProductId || '(chưa cấu hình)'}</code></div>
-        </div>
-        <div style={{ ...s.planCard, background: '#f8fafc' }}>
-          <div style={s.planTitle}><Users size={14} /> Tổng subscriber</div>
-          <div style={{ fontSize: 28, fontWeight: 800, color: '#6366f1' }}>{activeCount}</div>
-          <div style={s.planDetail}>đang active / {subscribers.length} tổng</div>
+        <div style={{ background: '#faf5ff', border: '1px solid #e9d5ff', borderRadius: 10, padding: '12px 20px', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <Crown size={16} color="#7c3aed" />
+          <div>
+            <div style={{ fontSize: 20, fontWeight: 800, color: '#7c3aed', lineHeight: 1 }}>{subscribers.length}</div>
+            <div style={{ fontSize: 11, color: '#6d28d9' }}>tổng đã mua</div>
+          </div>
         </div>
       </div>
 
-      {/* Config section */}
+      {/* Plan config cards */}
       <div style={s.section}>
-        <div style={s.sectionTitle}><Package size={16} /> Cấu hình Google Play</div>
-        <div style={s.sectionSub}>Product ID phải trùng với ID đã tạo trên Google Play Console</div>
-
-        <div style={s.row}>
-          <span style={s.label}>Package Name</span>
-          <input style={s.input} value={config.packageName}
-            placeholder="com.example.app"
-            onChange={e => setConfig(c => ({ ...c, packageName: e.target.value }))} />
-        </div>
-        <div style={s.row}>
-          <span style={s.label}>Product ID — Gói Standard</span>
-          <input style={s.input} value={config.standardProductId}
-            placeholder="vip_standard"
-            onChange={e => setConfig(c => ({ ...c, standardProductId: e.target.value }))} />
-        </div>
-        <div style={s.row}>
-          <span style={s.label}>Product ID — Gói Max</span>
-          <input style={s.input} value={config.maxProductId}
-            placeholder="vip_max"
-            onChange={e => setConfig(c => ({ ...c, maxProductId: e.target.value }))} />
-        </div>
-        <div style={s.row}>
-          <span style={s.label}>Giá hiển thị — Gói Standard</span>
-          <input style={s.input} value={config.standardPrice}
-            placeholder="29.000đ / tháng"
-            onChange={e => setConfig(c => ({ ...c, standardPrice: e.target.value }))} />
-        </div>
-        <div style={s.row}>
-          <span style={s.label}>Giá hiển thị — Gói Max</span>
-          <input style={s.input} value={config.maxPrice}
-            placeholder="59.000đ / tháng"
-            onChange={e => setConfig(c => ({ ...c, maxPrice: e.target.value }))} />
+        <div style={s.sectionTitle}>
+          <Crown size={16} color="#6366f1" /> Cấu hình gói VIP
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', marginTop: 8 }}>
+        {/* Package name */}
+        <div style={{ marginBottom: 18 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: '#64748b', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.4 }}>Package Name</div>
+          <input
+            style={pkgFocused ? { ...inpFocus, maxWidth: 400 } : { ...inp, maxWidth: 400 }}
+            value={config.packageName}
+            placeholder="doanhdd.javaup.mobile"
+            onChange={e => setConfig(c => ({ ...c, packageName: e.target.value }))}
+            onFocus={() => setPkgFocused(true)}
+            onBlur={() => setPkgFocused(false)}
+          />
+          <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 3 }}>Phải trùng với package name trong Google Play Console</div>
+        </div>
+
+        {/* Plan cards */}
+        <div style={{ display: 'flex', gap: 16, marginBottom: 18 }}>
+          <PlanCard
+            icon="⭐"
+            title="Gói Standard"
+            accentColor="#b45309"
+            borderColor="#fde68a"
+            aiLimit="100 lượt / ngày"
+            fields={{ productId: config.standardProductId, price: config.standardPrice }}
+            onChange={(field, val) => setConfig(c => ({
+              ...c,
+              [field === 'productId' ? 'standardProductId' : 'standardPrice']: val
+            }))}
+          />
+          <PlanCard
+            icon="👑"
+            title="Gói Max"
+            accentColor="#7c3aed"
+            borderColor="#c4b5fd"
+            aiLimit="Không giới hạn"
+            fields={{ productId: config.maxProductId, price: config.maxPrice }}
+            onChange={(field, val) => setConfig(c => ({
+              ...c,
+              [field === 'productId' ? 'maxProductId' : 'maxPrice']: val
+            }))}
+          />
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <button style={{ ...s.btn, ...s.btnPrimary }} onClick={saveConfig} disabled={saving}>
             <Save size={14} /> {saving ? 'Đang lưu...' : 'Lưu cấu hình'}
           </button>
           {msg && (
-            <span style={{ ...s.msg, color: msg.ok ? '#16a34a' : '#dc2626' }}>{msg.text}</span>
+            <span style={{ fontSize: 12, color: msg.ok ? '#16a34a' : '#dc2626' }}>{msg.text}</span>
           )}
         </div>
       </div>
@@ -151,10 +213,7 @@ export default function SubscriptionPage() {
       {/* Subscribers list */}
       <div style={s.section}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <div>
-            <div style={s.sectionTitle}><Crown size={16} /> Danh sách subscriber</div>
-            <div style={s.sectionSub}>Tất cả user đã mua gói VIP</div>
-          </div>
+          <div style={s.sectionTitle}><Users size={16} /> Danh sách subscriber</div>
           <button style={{ ...s.btn, background: '#f1f5f9', color: '#64748b' }}
             onClick={() => subscriptionAdminApi.getAll().then(d => setSubscribers(d ?? [])).catch(() => {})}>
             <RefreshCw size={13} /> Tải lại
@@ -204,7 +263,7 @@ export default function SubscriptionPage() {
                   </td>
                   <td style={s.td}>
                     {sub.isActive
-                      ? <span style={s.badge('green', '#dcfce7', '#166534')}>Active</span>
+                      ? <span style={s.badge('green')}>Active</span>
                       : <span style={s.badge('')}>Đã huỷ</span>}
                   </td>
                   <td style={s.td}>

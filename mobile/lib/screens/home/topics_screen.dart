@@ -210,7 +210,7 @@ class _TopicsScreenState extends State<TopicsScreen> {
             GestureDetector(
               onTap: () => _goToProfile(context),
               child: Container(
-                padding: const EdgeInsets.all(1),
+                padding: const EdgeInsets.all(3),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: subProvider.isMax
@@ -231,24 +231,35 @@ class _TopicsScreenState extends State<TopicsScreen> {
                               end: Alignment.bottomRight,
                             ),
                 ),
-                child: Container(
+                child: CircleAvatar(
+                  radius: 22,
+                  backgroundColor: context.surfaceColor,
                   child: CircleAvatar(
-                    radius: 22,
-                    backgroundImage: user?.photoURL != null
-                        ? CachedNetworkImageProvider(user!.photoURL!)
-                        : null,
-                    backgroundColor: AppColors.primary.withValues(alpha: 0.25),
-                    child: user?.photoURL == null
-                        ? Text(
-                            (user?.displayName ?? 'J')
-                                .substring(0, 1)
-                                .toUpperCase(),
+                    radius: 20,
+                    backgroundColor: AppColors.primary.withValues(alpha: 0.2),
+                    child: user?.photoURL != null
+                        ? ClipOval(
+                            child: CachedNetworkImage(
+                              imageUrl: user!.photoURL!,
+                              width: 40,
+                              height: 40,
+                              fit: BoxFit.cover,
+                              errorWidget: (_, __, ___) => Text(
+                                (user.displayName ?? 'J').substring(0, 1).toUpperCase(),
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 16),
+                              ),
+                            ),
+                          )
+                        : Text(
+                            (user?.displayName ?? 'J').substring(0, 1).toUpperCase(),
                             style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w800,
-                                fontSize: 18),
-                          )
-                        : null,
+                                fontSize: 16),
+                          ),
                   ),
                 ),
               ),

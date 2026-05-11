@@ -15,4 +15,5 @@ public class UserProfile
     public bool IsAdmin { get; set; }
     public List<string> FcmTokens { get; set; } = new();
     public DateTime? LastSeenQaAt { get; set; }
+    public DateTime? LastActiveAt { get; set; }
 }

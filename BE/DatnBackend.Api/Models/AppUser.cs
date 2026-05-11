@@ -14,4 +14,5 @@ public class AppUser
     public bool IsAdmin { get; set; }
     public List<string> FcmTokens { get; set; } = [];
     public string? Provider { get; set; }
+    public DateTime? LastActiveAt { get; set; }
 }

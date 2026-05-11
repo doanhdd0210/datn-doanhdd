@@ -26,6 +26,23 @@ public class UserService : IUserService
             users.Add(MapUser(record));
             if (users.Count >= maxResults) break;
         }
+
+        var uids = users.Select(u => u.Uid).ToList();
+        var profiles = await _db.UserProfiles
+            .Where(p => uids.Contains(p.Uid))
+            .Select(p => new { p.Uid, p.FcmTokens, p.LastActiveAt })
+            .ToListAsync();
+        var profileMap = profiles.ToDictionary(p => p.Uid);
+
+        foreach (var user in users)
+        {
+            if (profileMap.TryGetValue(user.Uid, out var profile))
+            {
+                user.FcmTokens = profile.FcmTokens;
+                user.LastActiveAt = profile.LastActiveAt;
+            }
+        }
+
         return users;
     }
 
@@ -38,7 +55,10 @@ public class UserService : IUserService
 
             var profile = await _db.UserProfiles.FirstOrDefaultAsync(p => p.Uid == uid);
             if (profile != null)
+            {
                 user.FcmTokens = profile.FcmTokens;
+                user.LastActiveAt = profile.LastActiveAt;
+            }
 
             return user;
         }

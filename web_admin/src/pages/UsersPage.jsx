@@ -30,6 +30,16 @@ async function runDeleteAll(reload) {
 
 const PROVIDER_LABEL = { 'google.com': 'Google', password: 'Email', phone: 'Phone' }
 
+function formatRelativeTime(dateStr) {
+  const date = new Date(dateStr)
+  const diff = Math.floor((Date.now() - date.getTime()) / 1000)
+  if (diff < 60) return 'Vừa xong'
+  if (diff < 3600) return `${Math.floor(diff / 60)} phút trước`
+  if (diff < 86400) return `${Math.floor(diff / 3600)} giờ trước`
+  if (diff < 86400 * 7) return `${Math.floor(diff / 86400)} ngày trước`
+  return date.toLocaleDateString('vi-VN')
+}
+
 export default function UsersPage() {
   const [users, setUsers] = useState([])
   const [leaderboard, setLeaderboard] = useState([])
@@ -184,6 +194,7 @@ export default function UsersPage() {
                 <th style={s.th}>Trạng thái</th>
                 <th style={s.th}>Admin</th>
                 <th style={s.th}>Ngày tạo</th>
+                <th style={s.th}>Hoạt động gần nhất</th>
                 <th style={s.th}>Thao tác</th>
               </tr>
             </thead>
@@ -236,6 +247,15 @@ export default function UsersPage() {
                     )}
                   </td>
                   <td style={s.td}>
+                    {u.lastActiveAt ? (
+                      <div style={{ fontSize: 12, color: '#16a34a', fontWeight: 500 }}>
+                        {formatRelativeTime(u.lastActiveAt)}
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: 12, color: '#cbd5e1' }}>—</div>
+                    )}
+                  </td>
+                  <td style={s.td}>
                     <div style={s.actions}>
                       <button onClick={() => openStats(u)} style={s.btnStats} title="Xem thống kê"><BarChart2 size={14}/></button>
                       <button onClick={() => openDelete(u)} style={s.btnDelete} title="Xoá"><Trash2 size={14}/></button>
@@ -244,7 +264,7 @@ export default function UsersPage() {
                 </tr>
               ))}
               {filtered.length === 0 && (
-                <tr><td colSpan={7} style={{ textAlign: 'center', padding: 40, color: '#94a3b8' }}>Không có kết quả</td></tr>
+                <tr><td colSpan={8} style={{ textAlign: 'center', padding: 40, color: '#94a3b8' }}>Không có kết quả</td></tr>
               )}
             </tbody>
           </table>

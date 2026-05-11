@@ -1,4 +1,6 @@
 using FirebaseAdmin.Auth;
+using Microsoft.EntityFrameworkCore;
+using DatnBackend.Api.Data;
 using DatnBackend.Api.Models;
 
 namespace DatnBackend.Api.Middleware;
@@ -7,6 +9,7 @@ public class FirebaseAuthMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<FirebaseAuthMiddleware> _logger;
+    private readonly IServiceScopeFactory _scopeFactory;
 
     // Paths that do not require any authentication
     private static readonly HashSet<string> PublicPaths =
@@ -35,10 +38,11 @@ public class FirebaseAuthMiddleware
         "/api/notifications/topic/unsubscribe",
     ];
 
-    public FirebaseAuthMiddleware(RequestDelegate next, ILogger<FirebaseAuthMiddleware> logger)
+    public FirebaseAuthMiddleware(RequestDelegate next, ILogger<FirebaseAuthMiddleware> logger, IServiceScopeFactory scopeFactory)
     {
         _next = next;
         _logger = logger;
+        _scopeFactory = scopeFactory;
     }
 
     public async Task InvokeAsync(HttpContext context)
@@ -77,6 +81,8 @@ public class FirebaseAuthMiddleware
             context.Items["FirebaseEmail"] = decoded.Claims.GetValueOrDefault("email")?.ToString();
             context.Items["FirebaseIsAdmin"] = isAdmin;
 
+            _ = UpdateLastActiveAsync(decoded.Uid);
+
             // Enforce admin for restricted paths
             bool isAdminOnlyPath = AdminOnlyPrefixes.Any(prefix =>
                 path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
@@ -104,5 +110,22 @@ public class FirebaseAuthMiddleware
         }
 
         await _next(context);
+    }
+
+    private async Task UpdateLastActiveAsync(string uid)
+    {
+        try
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var threshold = DateTime.UtcNow.AddMinutes(-30);
+            await db.UserProfiles
+                .Where(p => p.Uid == uid && (p.LastActiveAt == null || p.LastActiveAt < threshold))
+                .ExecuteUpdateAsync(s => s.SetProperty(p => p.LastActiveAt, DateTime.UtcNow));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to update LastActiveAt for {Uid}", uid);
+        }
     }
 }

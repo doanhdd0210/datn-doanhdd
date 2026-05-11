@@ -8,6 +8,7 @@ import '../../constants/app_text_styles.dart';
 import '../../constants/app_theme.dart';
 import '../../models/topic.dart';
 import '../../models/lesson.dart';
+import '../../providers/subscription_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../services/api_service.dart';
 import 'lesson_detail_screen.dart';
@@ -90,12 +91,60 @@ class _TopicsScreenState extends State<TopicsScreen> {
 
   List<Topic> _mockTopics() {
     return [
-      const Topic(id: 'mock1', title: 'Java Basics', description: 'Biến, kiểu dữ liệu, toán tử', icon: '☕', color: '#58CC02', order: 1, totalLessons: 8, isActive: true),
-      const Topic(id: 'mock2', title: 'Object-Oriented', description: 'Lớp, đối tượng, kế thừa', icon: '🏗️', color: '#1CB0F6', order: 2, totalLessons: 10, isActive: true),
-      const Topic(id: 'mock3', title: 'Data Structures', description: 'Mảng, danh sách, ngăn xếp', icon: '📊', color: '#FF9600', order: 3, totalLessons: 12, isActive: true),
-      const Topic(id: 'mock4', title: 'Algorithms', description: 'Sắp xếp, tìm kiếm, đệ quy', icon: '🔄', color: '#CE82FF', order: 4, totalLessons: 8, isActive: true),
-      const Topic(id: 'mock5', title: 'Exception Handling', description: 'Try-catch, ngoại lệ tùy chỉnh', icon: '⚠️', color: '#FF4B4B', order: 5, totalLessons: 6, isActive: true),
-      const Topic(id: 'mock6', title: 'Collections & Streams', description: 'Collections Framework', icon: '🌊', color: '#00CD9C', order: 6, totalLessons: 10, isActive: true),
+      const Topic(
+          id: 'mock1',
+          title: 'Java Basics',
+          description: 'Biến, kiểu dữ liệu, toán tử',
+          icon: '☕',
+          color: '#58CC02',
+          order: 1,
+          totalLessons: 8,
+          isActive: true),
+      const Topic(
+          id: 'mock2',
+          title: 'Object-Oriented',
+          description: 'Lớp, đối tượng, kế thừa',
+          icon: '🏗️',
+          color: '#1CB0F6',
+          order: 2,
+          totalLessons: 10,
+          isActive: true),
+      const Topic(
+          id: 'mock3',
+          title: 'Data Structures',
+          description: 'Mảng, danh sách, ngăn xếp',
+          icon: '📊',
+          color: '#FF9600',
+          order: 3,
+          totalLessons: 12,
+          isActive: true),
+      const Topic(
+          id: 'mock4',
+          title: 'Algorithms',
+          description: 'Sắp xếp, tìm kiếm, đệ quy',
+          icon: '🔄',
+          color: '#CE82FF',
+          order: 4,
+          totalLessons: 8,
+          isActive: true),
+      const Topic(
+          id: 'mock5',
+          title: 'Exception Handling',
+          description: 'Try-catch, ngoại lệ tùy chỉnh',
+          icon: '⚠️',
+          color: '#FF4B4B',
+          order: 5,
+          totalLessons: 6,
+          isActive: true),
+      const Topic(
+          id: 'mock6',
+          title: 'Collections & Streams',
+          description: 'Collections Framework',
+          icon: '🌊',
+          color: '#00CD9C',
+          order: 6,
+          totalLessons: 10,
+          isActive: true),
     ];
   }
 
@@ -109,40 +158,42 @@ class _TopicsScreenState extends State<TopicsScreen> {
     return Stack(
       children: [
         Scaffold(
-      backgroundColor: context.bgColor,
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: _loadData,
-          color: AppColors.primary,
-          child: CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(child: _buildHeader()),
-              SliverToBoxAdapter(child: _buildStreakBanner()),
-              SliverToBoxAdapter(child: _buildDailyGoalBanner()),
-              if (_isLoading)
-                const SliverToBoxAdapter(child: _PathShimmer())
-              else
-                SliverToBoxAdapter(
-                  child: _SkillPath(
-                    topics: _topics,
-                    topicLessons: _topicLessons,
-                    onTopicTap: (topic) => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => LessonsScreen(topic: topic)),
-                    ),
-                    onLessonTap: (topic, lesson) => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => LessonDetailScreen(lesson: lesson, topic: topic),
+          backgroundColor: context.bgColor,
+          body: SafeArea(
+            child: RefreshIndicator(
+              onRefresh: _loadData,
+              color: AppColors.primary,
+              child: CustomScrollView(
+                slivers: [
+                  SliverToBoxAdapter(child: _buildHeader()),
+                  SliverToBoxAdapter(child: _buildStreakBanner()),
+                  SliverToBoxAdapter(child: _buildDailyGoalBanner()),
+                  if (_isLoading)
+                    const SliverToBoxAdapter(child: _PathShimmer())
+                  else
+                    SliverToBoxAdapter(
+                      child: _SkillPath(
+                        topics: _topics,
+                        topicLessons: _topicLessons,
+                        onTopicTap: (topic) => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => LessonsScreen(topic: topic)),
+                        ),
+                        onLessonTap: (topic, lesson) => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => LessonDetailScreen(
+                                lesson: lesson, topic: topic),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
-              const SliverToBoxAdapter(child: SizedBox(height: 80)),
-            ],
+                  const SliverToBoxAdapter(child: SizedBox(height: 80)),
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
         ),
       ],
     );
@@ -150,24 +201,56 @@ class _TopicsScreenState extends State<TopicsScreen> {
 
   Widget _buildHeader() {
     final user = FirebaseAuth.instance.currentUser;
-    return Consumer<UserProvider>(
-      builder: (context, provider, _) => Container(
+    return Consumer<UserProvider>(builder: (context, provider, _) {
+      final subProvider = context.watch<SubscriptionProvider>();
+      return Container(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-        color: context.bgColor,
         child: Row(
           children: [
             GestureDetector(
               onTap: () => _goToProfile(context),
-              child: CircleAvatar(
-                radius: 22,
-                backgroundImage: user?.photoURL != null ? CachedNetworkImageProvider(user!.photoURL!) : null,
-                backgroundColor: AppColors.primary.withValues(alpha: 0.25),
-                child: user?.photoURL == null
-                    ? Text(
-                        (user?.displayName ?? 'J').substring(0, 1).toUpperCase(),
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18),
-                      )
-                    : null,
+              child: Container(
+                padding: const EdgeInsets.all(1),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: subProvider.isMax
+                      ? const LinearGradient(
+                          colors: [Color(0xFFD97706), Color(0xFFFBBF24)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        )
+                      : subProvider.isStandard
+                          ? const LinearGradient(
+                              colors: [Color(0xFF7C3AED), Color(0xFF4F46E5)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            )
+                          : const LinearGradient(
+                              colors: [AppColors.primary, AppColors.secondary],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                ),
+                child: Container(
+                  child: CircleAvatar(
+                    radius: 22,
+                    backgroundImage: user?.photoURL != null
+                        ? CachedNetworkImageProvider(user!.photoURL!)
+                        : null,
+                    backgroundColor: AppColors.primary.withValues(alpha: 0.25),
+                    child: user?.photoURL == null
+                        ? Text(
+                            (user?.displayName ?? 'J')
+                                .substring(0, 1)
+                                .toUpperCase(),
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 18),
+                          )
+                        : null,
+                  ),
+                ),
               ),
             ),
             const SizedBox(width: 12),
@@ -177,22 +260,30 @@ class _TopicsScreenState extends State<TopicsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(user?.displayName ?? '', style: AppTextStyles.heading4, overflow: TextOverflow.ellipsis),
+                    Text(user?.displayName ?? '',
+                        style: AppTextStyles.heading4,
+                        overflow: TextOverflow.ellipsis),
                     _LevelSubtitle(level: provider.level),
                   ],
                 ),
               ),
             ),
             const SizedBox(width: 8),
-            _StatChip(icon: '🔥', value: provider.streak.toString(), color: AppColors.streakOrange),
+            _StatChip(
+                icon: '🔥',
+                value: provider.streak.toString(),
+                color: AppColors.streakOrange),
             const SizedBox(width: 8),
-            _StatChip(icon: '⚡', value: provider.totalXp.toString(), color: AppColors.xpGold),
+            _StatChip(
+                icon: '⚡',
+                value: provider.totalXp.toString(),
+                color: AppColors.xpGold),
             const SizedBox(width: 8),
             _NotifBell(),
           ],
         ),
-      ),
-    );
+      );
+    });
   }
 
   Widget _buildStreakBanner() {
@@ -208,7 +299,8 @@ class _TopicsScreenState extends State<TopicsScreen> {
               AppColors.streakOrange.withValues(alpha: 0.1),
             ]),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.accentGold.withValues(alpha: 0.3)),
+            border:
+                Border.all(color: AppColors.accentGold.withValues(alpha: 0.3)),
           ),
           child: Row(
             children: [
@@ -219,9 +311,13 @@ class _TopicsScreenState extends State<TopicsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('${provider.streak} ngày liên tiếp!',
-                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppColors.accentGold)),
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 15,
+                            color: AppColors.accentGold)),
                     Text('Duy trì nhé — quay lại vào ngày mai!',
-                        style: TextStyle(fontSize: 12, color: context.textSecondary)),
+                        style: TextStyle(
+                            fontSize: 12, color: context.textSecondary)),
                   ],
                 ),
               ),
@@ -246,58 +342,75 @@ class _TopicsScreenState extends State<TopicsScreen> {
         } else {
           headerText = '🎯 Mục tiêu hôm nay';
         }
-        final headerColor = (reached || claimed) ? AppColors.correct : context.textDark;
+        final headerColor =
+            (reached || claimed) ? AppColors.correct : context.textDark;
         return GestureDetector(
           onTap: () => _showGoalPicker(context, provider),
           child: Container(
-          margin: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
-          decoration: BoxDecoration(
-            color: context.surfaceColor,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: (reached || claimed) ? AppColors.correct.withValues(alpha: 0.4) : context.borderColor,
+            margin: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+            decoration: BoxDecoration(
+              color: context.surfaceColor,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: (reached || claimed)
+                    ? AppColors.correct.withValues(alpha: 0.4)
+                    : context.borderColor,
+              ),
             ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    headerText,
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: headerColor),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      headerText,
+                      style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                          color: headerColor),
+                    ),
+                    const Spacer(),
+                    Text(
+                      '${provider.todayXp} / ${provider.dailyGoal} XP',
+                      style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13,
+                          color: (reached || claimed)
+                              ? AppColors.correct
+                              : AppColors.xpGold),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: LinearProgressIndicator(
+                    value: provider.dailyGoalProgress,
+                    minHeight: 8,
+                    backgroundColor: context.borderColor,
+                    valueColor: AlwaysStoppedAnimation(
+                      (reached || claimed)
+                          ? AppColors.correct
+                          : AppColors.primary,
+                    ),
                   ),
-                  const Spacer(),
+                ),
+                if ((reached || claimed) && bonus > 0) ...[
+                  const SizedBox(height: 6),
                   Text(
-                    '${provider.todayXp} / ${provider.dailyGoal} XP',
-                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13,
-                        color: (reached || claimed) ? AppColors.correct : AppColors.xpGold),
+                    claimed
+                        ? '⚡ +$bonus XP thưởng đã nhận'
+                        : '⚡ +$bonus XP thưởng',
+                    style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.xpGold),
                   ),
                 ],
-              ),
-              const SizedBox(height: 8),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(6),
-                child: LinearProgressIndicator(
-                  value: provider.dailyGoalProgress,
-                  minHeight: 8,
-                  backgroundColor: context.borderColor,
-                  valueColor: AlwaysStoppedAnimation(
-                    (reached || claimed) ? AppColors.correct : AppColors.primary,
-                  ),
-                ),
-              ),
-              if ((reached || claimed) && bonus > 0) ...[
-                const SizedBox(height: 6),
-                Text(
-                  claimed ? '⚡ +$bonus XP thưởng đã nhận' : '⚡ +$bonus XP thưởng',
-                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.xpGold),
-                ),
               ],
-            ],
+            ),
           ),
-        ),
         );
       },
     );
@@ -308,77 +421,104 @@ class _TopicsScreenState extends State<TopicsScreen> {
       context: context,
       backgroundColor: context.surfaceColor,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (_) => Consumer<UserProvider>(
-        builder: (_, provider, __) => Padding(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Chọn mục tiêu hằng ngày',
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: context.textDark)),
-            if (provider.isDailyGoalReached || provider.dailyGoalBonusClaimedToday) ...[
-              const SizedBox(height: 6),
-              Text(
-                provider.dailyGoalBonusClaimedToday
-                    ? 'Bạn đã nhận thưởng hôm nay. Thưởng tiếp theo vào ngày mai.'
-                    : 'Bạn đã đạt mục tiêu hôm nay. Có thể đổi mục tiêu từ ngày mai.',
-                style: TextStyle(fontSize: 12, color: context.textSecondary),
-              ),
-            ],
-            const SizedBox(height: 16),
-            ...provider.dailyGoalOptions.map((g) {
-              final isSelected = provider.dailyGoal == g;
-              final bonus = provider.bonusForGoal(g);
-              final disabled = provider.isDailyGoalReached || provider.dailyGoalBonusClaimedToday;
-              return GestureDetector(
-                onTap: disabled ? null : () { provider.setDailyGoal(g); Navigator.pop(context); },
-                child: Container(
-                  width: double.infinity,
-                  margin: const EdgeInsets.only(bottom: 10),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  decoration: BoxDecoration(
-                    color: disabled
-                        ? context.surfaceElevatedColor.withValues(alpha: 0.5)
-                        : isSelected ? AppColors.primary.withValues(alpha: 0.1) : context.surfaceElevatedColor,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: disabled
-                          ? context.borderColor.withValues(alpha: 0.4)
-                          : isSelected ? AppColors.primary : context.borderColor,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('⚡ $g XP / ngày',
-                                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14,
-                                    color: disabled
-                                        ? context.textSecondary
-                                        : isSelected ? AppColors.primary : context.textDark)),
-                            if (bonus > 0)
-                              Text('Thưởng khi đạt: +$bonus XP',
-                                  style: TextStyle(fontSize: 11,
-                                      color: disabled ? context.textSecondary : AppColors.xpGold)),
-                          ],
-                        ),
+          builder: (_, provider, __) => Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Chọn mục tiêu hằng ngày',
+                        style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 16,
+                            color: context.textDark)),
+                    if (provider.isDailyGoalReached ||
+                        provider.dailyGoalBonusClaimedToday) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        provider.dailyGoalBonusClaimedToday
+                            ? 'Bạn đã nhận thưởng hôm nay. Thưởng tiếp theo vào ngày mai.'
+                            : 'Bạn đã đạt mục tiêu hôm nay. Có thể đổi mục tiêu từ ngày mai.',
+                        style: TextStyle(
+                            fontSize: 12, color: context.textSecondary),
                       ),
-                      if (isSelected && !disabled)
-                        const Icon(Icons.check_circle_rounded, color: AppColors.primary, size: 20),
-                      if (isSelected && disabled)
-                        Icon(Icons.check_circle_rounded, color: context.textSecondary, size: 20),
                     ],
-                  ),
+                    const SizedBox(height: 16),
+                    ...provider.dailyGoalOptions.map((g) {
+                      final isSelected = provider.dailyGoal == g;
+                      final bonus = provider.bonusForGoal(g);
+                      final disabled = provider.isDailyGoalReached ||
+                          provider.dailyGoalBonusClaimedToday;
+                      return GestureDetector(
+                        onTap: disabled
+                            ? null
+                            : () {
+                                provider.setDailyGoal(g);
+                                Navigator.pop(context);
+                              },
+                        child: Container(
+                          width: double.infinity,
+                          margin: const EdgeInsets.only(bottom: 10),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 14),
+                          decoration: BoxDecoration(
+                            color: disabled
+                                ? context.surfaceElevatedColor
+                                    .withValues(alpha: 0.5)
+                                : isSelected
+                                    ? AppColors.primary.withValues(alpha: 0.1)
+                                    : context.surfaceElevatedColor,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: disabled
+                                  ? context.borderColor.withValues(alpha: 0.4)
+                                  : isSelected
+                                      ? AppColors.primary
+                                      : context.borderColor,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('⚡ $g XP / ngày',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 14,
+                                            color: disabled
+                                                ? context.textSecondary
+                                                : isSelected
+                                                    ? AppColors.primary
+                                                    : context.textDark)),
+                                    if (bonus > 0)
+                                      Text('Thưởng khi đạt: +$bonus XP',
+                                          style: TextStyle(
+                                              fontSize: 11,
+                                              color: disabled
+                                                  ? context.textSecondary
+                                                  : AppColors.xpGold)),
+                                  ],
+                                ),
+                              ),
+                              if (isSelected && !disabled)
+                                const Icon(Icons.check_circle_rounded,
+                                    color: AppColors.primary, size: 20),
+                              if (isSelected && disabled)
+                                Icon(Icons.check_circle_rounded,
+                                    color: context.textSecondary, size: 20),
+                            ],
+                          ),
+                        ),
+                      );
+                    }),
+                  ],
                 ),
-              );
-            }),
-          ],
-        ),
-      )),
+              )),
     );
   }
 }
@@ -399,7 +539,16 @@ class _SkillPath extends StatelessWidget {
   });
 
   // Zigzag x positions as fraction (0=leftmost, 1=rightmost within margins)
-  static const List<double> _xPattern = [0.5, 0.67, 0.78, 0.67, 0.5, 0.33, 0.22, 0.33];
+  static const List<double> _xPattern = [
+    0.5,
+    0.67,
+    0.78,
+    0.67,
+    0.5,
+    0.33,
+    0.22,
+    0.33
+  ];
 
   Color _topicColor(Topic topic, int index) {
     if (topic.color.startsWith('#')) {
@@ -422,9 +571,9 @@ class _SkillPath extends StatelessWidget {
 
             // Số topic được mở sẵn theo level
             final preUnlocked = switch (provider.level) {
-              'advanced'     => 3,
+              'advanced' => 3,
               'intermediate' => 2,
-              _              => 1,
+              _ => 1,
             };
 
             for (int ti = 0; ti < topics.length; ti++) {
@@ -439,7 +588,8 @@ class _SkillPath extends StatelessWidget {
                 isUnlocked = true;
               } else {
                 final prevTopic = topics[ti - 1];
-                final prevCompleted = provider.topicCompletedCount(prevTopic.id);
+                final prevCompleted =
+                    provider.topicCompletedCount(prevTopic.id);
                 final prevTotal = prevTopic.totalLessons.clamp(1, 999);
                 isUnlocked = prevCompleted >= prevTotal;
               }
@@ -454,7 +604,8 @@ class _SkillPath extends StatelessWidget {
                     ? () => onTopicTap(topic)
                     : () {
                         final prevTitle = topics[ti - 1].title;
-                        AppSnackBar.warning(context, '🔒 Hoàn thành "$prevTitle" trước để mở khoá chủ đề này!');
+                        AppSnackBar.warning(context,
+                            '🔒 Hoàn thành "$prevTitle" trước để mở khoá chủ đề này!');
                       },
               ));
 
@@ -529,11 +680,13 @@ class _TopicBanner extends StatelessWidget {
             color: bg,
             borderRadius: BorderRadius.circular(16),
             boxShadow: isUnlocked
-                ? [BoxShadow(
-                    color: Color.lerp(color, Colors.black, 0.35)!,
-                    blurRadius: 0,
-                    offset: const Offset(0, 5),
-                  )]
+                ? [
+                    BoxShadow(
+                      color: Color.lerp(color, Colors.black, 0.35)!,
+                      blurRadius: 0,
+                      offset: const Offset(0, 5),
+                    )
+                  ]
                 : null,
           ),
           child: Row(
@@ -545,7 +698,8 @@ class _TopicBanner extends StatelessWidget {
                     Text(
                       'CHỦ ĐỀ ${topicIndex + 1}',
                       style: TextStyle(
-                        color: isUnlocked ? Colors.white70 : context.textTertiary,
+                        color:
+                            isUnlocked ? Colors.white70 : context.textTertiary,
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1.4,
@@ -563,7 +717,9 @@ class _TopicBanner extends StatelessWidget {
                           child: Text(
                             topic.title,
                             style: TextStyle(
-                              color: isUnlocked ? Colors.white : context.textSecondary,
+                              color: isUnlocked
+                                  ? Colors.white
+                                  : context.textSecondary,
                               fontSize: 17,
                               fontWeight: FontWeight.w800,
                             ),
@@ -591,11 +747,15 @@ class _TopicBanner extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: isUnlocked ? Colors.white.withValues(alpha: 0.2) : context.borderColor,
+                  color: isUnlocked
+                      ? Colors.white.withValues(alpha: 0.2)
+                      : context.borderColor,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
-                  isUnlocked ? Icons.format_list_bulleted_rounded : Icons.lock_rounded,
+                  isUnlocked
+                      ? Icons.format_list_bulleted_rounded
+                      : Icons.lock_rounded,
                   color: isUnlocked ? Colors.white : context.textTertiary,
                   size: 20,
                 ),
@@ -653,9 +813,8 @@ class _LessonNodeRow extends StatelessWidget {
     // Character goes on opposite side of center
     final charOnLeft = xFraction > 0.5;
     final charLeft = charOnLeft ? nodeLeft - 52 : nodeLeft + _nodeSize + 8;
-    final charVisible = isCurrent &&
-        charLeft >= 0 &&
-        charLeft + 40 <= screenWidth;
+    final charVisible =
+        isCurrent && charLeft >= 0 && charLeft + 40 <= screenWidth;
 
     return SizedBox(
       height: _rowHeight,
@@ -847,7 +1006,8 @@ class _PathShimmer extends StatelessWidget {
                       left: left,
                       top: 8,
                       child: Container(
-                        width: 72, height: 72,
+                        width: 72,
+                        height: 72,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: context.surfaceElevatedColor,
@@ -886,14 +1046,14 @@ class _LevelSubtitle extends StatelessWidget {
         const SizedBox(width: 3),
         Text(
           entry.$2,
-          style: TextStyle(fontSize: 12, color: entry.$3, fontWeight: FontWeight.w600),
+          style: TextStyle(
+              fontSize: 12, color: entry.$3, fontWeight: FontWeight.w600),
           overflow: TextOverflow.ellipsis,
         ),
       ],
     );
   }
 }
-
 
 // ─── Stat Chip ───────────────────────────────────────────────────────────────
 
@@ -902,7 +1062,8 @@ class _StatChip extends StatelessWidget {
   final String value;
   final Color color;
 
-  const _StatChip({required this.icon, required this.value, required this.color});
+  const _StatChip(
+      {required this.icon, required this.value, required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -918,7 +1079,9 @@ class _StatChip extends StatelessWidget {
         children: [
           Text(icon, style: const TextStyle(fontSize: 15)),
           const SizedBox(width: 4),
-          Text(value, style: TextStyle(color: color, fontWeight: FontWeight.w800, fontSize: 14)),
+          Text(value,
+              style: TextStyle(
+                  color: color, fontWeight: FontWeight.w800, fontSize: 14)),
         ],
       ),
     );
@@ -943,7 +1106,8 @@ class _NotifBellState extends State<_NotifBell> {
     super.initState();
     _fetchCount();
     _timer = Timer.periodic(const Duration(seconds: 30), (_) => _fetchCount());
-    _notifSub = NotificationService().dataMessages.stream.listen((_) => _fetchCount());
+    _notifSub =
+        NotificationService().dataMessages.stream.listen((_) => _fetchCount());
   }
 
   @override
@@ -972,7 +1136,8 @@ class _NotifBellState extends State<_NotifBell> {
         clipBehavior: Clip.none,
         children: [
           Container(
-            width: 36, height: 36,
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
               color: context.surfaceColor,
               shape: BoxShape.circle,
@@ -986,7 +1151,8 @@ class _NotifBellState extends State<_NotifBell> {
           ),
           if (_unread > 0)
             Positioned(
-              top: -4, right: -4,
+              top: -4,
+              right: -4,
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                 decoration: BoxDecoration(
@@ -996,7 +1162,10 @@ class _NotifBellState extends State<_NotifBell> {
                 ),
                 child: Text(
                   _unread > 9 ? '9+' : '$_unread',
-                  style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w800),
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w800),
                 ),
               ),
             ),

@@ -140,7 +140,11 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
     } catch (e) {
       _showError('Không thể xác minh giao dịch: $e');
     } finally {
-      if (mounted) setState(() { _verifying = false; _purchasingId = null; });
+      if (mounted)
+        setState(() {
+          _verifying = false;
+          _purchasingId = null;
+        });
     }
   }
 
@@ -188,16 +192,18 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
       body: _verifying
           ? _buildVerifying()
           : _loadingConfig
-              ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+              ? const Center(
+                  child: CircularProgressIndicator(color: AppColors.primary))
               : SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       _buildHeader(),
                       const SizedBox(height: 28),
-                      _buildCurrentStatus(),
-                      const SizedBox(height: 20),
+                      // _buildCurrentStatus(),
+                      // const SizedBox(height: 20),
                       _buildPlans(),
                       const SizedBox(height: 24),
                       _buildFeatureList(),
@@ -226,7 +232,8 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
     return Column(
       children: [
         Container(
-          width: 80, height: 80,
+          width: 80,
+          height: 80,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: const LinearGradient(
@@ -237,11 +244,13 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
             boxShadow: [
               BoxShadow(
                 color: const Color(0xFFFFD700).withValues(alpha: 0.35),
-                blurRadius: 20, spreadRadius: 2,
+                blurRadius: 20,
+                spreadRadius: 2,
               ),
             ],
           ),
-          child: const Icon(Icons.workspace_premium_rounded, color: Colors.white, size: 42),
+          child: const Icon(Icons.workspace_premium_rounded,
+              color: Colors.white, size: 42),
         ),
         const SizedBox(height: 16),
         Text('Mở khoá toàn bộ tính năng AI',
@@ -268,7 +277,9 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
       child: Row(
         children: [
           Icon(
-            sub.isTrial ? Icons.hourglass_top_rounded : Icons.check_circle_rounded,
+            sub.isTrial
+                ? Icons.hourglass_top_rounded
+                : Icons.check_circle_rounded,
             color: sub.isTrial ? Colors.orange : AppColors.primary,
             size: 20,
           ),
@@ -300,13 +311,14 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
 
   Widget _buildPlans() {
     if (_config == null || _config!.plans.isEmpty) {
-      return _buildConfigNote('Chưa cấu hình gói VIP.\nAdmin cần thiết lập trên trang quản trị.');
+      return _buildConfigNote(
+          'Chưa cấu hình gói VIP.\nAdmin cần thiết lập trên trang quản trị.');
     }
 
     return Column(
       children: [
         for (int i = 0; i < _config!.plans.length; i++) ...[
-          if (i > 0) const SizedBox(height: 12),
+          if (i > 0) const SizedBox(height: 18),
           _buildPlanCard(_config!.plans[i]),
         ],
       ],
@@ -324,11 +336,13 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.info_outline_rounded, color: Colors.orange, size: 16),
+          const Icon(Icons.info_outline_rounded,
+              color: Colors.orange, size: 16),
           const SizedBox(width: 8),
           Expanded(
             child: Text(message,
-                style: AppTextStyles.bodySmall.copyWith(color: Colors.orange.shade800)),
+                style: AppTextStyles.bodySmall
+                    .copyWith(color: Colors.orange.shade800)),
           ),
         ],
       ),
@@ -339,7 +353,8 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
     final isMax = plan.id == 'max';
     final color = isMax ? const Color(0xFFFFC107) : AppColors.secondary;
 
-    final playProduct = _playProducts.where((p) => p.id == plan.productId).firstOrNull;
+    final playProduct =
+        _playProducts.where((p) => p.id == plan.productId).firstOrNull;
     final priceText = playProduct?.price ??
         (plan.displayPrice.isNotEmpty
             ? plan.displayPrice
@@ -350,10 +365,16 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
     final isCurrent = currentSub?.productId == plan.productId && hasActiveSub;
     final isPurchasing = _purchasingId == plan.productId;
     // Block purchase if user already has any active subscription (must cancel first in Google Play)
-    final canBuy = playProduct != null && _iapAvailable && !hasActiveSub && !isPurchasing && !_verifying;
+    final canBuy = playProduct != null &&
+        _iapAvailable &&
+        !hasActiveSub &&
+        !isPurchasing &&
+        !_verifying;
     // Play Store loaded but product missing — show informative note
-    final playLoadedButMissing = _iapAvailable && _playProducts.isNotEmpty &&
-        plan.productId.isNotEmpty && playProduct == null;
+    final playLoadedButMissing = _iapAvailable &&
+        _playProducts.isNotEmpty &&
+        plan.productId.isNotEmpty &&
+        playProduct == null;
 
     return Stack(
       clipBehavior: Clip.none,
@@ -365,11 +386,18 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
             color: context.surfaceColor,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isMax ? color.withValues(alpha: 0.6) : context.borderColor,
+              color: !isCurrent
+                  ? context.borderColor
+                  : color.withValues(alpha: 0.6),
               width: isMax ? 2 : 1,
             ),
-            boxShadow: isMax
-                ? [BoxShadow(color: color.withValues(alpha: 0.15), blurRadius: 16, spreadRadius: 2)]
+            boxShadow: isCurrent && isMax
+                ? [
+                    BoxShadow(
+                        color: color.withValues(alpha: 0.15),
+                        blurRadius: 16,
+                        spreadRadius: 2)
+                  ]
                 : [],
           ),
           child: Column(
@@ -385,22 +413,29 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
                         children: [
                           Text(plan.icon, style: const TextStyle(fontSize: 22)),
                           const SizedBox(width: 8),
-                          Text(plan.title, style: AppTextStyles.heading3.copyWith(color: color)),
+                          Text(plan.title,
+                              style: AppTextStyles.heading3
+                                  .copyWith(color: color)),
                         ],
                       ),
                       if (plan.trialDays > 0) ...[
                         const SizedBox(height: 4),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF16A34A).withValues(alpha: 0.12),
+                            color:
+                                const Color(0xFF16A34A).withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: const Color(0xFF16A34A).withValues(alpha: 0.3)),
+                            border: Border.all(
+                                color: const Color(0xFF16A34A)
+                                    .withValues(alpha: 0.3)),
                           ),
                           child: Text(
                             'Thử miễn phí ${plan.trialDays} ngày',
                             style: const TextStyle(
-                              fontSize: 11, fontWeight: FontWeight.w600,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
                               color: Color(0xFF15803D),
                             ),
                           ),
@@ -412,8 +447,11 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(priceText,
-                          style: AppTextStyles.heading3.copyWith(color: color, fontSize: 18)),
-                      Text('/ tháng', style: AppTextStyles.bodySmall.copyWith(fontSize: 11)),
+                          style: AppTextStyles.heading3
+                              .copyWith(color: color, fontSize: 18)),
+                      Text('/ tháng',
+                          style:
+                              AppTextStyles.bodySmall.copyWith(fontSize: 11)),
                     ],
                   ),
                 ],
@@ -423,23 +461,28 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
                     padding: const EdgeInsets.only(bottom: 6),
                     child: Row(
                       children: [
-                        Icon(Icons.check_circle_rounded, size: 15, color: color),
+                        Icon(Icons.check_circle_rounded,
+                            size: 15, color: color),
                         const SizedBox(width: 8),
-                        Text(f, style: AppTextStyles.bodyMedium.copyWith(fontSize: 13)),
+                        Text(f,
+                            style: AppTextStyles.bodyMedium
+                                .copyWith(fontSize: 13)),
                       ],
                     ),
                   )),
               const SizedBox(height: 16),
               if (playLoadedButMissing) ...[
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
                     color: Colors.orange.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.info_outline_rounded, size: 14, color: Colors.orange.shade700),
+                      Icon(Icons.info_outline_rounded,
+                          size: 14, color: Colors.orange.shade700),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
@@ -460,24 +503,28 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
                       backgroundColor: isCurrent ? Colors.grey.shade300 : color,
                       foregroundColor: Colors.white,
                       disabledBackgroundColor: isCurrent
-                          ? Colors.grey.shade300
+                          ? Colors.black26
                           : color.withValues(alpha: 0.4),
                       disabledForegroundColor: Colors.white70,
                       padding: const EdgeInsets.symmetric(vertical: 13),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
                       elevation: 0,
                     ),
                     child: isPurchasing
                         ? const SizedBox(
-                            width: 20, height: 20,
-                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                                color: Colors.white, strokeWidth: 2))
                         : Text(
                             isCurrent
                                 ? 'Đang sử dụng'
                                 : hasActiveSub
-                                    ? 'Huỷ gói hiện tại trước'
+                                    ? 'Nâng cấp gói'
                                     : 'Đăng ký ngay',
-                            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w700, fontSize: 14)),
                   ),
                 ),
               ],
@@ -486,7 +533,8 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
         ),
         if (isMax)
           Positioned(
-            top: -10, right: 14,
+            top: -10,
+            right: 14,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
@@ -495,8 +543,10 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
               ),
               child: const Text('PHỔ BIẾN',
                   style: TextStyle(
-                      color: Colors.white, fontSize: 10,
-                      fontWeight: FontWeight.w800, letterSpacing: 0.5)),
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.5)),
             ),
           ),
       ],
@@ -526,7 +576,8 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
                 child: Row(
                   children: [
                     Container(
-                      width: 38, height: 38,
+                      width: 38,
+                      height: 38,
                       decoration: BoxDecoration(
                         color: AppColors.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(10),
@@ -537,7 +588,9 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(item.$2, style: AppTextStyles.labelBold.copyWith(fontSize: 13)),
+                        Text(item.$2,
+                            style:
+                                AppTextStyles.labelBold.copyWith(fontSize: 13)),
                         Text(item.$3, style: AppTextStyles.bodySmall),
                       ],
                     ),

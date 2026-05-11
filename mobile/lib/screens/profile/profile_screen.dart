@@ -33,8 +33,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           builder: (context, provider, _) {
             return CustomScrollView(
               slivers: [
-                SliverToBoxAdapter(
-                    child: _buildHero(context, user, provider)),
+                SliverToBoxAdapter(child: _buildHero(context, user, provider)),
                 SliverToBoxAdapter(child: _buildStatCards(provider)),
                 SliverToBoxAdapter(child: _buildWeeklyStreak(provider)),
                 SliverToBoxAdapter(child: _buildAchievementsSection(provider)),
@@ -49,8 +48,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // ── Hero ──────────────────────────────────────────────────────────────────
 
-  Widget _buildHero(
-      BuildContext context, User? user, UserProvider provider) {
+  Widget _buildHero(BuildContext context, User? user, UserProvider provider) {
     final subProvider = context.watch<SubscriptionProvider>();
     return Container(
       color: context.surfaceColor,
@@ -64,8 +62,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               GestureDetector(
                 onTap: () => Navigator.push(
                   context,
-                  MaterialPageRoute(
-                      builder: (_) => const SettingsScreen()),
+                  MaterialPageRoute(builder: (_) => const SettingsScreen()),
                 ),
                 child: Container(
                   padding: const EdgeInsets.all(8),
@@ -91,13 +88,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   shape: BoxShape.circle,
                   gradient: subProvider.isMax
                       ? const LinearGradient(
-                          colors: [Color(0xFF7C3AED), Color(0xFF4F46E5)],
+                          colors: [Color(0xFFD97706), Color(0xFFFBBF24)],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         )
                       : subProvider.isStandard
                           ? const LinearGradient(
-                              colors: [Color(0xFFD97706), Color(0xFFFBBF24)],
+                              colors: [Color(0xFF7C3AED), Color(0xFF4F46E5)],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             )
@@ -112,8 +109,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   backgroundColor: context.surfaceColor,
                   child: CircleAvatar(
                     radius: 43,
-                    backgroundColor:
-                        AppColors.primary.withValues(alpha: 0.2),
+                    backgroundColor: AppColors.primary.withValues(alpha: 0.2),
                     child: user?.photoURL != null
                         ? ClipOval(
                             child: CachedNetworkImage(
@@ -121,8 +117,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               width: 86,
                               height: 86,
                               fit: BoxFit.cover,
-                              errorWidget: (_, __, ___) =>
-                                  _avatarText(user),
+                              errorWidget: (_, __, ___) => _avatarText(user),
                             ),
                           )
                         : _avatarText(user),
@@ -131,8 +126,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               // Level badge
               Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: AppColors.xpGold,
                   borderRadius: BorderRadius.circular(10),
@@ -150,9 +144,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               // VIP crown badge (top-left)
               if (subProvider.isPremium)
                 Positioned(
-                  top: 0, left: 0,
+                  top: 0,
+                  left: 0,
                   child: Container(
-                    width: 26, height: 26,
+                    width: 26,
+                    height: 26,
                     decoration: BoxDecoration(
                       color: subProvider.isMax
                           ? const Color(0xFF7C3AED)
@@ -181,12 +177,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   style: AppTextStyles.heading3,
                 ),
                 const SizedBox(width: 6),
-                Icon(Icons.edit_rounded, size: 14, color: context.textSecondary),
+                Icon(Icons.edit_rounded,
+                    size: 14, color: context.textSecondary),
               ],
             ),
           ),
           const SizedBox(height: 4),
-          Text(user?.email ?? '', style: AppTextStyles.bodySmall.copyWith(color: context.textSecondary)),
+          Text(user?.email ?? '',
+              style: AppTextStyles.bodySmall
+                  .copyWith(color: context.textSecondary)),
         ],
       ),
     );
@@ -194,9 +193,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _avatarText(User? user) {
     return Text(
-      (user?.displayName?.isNotEmpty == true
-              ? user!.displayName![0]
-              : 'J')
+      (user?.displayName?.isNotEmpty == true ? user!.displayName![0] : 'J')
           .toUpperCase(),
       style: const TextStyle(
         fontSize: 38,
@@ -336,62 +333,63 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     return Builder(
       builder: (context) => Container(
-      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: context.surfaceColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: context.borderColor),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Text('🏆', style: TextStyle(fontSize: 18)),
-              const SizedBox(width: 8),
-              const Text('Thành tích', style: AppTextStyles.labelBold),
-              const Spacer(),
-              if (all.isNotEmpty)
-                Text(
-                  '$unlockedCount/${all.length}',
-                  style: const TextStyle(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
+        margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: context.surfaceColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: context.borderColor),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Text('🏆', style: TextStyle(fontSize: 18)),
+                const SizedBox(width: 8),
+                const Text('Thành tích', style: AppTextStyles.labelBold),
+                const Spacer(),
+                if (all.isNotEmpty)
+                  Text(
+                    '$unlockedCount/${all.length}',
+                    style: const TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            if (!provider.achievementsLoaded)
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  child: Text(
+                    'Đang tải...',
+                    style:
+                        TextStyle(color: context.textSecondary, fontSize: 13),
                   ),
                 ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          if (!provider.achievementsLoaded)
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 20),
-                child: Text(
-                  'Đang tải...',
-                  style: TextStyle(color: context.textSecondary, fontSize: 13),
+              )
+            else
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 5,
+                  mainAxisSpacing: 8,
+                  crossAxisSpacing: 8,
+                  childAspectRatio: 0.72,
+                ),
+                itemCount: all.length,
+                itemBuilder: (_, i) => _AchievementBadge(
+                  achievement: all[i],
+                  isUnlocked: all[i].isUnlocked,
                 ),
               ),
-            )
-          else
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 5,
-                mainAxisSpacing: 8,
-                crossAxisSpacing: 8,
-                childAspectRatio: 0.72,
-              ),
-              itemCount: all.length,
-              itemBuilder: (_, i) => _AchievementBadge(
-                achievement: all[i],
-                isUnlocked: all[i].isUnlocked,
-              ),
-            ),
-        ],
-      ),
+          ],
+        ),
       ),
     );
   }
@@ -425,8 +423,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             color: AppColors.blue,
             onTap: () => Navigator.push(
               context,
-              MaterialPageRoute(
-                  builder: (_) => const SettingsScreen()),
+              MaterialPageRoute(builder: (_) => const SettingsScreen()),
             ),
           ),
           _MenuItem(
@@ -439,7 +436,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 24),
           Center(
             child: Text('JavaUp v1.0.0',
-                style: AppTextStyles.bodySmall.copyWith(color: context.textSecondary)),
+                style: AppTextStyles.bodySmall
+                    .copyWith(color: context.textSecondary)),
           ),
         ],
       ),
@@ -483,7 +481,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
             ),
             child: const Text('Lưu'),
           ),
@@ -496,8 +495,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Đăng xuất?', style: AppTextStyles.heading4),
         content: const Text('Bạn sẽ quay lại màn hình đăng nhập.',
             style: AppTextStyles.bodyMedium),
@@ -604,7 +602,7 @@ class _VipMenuItem extends StatelessWidget {
         decoration: BoxDecoration(
           gradient: isPremium
               ? LinearGradient(
-                  colors: isMax
+                  colors: !isMax
                       ? [const Color(0xFF7C3AED), const Color(0xFF4F46E5)]
                       : [const Color(0xFFD97706), const Color(0xFFF59E0B)],
                   begin: Alignment.topLeft,
@@ -620,10 +618,16 @@ class _VipMenuItem extends StatelessWidget {
             width: 1.5,
           ),
           boxShadow: isPremium
-              ? [BoxShadow(
-                  color: (isMax ? const Color(0xFF7C3AED) : const Color(0xFFD97706))
-                      .withValues(alpha: 0.25),
-                  blurRadius: 12, spreadRadius: 1, offset: const Offset(0, 3))]
+              ? [
+                  BoxShadow(
+                      color: (!isMax
+                              ? const Color(0xFF7C3AED)
+                              : const Color(0xFFD97706))
+                          .withValues(alpha: 0.25),
+                      blurRadius: 12,
+                      spreadRadius: 1,
+                      offset: const Offset(0, 3))
+                ]
               : [],
         ),
         child: Row(
@@ -636,7 +640,9 @@ class _VipMenuItem extends StatelessWidget {
                 children: [
                   Text(
                     isPremium
-                        ? (isMax ? 'Gói Max đang hoạt động' : 'Gói Standard đang hoạt động')
+                        ? (isMax
+                            ? 'Gói Max đang hoạt động'
+                            : 'Gói Standard đang hoạt động')
                         : 'Nâng cấp VIP',
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
@@ -646,7 +652,9 @@ class _VipMenuItem extends StatelessWidget {
                   ),
                   Text(
                     isPremium
-                        ? (isMax ? 'AI không giới hạn 🚀' : '100 lượt AI mỗi ngày')
+                        ? (isMax
+                            ? 'AI không giới hạn 🚀'
+                            : '100 lượt AI mỗi ngày')
                         : 'Mở khoá tính năng AI không giới hạn',
                     style: TextStyle(
                       fontSize: 12,
@@ -659,7 +667,9 @@ class _VipMenuItem extends StatelessWidget {
               ),
             ),
             Icon(
-              isPremium ? Icons.check_circle_rounded : Icons.arrow_forward_ios_rounded,
+              isPremium
+                  ? Icons.check_circle_rounded
+                  : Icons.arrow_forward_ios_rounded,
               color: isPremium ? Colors.white : const Color(0xFFFFD700),
               size: isPremium ? 20 : 14,
             ),
@@ -732,10 +742,8 @@ class _MenuItem extends StatelessWidget {
         trailing: Icon(Icons.chevron_right_rounded,
             color: context.textSecondary, size: 20),
         onTap: onTap,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
     );
   }
@@ -762,7 +770,8 @@ class _AchievementBadge extends StatelessWidget {
             Text(achievement.emoji, style: const TextStyle(fontSize: 48)),
             const SizedBox(height: 12),
             Text(achievement.title,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                 textAlign: TextAlign.center),
             const SizedBox(height: 8),
             Text(achievement.description,
@@ -825,7 +834,8 @@ class _AchievementBadge extends StatelessWidget {
             child: Center(
               child: Opacity(
                 opacity: isUnlocked ? 1.0 : 0.35,
-                child: Text(achievement.emoji, style: const TextStyle(fontSize: 20)),
+                child: Text(achievement.emoji,
+                    style: const TextStyle(fontSize: 20)),
               ),
             ),
           ),

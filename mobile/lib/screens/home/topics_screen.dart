@@ -209,59 +209,108 @@ class _TopicsScreenState extends State<TopicsScreen> {
           children: [
             GestureDetector(
               onTap: () => _goToProfile(context),
-              child: Container(
-                padding: const EdgeInsets.all(3),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: subProvider.isMax
-                      ? const LinearGradient(
-                          colors: [Color(0xFFD97706), Color(0xFFFBBF24)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        )
-                      : subProvider.isStandard
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: subProvider.isMax
                           ? const LinearGradient(
-                              colors: [Color(0xFF7C3AED), Color(0xFF4F46E5)],
+                              colors: [Color(0xFFD97706), Color(0xFFFBBF24)],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             )
-                          : const LinearGradient(
-                              colors: [AppColors.primary, AppColors.secondary],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                ),
-                child: CircleAvatar(
-                  radius: 22,
-                  backgroundColor: context.surfaceColor,
-                  child: CircleAvatar(
-                    radius: 20,
-                    backgroundColor: AppColors.primary.withValues(alpha: 0.2),
-                    child: user?.photoURL != null
-                        ? ClipOval(
-                            child: CachedNetworkImage(
-                              imageUrl: user!.photoURL!,
-                              width: 40,
-                              height: 40,
-                              fit: BoxFit.cover,
-                              errorWidget: (_, __, ___) => Text(
-                                (user.displayName ?? 'J').substring(0, 1).toUpperCase(),
+                          : subProvider.isStandard
+                              ? const LinearGradient(
+                                  colors: [Color(0xFF7C3AED), Color(0xFF4F46E5)],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                )
+                              : const LinearGradient(
+                                  colors: [AppColors.primary, AppColors.secondary],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                    ),
+                    child: CircleAvatar(
+                      radius: 22,
+                      backgroundColor: context.surfaceColor,
+                      child: CircleAvatar(
+                        radius: 20,
+                        backgroundColor: AppColors.primary.withValues(alpha: 0.2),
+                        child: user?.photoURL != null
+                            ? ClipOval(
+                                child: CachedNetworkImage(
+                                  imageUrl: user!.photoURL!,
+                                  width: 40,
+                                  height: 40,
+                                  fit: BoxFit.cover,
+                                  errorWidget: (_, __, ___) => Text(
+                                    (user.displayName ?? 'J').substring(0, 1).toUpperCase(),
+                                    style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 16),
+                                  ),
+                                ),
+                              )
+                            : Text(
+                                (user?.displayName ?? 'J').substring(0, 1).toUpperCase(),
                                 style: const TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w800,
                                     fontSize: 16),
                               ),
-                            ),
-                          )
-                        : Text(
-                            (user?.displayName ?? 'J').substring(0, 1).toUpperCase(),
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 16),
-                          ),
+                      ),
+                    ),
                   ),
-                ),
+                  // Level badge — bottom right
+                  Positioned(
+                    bottom: -4,
+                    right: -4,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.xpGold,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: context.surfaceColor, width: 1.5),
+                      ),
+                      child: Text(
+                        'Lv.${(provider.totalXp / 100).floor() + 1}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 8,
+                        ),
+                      ),
+                    ),
+                  ),
+                  // VIP crown badge — top left
+                  if (subProvider.isPremium)
+                    Positioned(
+                      top: -2,
+                      left: -2,
+                      child: Container(
+                        width: 18,
+                        height: 18,
+                        decoration: BoxDecoration(
+                          color: subProvider.isMax
+                              ? const Color(0xFF7C3AED)
+                              : const Color(0xFFD97706),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: context.surfaceColor, width: 1.5),
+                        ),
+                        child: Center(
+                          child: Text(
+                            subProvider.isMax ? '👑' : '⭐',
+                            style: const TextStyle(fontSize: 8),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
             const SizedBox(width: 12),

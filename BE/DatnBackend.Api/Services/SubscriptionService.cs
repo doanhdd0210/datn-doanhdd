@@ -205,15 +205,45 @@ public class SubscriptionService
     public async Task<List<UserSubscription>> GetAllSubscriptionsAsync() =>
         await _db.UserSubscriptions.OrderByDescending(s => s.PurchasedAt).ToListAsync();
 
-    /// <summary>Admin: huỷ subscription thủ công.</summary>
+    /// <summary>Admin: huỷ subscription thủ công và cancel trên Google Play.</summary>
     public async Task RevokeAsync(string userId)
     {
         var sub = await _db.UserSubscriptions.FindAsync(userId);
-        if (sub is not null)
+        if (sub is null) return;
+
+        // Gọi Google Play API để cancel subscription trước khi revoke trong DB
+        if (sub.IsActive && !string.IsNullOrEmpty(sub.PurchaseToken) && !string.IsNullOrEmpty(sub.ProductId))
         {
-            sub.IsActive = false;
-            sub.UpdatedAt = DateTime.UtcNow;
-            await _db.SaveChangesAsync();
+            var skipVerify = _config["Subscription:SkipPlayVerify"] == "true";
+            if (!skipVerify)
+            {
+                try
+                {
+                    var packageName = await GetSettingAsync("subscription:package_name");
+                    if (!string.IsNullOrEmpty(packageName))
+                    {
+                        var credential = await GetGoogleCredentialAsync();
+                        var publisher = new AndroidPublisherService(new BaseClientService.Initializer
+                        {
+                            HttpClientInitializer = credential,
+                            ApplicationName = "JavaUp",
+                        });
+                        await publisher.Purchases.Subscriptions
+                            .Cancel(packageName, sub.ProductId, sub.PurchaseToken)
+                            .ExecuteAsync();
+                        _logger.LogInformation("Cancelled Google Play subscription for user {UserId}", userId);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Vẫn tiếp tục revoke trong DB dù Google Play API thất bại (token hết hạn, đã cancel, v.v.)
+                    _logger.LogWarning(ex, "Failed to cancel Google Play subscription for user {UserId}: {msg}", userId, ex.Message);
+                }
+            }
         }
+
+        sub.IsActive = false;
+        sub.UpdatedAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
     }
 }

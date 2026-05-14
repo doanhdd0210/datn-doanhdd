@@ -85,7 +85,10 @@
       "mcp__Claude_in_Chrome__read_console_messages",
       "mcp__Claude_in_Chrome__read_network_requests",
       "Bash(firebase --version)",
-      "Bash(git rm *)"
+      "Bash(git rm *)",
+      "Bash(ls /Users/doducdoanh/StudioProjects/datn.doanhdd/BE/DatnBackend.Api/)",
+      "Bash(cp /Users/doducdoanh/Downloads/javaup-7f05b840b9d7.json /Users/doducdoanh/StudioProjects/datn.doanhdd/BE/DatnBackend.Api/google-play-service-account.json)",
+      "Bash(cat /Users/doducdoanh/StudioProjects/datn.doanhdd/.gitignore 2>/dev/null | grep -i \"service-account\\\\|secret\\\\|private\" | head -10)"
     ]
   }
 }

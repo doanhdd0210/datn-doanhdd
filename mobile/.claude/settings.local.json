@@ -107,7 +107,22 @@
       "Bash(cp /tmp/DoAnTotNghiep_fixed.docx \"/Users/doducdoanh/Downloads/DoAnTotNghiep_DoDucDoanh_v3_fixed.docx\")",
       "Bash(open -a \"Microsoft Word\" \"/Users/doducdoanh/Downloads/DoAnTotNghiep_DoDucDoanh_v3_fixed.docx\")",
       "Bash(open \"/Users/doducdoanh/Downloads/DoAnTotNghiep_DoDucDoanh_v3_fixed.docx\")",
-      "Bash(xargs cat)"
+      "Bash(xargs cat)",
+      "Bash(xattr -d com.apple.quarantine \"/Users/doducdoanh/Downloads/DoAnTotNghiep_DoDucDoanh_v3_fixed.docx\")",
+      "Bash(chmod 644 \"/Users/doducdoanh/Downloads/DoAnTotNghiep_DoDucDoanh_v3_fixed.docx\")",
+      "Bash(xattr -d com.apple.quarantine \"/Users/doducdoanh/Downloads/DoAnTotNghiep_DoDucDoanh_v3_clean.docx\")",
+      "Bash(open \"/Users/doducdoanh/Downloads/DoAnTotNghiep_DoDucDoanh_v3_clean.docx\")",
+      "Bash(xattr -d com.apple.quarantine \"/Users/doducdoanh/Downloads/DoAnTotNghiep_DoDucDoanh_v3_fixed2.docx\")",
+      "Bash(open \"/Users/doducdoanh/Downloads/DoAnTotNghiep_DoDucDoanh_v3_fixed2.docx\")",
+      "Bash(open \"/Users/doducdoanh/Downloads/test_loadsave.docx\")",
+      "Bash(textutil -convert docx \"/Users/doducdoanh/Downloads/DoAnTotNghiep_DoDucDoanh_v3_rebuild.docx\" -output \"/Users/doducdoanh/Downloads/test_textutil.docx\")",
+      "Bash(echo \"exit: $?\")",
+      "Bash(cp \"/Users/doducdoanh/Downloads/test_textutil.docx\" \"/Users/doducdoanh/Downloads/DoAnTotNghiep_DoDucDoanh_v3.docx\")",
+      "Bash(xattr -d com.apple.quarantine \"/Users/doducdoanh/Downloads/DoAnTotNghiep_DoDucDoanh_v3.docx\")",
+      "Bash(osascript)",
+      "Bash(echo \"Done: $?\")",
+      "Bash(xattr -d com.apple.quarantine \"/Users/doducdoanh/Downloads/DoAnTotNghiep_Pages_export.docx\")",
+      "Bash(open \"/Users/doducdoanh/Downloads/DoAnTotNghiep_Pages_export.docx\")"
     ]
   }
 }

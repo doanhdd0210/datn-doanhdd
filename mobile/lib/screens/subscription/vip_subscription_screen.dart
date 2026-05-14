@@ -9,7 +9,6 @@ import '../../constants/app_colors.dart';
 import '../../constants/app_text_styles.dart';
 import '../../constants/app_theme.dart';
 import '../../models/subscription_plan.dart';
-import '../../models/user_subscription.dart';
 import '../../providers/ai_usage_provider.dart';
 import '../../providers/subscription_provider.dart';
 import '../../services/api_service.dart';
@@ -36,8 +35,6 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
 
   String? _purchasingId;
   bool _verifying = false;
-  // Dùng cho upgrade flow: sản phẩm mới đang chờ upgrade
-  ProductDetails? _pendingUpgradeProduct;
 
   @override
   void initState() {
@@ -102,39 +99,19 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
       if (purchase.status == PurchaseStatus.pending) continue;
 
       if (purchase.status == PurchaseStatus.error) {
-        setState(() { _purchasingId = null; _pendingUpgradeProduct = null; });
+        setState(() => _purchasingId = null);
         _showError(purchase.error?.message ?? 'Thanh toán thất bại');
         await _iap.completePurchase(purchase);
         continue;
       }
 
       if (purchase.status == PurchaseStatus.canceled) {
-        setState(() { _purchasingId = null; _pendingUpgradeProduct = null; });
+        setState(() => _purchasingId = null);
         await _iap.completePurchase(purchase);
         continue;
       }
 
       if (purchase.status == PurchaseStatus.restored) {
-        // Nếu đang trong upgrade flow → dùng purchase cũ này làm oldPurchaseDetails
-        if (_pendingUpgradeProduct != null &&
-            Platform.isAndroid &&
-            purchase is GooglePlayPurchaseDetails) {
-          final newProduct = _pendingUpgradeProduct!;
-          setState(() => _pendingUpgradeProduct = null);
-          await _iap.completePurchase(purchase); // acknowledge purchase cũ
-          if (newProduct is GooglePlayProductDetails) {
-            final param = GooglePlayPurchaseParam(
-              productDetails: newProduct,
-              offerToken: newProduct.offerToken,
-              changeSubscriptionParam: ChangeSubscriptionParam(
-                oldPurchaseDetails: purchase,
-              ),
-            );
-            await _iap.buyNonConsumable(purchaseParam: param);
-          }
-          return; // Chờ purchased event từ Google Play
-        }
-        // Restore thường — không cần xác minh lại
         await _iap.completePurchase(purchase);
         continue;
       }
@@ -158,13 +135,13 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
       );
 
       final inner = data['data'];
-      if (inner != null) {
-        final sub = UserSubscription.fromJson(inner as Map<String, dynamic>);
-        if (mounted) {
-          context.read<SubscriptionProvider>().setSubscription(sub);
-          context.read<AiUsageProvider>().load();
-          AppSnackBar.success(context, '🎉 Kích hoạt VIP thành công!');
-        }
+      if (inner != null && mounted) {
+        // Re-fetch từ server để đảm bảo UI hiển thị đúng trạng thái mới nhất
+        final subProvider = context.read<SubscriptionProvider>();
+        final usageProvider = context.read<AiUsageProvider>();
+        await subProvider.load();
+        await usageProvider.load();
+        if (mounted) AppSnackBar.success(context, '🎉 Kích hoạt VIP thành công!');
       }
     } catch (e) {
       _showError('Không thể xác minh giao dịch: $e');
@@ -192,18 +169,6 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
     }
 
     await _iap.buyNonConsumable(purchaseParam: param);
-  }
-
-  /// Upgrade/downgrade giữa các gói dùng ChangeSubscriptionParam (prorate).
-  /// restorePurchases() lấy old purchase từ Google Play, stream handler sẽ
-  /// dùng nó làm oldPurchaseDetails rồi trigger mua gói mới.
-  Future<void> _upgrade(ProductDetails newProduct) async {
-    if (_purchasingId != null || _verifying) return;
-    setState(() {
-      _purchasingId = newProduct.id;
-      _pendingUpgradeProduct = newProduct;
-    });
-    await _iap.restorePurchases();
   }
 
   Future<void> _cancelSubscription() async {
@@ -419,10 +384,8 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
     final isCurrent = currentSub?.productId == plan.productId && hasActiveSub;
     final isOtherPlan = hasActiveSub && !isCurrent; // có sub nhưng là gói khác
     final isPurchasing = _purchasingId == plan.productId;
-    // Mua mới (chưa có sub)
+    // Chỉ cho mua khi chưa có sub nào đang hoạt động
     final canBuy = playProduct != null && _iapAvailable && !hasActiveSub && !isPurchasing && !_verifying;
-    // Upgrade/downgrade sang gói khác (đã có sub, không phải gói hiện tại)
-    final canUpgrade = playProduct != null && _iapAvailable && isOtherPlan && !isPurchasing && !_verifying;
     // Play Store loaded but product missing — show informative note
     final playLoadedButMissing = _iapAvailable &&
         _playProducts.isNotEmpty &&
@@ -551,11 +514,7 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: canBuy
-                        ? () => _buy(playProduct!)
-                        : canUpgrade
-                            ? () => _upgrade(playProduct!)
-                            : null,
+                    onPressed: canBuy ? () => _buy(playProduct) : null,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: isCurrent
                           ? Colors.grey.shade800
@@ -580,12 +539,21 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
                             isCurrent
                                 ? '✓ Đang sử dụng'
                                 : isOtherPlan
-                                    ? (isMax ? '👑 Nâng cấp lên Max' : '⭐ Chuyển xuống Standard')
+                                    ? 'Huỷ gói hiện tại để đổi gói'
                                     : 'Đăng ký ngay',
                             style: const TextStyle(
                                 fontWeight: FontWeight.w700, fontSize: 14)),
                   ),
                 ),
+                if (isOtherPlan) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    'Bạn cần huỷ gói đang dùng trước khi chuyển sang gói này.',
+                    style: AppTextStyles.bodySmall.copyWith(
+                        fontSize: 12, color: Colors.orange.shade700),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
                 if (isCurrent) ...[
                   const SizedBox(height: 8),
                   SizedBox(

@@ -29,9 +29,18 @@ public class SubscriptionAdminController : ControllerBase
         if (!IsAdmin()) return Forbid();
 
         var subs = await _svc.GetAllSubscriptionsAsync();
+
+        var userIds = subs.Select(s => s.UserId).Distinct().ToList();
+        var profiles = await _db.UserProfiles
+            .Where(p => userIds.Contains(p.Uid))
+            .Select(p => new { p.Uid, p.DisplayName })
+            .ToDictionaryAsync(p => p.Uid, p => p.DisplayName);
+
         return Ok(ApiResponse<List<AdminSubscriptionDto>>.Ok(
             subs.Select(s => new AdminSubscriptionDto(
-                s.UserId, s.PlanType, s.ProductId, s.OrderId,
+                s.UserId,
+                profiles.GetValueOrDefault(s.UserId, s.UserId),
+                s.PlanType, s.ProductId, s.OrderId,
                 s.IsActive, s.PurchasedAt, s.ExpiresAt, s.Platform))
             .ToList()));
     }
@@ -99,6 +108,7 @@ public class SubscriptionAdminController : ControllerBase
 
 public record AdminSubscriptionDto(
     string UserId,
+    string DisplayName,
     string PlanType,
     string ProductId,
     string OrderId,

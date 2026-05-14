@@ -4,11 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:in_app_purchase_android/in_app_purchase_android.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_text_styles.dart';
 import '../../constants/app_theme.dart';
 import '../../models/subscription_plan.dart';
 import '../../models/user_subscription.dart';
+import '../../providers/ai_usage_provider.dart';
 import '../../providers/subscription_provider.dart';
 import '../../services/api_service.dart';
 import '../../widgets/app_snackbar.dart';
@@ -160,6 +162,7 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
         final sub = UserSubscription.fromJson(inner as Map<String, dynamic>);
         if (mounted) {
           context.read<SubscriptionProvider>().setSubscription(sub);
+          context.read<AiUsageProvider>().load();
           AppSnackBar.success(context, '🎉 Kích hoạt VIP thành công!');
         }
       }
@@ -191,17 +194,30 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
     await _iap.buyNonConsumable(purchaseParam: param);
   }
 
-  /// Upgrade/downgrade giữa các gói — dùng ChangeSubscriptionParam để Google Play
-  /// tính tiền theo tỷ lệ (prorate) và kích hoạt gói mới ngay lập tức.
+  /// Upgrade/downgrade giữa các gói dùng ChangeSubscriptionParam (prorate).
+  /// restorePurchases() lấy old purchase từ Google Play, stream handler sẽ
+  /// dùng nó làm oldPurchaseDetails rồi trigger mua gói mới.
   Future<void> _upgrade(ProductDetails newProduct) async {
     if (_purchasingId != null || _verifying) return;
     setState(() {
       _purchasingId = newProduct.id;
       _pendingUpgradeProduct = newProduct;
     });
-    // restorePurchases() trả về purchase cũ qua stream → _onPurchaseUpdate
-    // sẽ dùng nó làm oldPurchaseDetails cho ChangeSubscriptionParam
     await _iap.restorePurchases();
+  }
+
+  Future<void> _cancelSubscription() async {
+    final sub = context.read<SubscriptionProvider>().subscription;
+    if (sub == null) return;
+
+    final packageName = _config?.packageName ?? 'doanhdd.javaup.mobile';
+    final url = Uri.parse(
+      'https://play.google.com/store/account/subscriptions'
+      '?sku=${sub.productId}&package=$packageName',
+    );
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    }
   }
 
   void _showError(String msg) {
@@ -570,6 +586,21 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
                                 fontWeight: FontWeight.w700, fontSize: 14)),
                   ),
                 ),
+                if (isCurrent) ...[
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: TextButton(
+                      onPressed: _cancelSubscription,
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.red.shade400,
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                      ),
+                      child: const Text('Huỷ đăng ký',
+                          style: TextStyle(fontSize: 13)),
+                    ),
+                  ),
+                ],
               ],
             ],
           ),

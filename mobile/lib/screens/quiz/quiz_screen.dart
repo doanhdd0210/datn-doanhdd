@@ -872,7 +872,7 @@ class _FeedbackBarState extends State<_FeedbackBar> {
               const SizedBox(width: 6),
               if (aiUsage.loaded)
                 Text(
-                  '${aiUsage.used}/${aiUsage.limit}',
+                  aiUsage.isUnlimited ? '${aiUsage.used}/∞' : '${aiUsage.used}/${aiUsage.limit}',
                   style: TextStyle(fontSize: 11, color: context.textSecondary),
                 ),
               if (!exhausted) ...[

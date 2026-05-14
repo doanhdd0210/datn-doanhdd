@@ -664,7 +664,7 @@ class _CodePracticeScreenState extends State<CodePracticeScreen> {
                         if (aiUsage.loaded) ...[
                           const Spacer(),
                           Text(
-                            '${aiUsage.used}/${aiUsage.limit}',
+                            aiUsage.isUnlimited ? '${aiUsage.used}/∞' : '${aiUsage.used}/${aiUsage.limit}',
                             style: const TextStyle(fontSize: 10, color: Color(0xFF666666)),
                           ),
                         ],

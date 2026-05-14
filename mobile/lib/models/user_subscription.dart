@@ -2,6 +2,7 @@ class UserSubscription {
   final String userId;
   final String planType; // "standard" | "max"
   final String productId;
+  final String purchaseToken;
   final bool isActive;
   final bool isTrial;
   final DateTime purchasedAt;
@@ -12,6 +13,7 @@ class UserSubscription {
     required this.userId,
     required this.planType,
     required this.productId,
+    this.purchaseToken = '',
     required this.isActive,
     this.isTrial = false,
     required this.purchasedAt,
@@ -28,6 +30,7 @@ class UserSubscription {
       userId: json['userId'] as String? ?? '',
       planType: json['planType'] as String? ?? '',
       productId: json['productId'] as String? ?? '',
+      purchaseToken: json['purchaseToken'] as String? ?? '',
       isActive: json['isActive'] as bool? ?? false,
       isTrial: json['isTrial'] as bool? ?? false,
       purchasedAt: DateTime.parse(json['purchasedAt'] as String),

@@ -90,6 +90,9 @@ public class SubscriptionService
         // Skip Google Play API verification if not configured (dev/test mode)
         var skipVerify = _config["Subscription:SkipPlayVerify"] == "true";
 
+        if (skipVerify)
+            expiresAt = DateTime.UtcNow.AddMonths(1);
+
         if (!skipVerify)
         try
         {

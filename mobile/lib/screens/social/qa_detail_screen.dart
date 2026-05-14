@@ -293,7 +293,7 @@ class _QaDetailScreenState extends State<QaDetailScreen> {
                       if (aiUsage.loaded) ...[
                         const Spacer(),
                         Text(
-                          '${aiUsage.used}/${aiUsage.limit} lượt',
+                          aiUsage.isUnlimited ? '${aiUsage.used}/∞ lượt' : '${aiUsage.used}/${aiUsage.limit} lượt',
                           style: TextStyle(fontSize: 11, color: context.textSecondary),
                         ),
                       ],

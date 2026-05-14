@@ -1,7 +1,7 @@
 name: mobile
 description: JavaUp - Học lập trình Java theo cách thú vị
 publish_to: "none"
-version: 1.0.0+9
+version: 1.0.0+10
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
@@ -58,6 +58,9 @@ dependencies:
 
   # In-App Purchase (Google Play)
   in_app_purchase: ^3.2.0
+
+  # Deep links / open URL
+  url_launcher: ^6.3.0
 
   # (AI calls go through backend — no direct Gemini SDK needed)
 

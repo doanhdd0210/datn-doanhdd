@@ -185,19 +185,20 @@ public class SubscriptionService
             .Select(s => s.Value)
             .FirstOrDefaultAsync();
 
-    private async Task<GoogleCredential> GetGoogleCredentialAsync()
+    private Task<GoogleCredential> GetGoogleCredentialAsync()
     {
-        var serviceAccountJson = Environment.GetEnvironmentVariable("FIREBASE_SERVICE_ACCOUNT_JSON");
+        // Google Play service account (separate from Firebase service account)
+        var googlePlayJson = Environment.GetEnvironmentVariable("GOOGLE_PLAY_SERVICE_ACCOUNT_JSON");
         GoogleCredential raw;
-        if (!string.IsNullOrEmpty(serviceAccountJson))
-            raw = GoogleCredential.FromJson(serviceAccountJson);
+        if (!string.IsNullOrEmpty(googlePlayJson))
+            raw = GoogleCredential.FromJson(googlePlayJson);
         else
         {
-            var path = _config["Firebase:ServiceAccountPath"] ?? "firebase-service-account.json";
+            var path = _config["Subscription:GooglePlayServiceAccountPath"] ?? "google-play-service-account.json";
             raw = GoogleCredential.FromFile(path);
         }
 
-        return raw.CreateScoped("https://www.googleapis.com/auth/androidpublisher");
+        return Task.FromResult(raw.CreateScoped("https://www.googleapis.com/auth/androidpublisher"));
     }
 
     /// <summary>Admin: lấy danh sách tất cả subscription.</summary>

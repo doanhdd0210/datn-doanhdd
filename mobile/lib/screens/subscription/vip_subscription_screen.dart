@@ -34,6 +34,8 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
 
   String? _purchasingId;
   bool _verifying = false;
+  // Dùng cho upgrade flow: sản phẩm mới đang chờ upgrade
+  ProductDetails? _pendingUpgradeProduct;
 
   @override
   void initState() {
@@ -98,20 +100,44 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
       if (purchase.status == PurchaseStatus.pending) continue;
 
       if (purchase.status == PurchaseStatus.error) {
-        setState(() => _purchasingId = null);
+        setState(() { _purchasingId = null; _pendingUpgradeProduct = null; });
         _showError(purchase.error?.message ?? 'Thanh toán thất bại');
         await _iap.completePurchase(purchase);
         continue;
       }
 
       if (purchase.status == PurchaseStatus.canceled) {
-        setState(() => _purchasingId = null);
+        setState(() { _purchasingId = null; _pendingUpgradeProduct = null; });
         await _iap.completePurchase(purchase);
         continue;
       }
 
-      if (purchase.status == PurchaseStatus.purchased ||
-          purchase.status == PurchaseStatus.restored) {
+      if (purchase.status == PurchaseStatus.restored) {
+        // Nếu đang trong upgrade flow → dùng purchase cũ này làm oldPurchaseDetails
+        if (_pendingUpgradeProduct != null &&
+            Platform.isAndroid &&
+            purchase is GooglePlayPurchaseDetails) {
+          final newProduct = _pendingUpgradeProduct!;
+          setState(() => _pendingUpgradeProduct = null);
+          await _iap.completePurchase(purchase); // acknowledge purchase cũ
+          if (newProduct is GooglePlayProductDetails) {
+            final param = GooglePlayPurchaseParam(
+              productDetails: newProduct,
+              offerToken: newProduct.offerToken,
+              changeSubscriptionParam: ChangeSubscriptionParam(
+                oldPurchaseDetails: purchase,
+              ),
+            );
+            await _iap.buyNonConsumable(purchaseParam: param);
+          }
+          return; // Chờ purchased event từ Google Play
+        }
+        // Restore thường — không cần xác minh lại
+        await _iap.completePurchase(purchase);
+        continue;
+      }
+
+      if (purchase.status == PurchaseStatus.purchased) {
         await _verifyWithBackend(purchase);
         await _iap.completePurchase(purchase);
       }
@@ -154,7 +180,6 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
 
     PurchaseParam param;
     if (Platform.isAndroid && product is GooglePlayProductDetails) {
-      // Android Billing Library 5+ requires specifying the offer token for subscriptions
       param = GooglePlayPurchaseParam(
         productDetails: product,
         offerToken: product.offerToken,
@@ -164,6 +189,19 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
     }
 
     await _iap.buyNonConsumable(purchaseParam: param);
+  }
+
+  /// Upgrade/downgrade giữa các gói — dùng ChangeSubscriptionParam để Google Play
+  /// tính tiền theo tỷ lệ (prorate) và kích hoạt gói mới ngay lập tức.
+  Future<void> _upgrade(ProductDetails newProduct) async {
+    if (_purchasingId != null || _verifying) return;
+    setState(() {
+      _purchasingId = newProduct.id;
+      _pendingUpgradeProduct = newProduct;
+    });
+    // restorePurchases() trả về purchase cũ qua stream → _onPurchaseUpdate
+    // sẽ dùng nó làm oldPurchaseDetails cho ChangeSubscriptionParam
+    await _iap.restorePurchases();
   }
 
   void _showError(String msg) {
@@ -361,15 +399,14 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
             : (plan.productId.isEmpty ? 'Chưa cấu hình' : '---'));
 
     final currentSub = context.watch<SubscriptionProvider>().subscription;
-    final hasActiveSub = currentSub != null && (currentSub.isActive);
+    final hasActiveSub = currentSub != null && currentSub.isActive;
     final isCurrent = currentSub?.productId == plan.productId && hasActiveSub;
+    final isOtherPlan = hasActiveSub && !isCurrent; // có sub nhưng là gói khác
     final isPurchasing = _purchasingId == plan.productId;
-    // Block purchase if user already has any active subscription (must cancel first in Google Play)
-    final canBuy = playProduct != null &&
-        _iapAvailable &&
-        !hasActiveSub &&
-        !isPurchasing &&
-        !_verifying;
+    // Mua mới (chưa có sub)
+    final canBuy = playProduct != null && _iapAvailable && !hasActiveSub && !isPurchasing && !_verifying;
+    // Upgrade/downgrade sang gói khác (đã có sub, không phải gói hiện tại)
+    final canUpgrade = playProduct != null && _iapAvailable && isOtherPlan && !isPurchasing && !_verifying;
     // Play Store loaded but product missing — show informative note
     final playLoadedButMissing = _iapAvailable &&
         _playProducts.isNotEmpty &&
@@ -498,12 +535,18 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: canBuy ? () => _buy(playProduct!) : null,
+                    onPressed: canBuy
+                        ? () => _buy(playProduct!)
+                        : canUpgrade
+                            ? () => _upgrade(playProduct!)
+                            : null,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: isCurrent ? Colors.grey.shade300 : color,
+                      backgroundColor: isCurrent
+                          ? Colors.grey.shade800
+                          : color,
                       foregroundColor: Colors.white,
                       disabledBackgroundColor: isCurrent
-                          ? Colors.black26
+                          ? Colors.grey.shade800
                           : color.withValues(alpha: 0.4),
                       disabledForegroundColor: Colors.white70,
                       padding: const EdgeInsets.symmetric(vertical: 13),
@@ -519,9 +562,9 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
                                 color: Colors.white, strokeWidth: 2))
                         : Text(
                             isCurrent
-                                ? 'Đang sử dụng'
-                                : hasActiveSub
-                                    ? 'Nâng cấp gói'
+                                ? '✓ Đang sử dụng'
+                                : isOtherPlan
+                                    ? (isMax ? '👑 Nâng cấp lên Max' : '⭐ Chuyển xuống Standard')
                                     : 'Đăng ký ngay',
                             style: const TextStyle(
                                 fontWeight: FontWeight.w700, fontSize: 14)),

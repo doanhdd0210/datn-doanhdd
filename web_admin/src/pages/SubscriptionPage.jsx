@@ -287,7 +287,7 @@ export default function SubscriptionPage() {
           <table style={s.table}>
             <thead>
               <tr>
-                <th style={s.th}>User ID</th>
+                <th style={s.th}>Người dùng</th>
                 <th style={s.th}>Gói</th>
                 <th style={s.th}>Order ID</th>
                 <th style={s.th}>Ngày mua</th>
@@ -300,9 +300,8 @@ export default function SubscriptionPage() {
               {subscribers.map(sub => (
                 <tr key={sub.userId}>
                   <td style={s.td}>
-                    <code style={{ fontSize: 11, background: '#f1f5f9', padding: '2px 6px', borderRadius: 4 }}>
-                      {sub.userId.slice(0, 16)}...
-                    </code>
+                    <div style={{ fontWeight: 600, fontSize: 13 }}>{sub.displayName || sub.userId.slice(0, 16) + '...'}</div>
+                    <code style={{ fontSize: 10, color: '#94a3b8' }}>{sub.userId.slice(0, 12)}...</code>
                   </td>
                   <td style={s.td}>
                     {sub.planType === 'max'

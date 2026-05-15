@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Crown, Save, RefreshCw, Users, Gift } from 'lucide-react'
+import { Crown, Save, RefreshCw, Users, Gift, ChevronDown } from 'lucide-react'
 import { subscriptionAdminApi } from '../services/api'
 
 const inp = {
@@ -306,10 +306,13 @@ export default function SubscriptionPage() {
           </div>
           <div>
             <div style={{ fontSize: 11, fontWeight: 600, color: '#64748b', marginBottom: 4 }}>Gói</div>
-            <select style={{ ...inp, width: 120 }} value={grant.planType} onChange={e => setGrant(g => ({ ...g, planType: e.target.value }))}>
-              <option value="max">👑 Max</option>
-              <option value="standard">⭐ Standard</option>
-            </select>
+            <div style={{ position: 'relative', width: 120 }}>
+              <select style={{ ...inp, width: 120, appearance: 'none', paddingRight: 28 }} value={grant.planType} onChange={e => setGrant(g => ({ ...g, planType: e.target.value }))}>
+                <option value="max">👑 Max</option>
+                <option value="standard">⭐ Standard</option>
+              </select>
+              <ChevronDown size={16} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#64748b' }} />
+            </div>
           </div>
           <div>
             <div style={{ fontSize: 11, fontWeight: 600, color: '#64748b', marginBottom: 4 }}>Số ngày</div>

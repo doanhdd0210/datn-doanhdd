@@ -128,7 +128,14 @@
       "Bash(git -C /Users/doducdoanh/StudioProjects/datn.doanhdd/mobile rev-parse --git-dir)",
       "Bash(git -C /Users/doducdoanh/StudioProjects/datn.doanhdd diff mobile/lib/screens/subscription/vip_subscription_screen.dart)",
       "Bash(git -C /Users/doducdoanh/StudioProjects/datn.doanhdd show HEAD:mobile/lib/screens/subscription/vip_subscription_screen.dart)",
-      "Bash(git -C /Users/doducdoanh/StudioProjects/datn.doanhdd show f099f6b --stat)"
+      "Bash(git -C /Users/doducdoanh/StudioProjects/datn.doanhdd show f099f6b --stat)",
+      "Bash(find /Users/doducdoanh/StudioProjects/datn.doanhdd -type f -name \"*.tsx\" -o -name \"*.jsx\" -o -name \"*.vue\" 2>/dev/null | xargs grep -l \"subscriber\\\\|Huỷ\\\\|cancel\\\\|revoke\" -i 2>/dev/null | grep -v node_modules | head -20)",
+      "Bash(git -C /Users/doducdoanh/StudioProjects/datn.doanhdd diff --stat HEAD mobile/lib/screens/subscription/)",
+      "Bash(git -C /Users/doducdoanh/StudioProjects/datn.doanhdd add web_admin/src/pages/SubscriptionPage.jsx)",
+      "Bash(git -C /Users/doducdoanh/StudioProjects/datn.doanhdd add mobile/lib/screens/subscription/vip_subscription_screen.dart)",
+      "Bash(git -C /Users/doducdoanh/StudioProjects/datn.doanhdd push origin main)",
+      "Bash(git -C /Users/doducdoanh/StudioProjects/datn.doanhdd add mobile/pubspec.yaml)",
+      "Bash(git -C /Users/doducdoanh/StudioProjects/datn.doanhdd add mobile/lib/providers/ai_usage_provider.dart)"
     ]
   }
 }

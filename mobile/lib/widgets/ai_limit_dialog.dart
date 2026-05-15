@@ -4,7 +4,6 @@ import '../constants/app_text_styles.dart';
 import '../constants/app_theme.dart';
 import '../screens/subscription/vip_subscription_screen.dart';
 
-/// Hiển thị dialog hết lượt AI kèm nút nâng cấp VIP.
 void showAiLimitDialog(BuildContext context, String message) {
   showDialog(
     context: context,
@@ -27,14 +26,13 @@ class _AiLimitDialog extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 64, height: 64,
+            width: 64,
+            height: 64,
             decoration: BoxDecoration(
               color: AppColors.heartRed.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: const Center(
-              child: Text('🤖', style: TextStyle(fontSize: 30)),
-            ),
+            child: const Center(child: Text('🤖', style: TextStyle(fontSize: 30))),
           ),
           const SizedBox(height: 14),
           Text('Hết lượt AI hôm nay',
@@ -64,17 +62,25 @@ class _AiLimitDialog extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: 11),
                 ),
                 child: Text('Đóng',
-                    style: TextStyle(color: context.textSecondary, fontSize: 13)),
+                    style:
+                        TextStyle(color: context.textSecondary, fontSize: 13)),
               ),
             ),
             const SizedBox(width: 10),
             Expanded(
               child: ElevatedButton(
                 onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.push(context,
-                      MaterialPageRoute(
-                          builder: (_) => const VipSubscriptionScreen()));
+                  Navigator.pop(context); // đóng dialog
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => VipSubscriptionScreen(
+                        // Sau khi mua thành công, SubscriptionSuccessScreen
+                        // tự pop về — không cần callback thêm ở đây
+                        onSuccess: () {},
+                      ),
+                    ),
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFFFD700),
@@ -86,7 +92,8 @@ class _AiLimitDialog extends StatelessWidget {
                 ),
                 child: const Text('Nâng cấp 👑',
                     style: TextStyle(
-                        fontSize: 13, fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
                         color: Colors.black87)),
               ),
             ),

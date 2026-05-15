@@ -86,6 +86,17 @@ public class SubscriptionService
 
         DateTime? expiresAt = null;
         bool isTrial = false;
+        bool willRenew = true;
+
+        // Idempotency: cùng token VÀ ExpiresAt còn hạn > 3 ngày → trả về ngay, không gọi Google Play
+        var existing = await _db.UserSubscriptions.FindAsync(userId);
+        if (existing is not null
+            && existing.PurchaseToken == purchaseToken
+            && existing.ExpiresAt.HasValue
+            && existing.ExpiresAt.Value > DateTime.UtcNow.AddDays(3))
+        {
+            return existing;
+        }
 
         // Skip Google Play API verification if not configured (dev/test mode)
         var skipVerify = _config["Subscription:SkipPlayVerify"] == "true";
@@ -111,6 +122,7 @@ public class SubscriptionService
                     throw new InvalidOperationException("Giao dịch chưa được thanh toán.");
 
                 isTrial = result.PaymentState == 2;
+                willRenew = result.AutoRenewing ?? true;
 
                 if (result.ExpiryTimeMillis.HasValue)
                     expiresAt = DateTimeOffset.FromUnixTimeMilliseconds(result.ExpiryTimeMillis.Value).UtcDateTime;
@@ -133,7 +145,6 @@ public class SubscriptionService
         }
 
         // Lưu hoặc cập nhật subscription
-        var existing = await _db.UserSubscriptions.FindAsync(userId);
         if (existing is null)
         {
             var sub = new UserSubscription
@@ -145,6 +156,7 @@ public class SubscriptionService
                 OrderId = orderId,
                 IsActive = true,
                 IsTrial = isTrial,
+                WillRenew = willRenew,
                 PurchasedAt = DateTime.UtcNow,
                 ExpiresAt = expiresAt,
                 UpdatedAt = DateTime.UtcNow,
@@ -161,6 +173,7 @@ public class SubscriptionService
             existing.OrderId = orderId;
             existing.IsActive = true;
             existing.IsTrial = isTrial;
+            existing.WillRenew = willRenew;
             existing.ExpiresAt = expiresAt;
             existing.UpdatedAt = DateTime.UtcNow;
             await _db.SaveChangesAsync();
@@ -201,49 +214,121 @@ public class SubscriptionService
         return Task.FromResult(raw.CreateScoped("https://www.googleapis.com/auth/androidpublisher"));
     }
 
+    /// <summary>
+    /// Xử lý Google Play Real-time Developer Notification (RTDN).
+    /// Gọi từ webhook endpoint khi nhận Pub/Sub message.
+    /// notificationType: 1=RECOVERED, 2=RENEWED, 3=CANCELED, 4=PURCHASED,
+    ///   5=ON_HOLD, 6=IN_GRACE_PERIOD, 7=RESTARTED, 12=REVOKED, 13=EXPIRED
+    /// </summary>
+    public async Task HandleRtdnAsync(string purchaseToken, string productId, int notificationType)
+    {
+        var sub = await _db.UserSubscriptions
+            .FirstOrDefaultAsync(s => s.PurchaseToken == purchaseToken);
+
+        switch (notificationType)
+        {
+            case 2: // SUBSCRIPTION_RENEWED
+            case 1: // SUBSCRIPTION_RECOVERED
+            case 7: // SUBSCRIPTION_RESTARTED
+                if (sub is null) break;
+                // Gọi Google Play để lấy ExpiresAt mới nhất
+                try
+                {
+                    var packageName = await GetSettingAsync("subscription:package_name") ?? "";
+                    var credential = await GetGoogleCredentialAsync();
+                    var publisher = new AndroidPublisherService(new BaseClientService.Initializer
+                    {
+                        HttpClientInitializer = credential,
+                        ApplicationName = "JavaUp",
+                    });
+                    var result = await publisher.Purchases.Subscriptions
+                        .Get(packageName, productId, purchaseToken)
+                        .ExecuteAsync();
+
+                    sub.IsActive = true;
+                    sub.WillRenew = result.AutoRenewing ?? true;
+                    if (result.ExpiryTimeMillis.HasValue)
+                        sub.ExpiresAt = DateTimeOffset.FromUnixTimeMilliseconds(result.ExpiryTimeMillis.Value).UtcDateTime;
+                    sub.UpdatedAt = DateTime.UtcNow;
+                    await _db.SaveChangesAsync();
+                    _logger.LogInformation("RTDN {type}: updated ExpiresAt for token {token}", notificationType, purchaseToken[..10]);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "RTDN renewal: failed to refresh ExpiresAt");
+                }
+                break;
+
+            case 3: // SUBSCRIPTION_CANCELED — vẫn active đến ExpiresAt, chỉ đánh dấu không gia hạn
+                if (sub is null) break;
+                sub.WillRenew = false;
+                sub.UpdatedAt = DateTime.UtcNow;
+                await _db.SaveChangesAsync();
+                break;
+
+            case 12: // SUBSCRIPTION_REVOKED
+            case 13: // SUBSCRIPTION_EXPIRED
+            case 5:  // SUBSCRIPTION_ON_HOLD
+                if (sub is null) break;
+                sub.IsActive = false;
+                sub.WillRenew = false;
+                sub.UpdatedAt = DateTime.UtcNow;
+                await _db.SaveChangesAsync();
+                break;
+        }
+    }
+
+    /// <summary>Admin: grant subscription thủ công (dùng cho test/support).</summary>
+    public async Task<UserSubscription> GrantAsync(string userId, string planType, int durationDays)
+    {
+        var existing = await _db.UserSubscriptions.FindAsync(userId);
+        var expiresAt = DateTime.UtcNow.AddDays(durationDays);
+
+        if (existing is null)
+        {
+            var sub = new UserSubscription
+            {
+                UserId = userId,
+                PlanType = planType,
+                ProductId = $"admin_grant_{planType}",
+                PurchaseToken = $"admin_{Guid.NewGuid():N}",
+                IsActive = true,
+                IsTrial = false,
+                WillRenew = false,
+                PurchasedAt = DateTime.UtcNow,
+                ExpiresAt = expiresAt,
+                UpdatedAt = DateTime.UtcNow,
+            };
+            _db.UserSubscriptions.Add(sub);
+            await _db.SaveChangesAsync();
+            return sub;
+        }
+        else
+        {
+            existing.PlanType = planType;
+            existing.IsActive = true;
+            existing.WillRenew = false;
+            existing.ExpiresAt = expiresAt;
+            existing.UpdatedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+            return existing;
+        }
+    }
+
     /// <summary>Admin: lấy danh sách tất cả subscription.</summary>
     public async Task<List<UserSubscription>> GetAllSubscriptionsAsync() =>
         await _db.UserSubscriptions.OrderByDescending(s => s.PurchasedAt).ToListAsync();
 
-    /// <summary>Admin: huỷ subscription thủ công và cancel trên Google Play.</summary>
+    /// <summary>Admin: thu hồi subscription (chỉ deactivate local, user tự cancel trên Play Store).</summary>
     public async Task RevokeAsync(string userId)
     {
         var sub = await _db.UserSubscriptions.FindAsync(userId);
         if (sub is null) return;
 
-        // Gọi Google Play API để cancel subscription trước khi revoke trong DB
-        if (sub.IsActive && !string.IsNullOrEmpty(sub.PurchaseToken) && !string.IsNullOrEmpty(sub.ProductId))
-        {
-            var skipVerify = _config["Subscription:SkipPlayVerify"] == "true";
-            if (!skipVerify)
-            {
-                try
-                {
-                    var packageName = await GetSettingAsync("subscription:package_name");
-                    if (!string.IsNullOrEmpty(packageName))
-                    {
-                        var credential = await GetGoogleCredentialAsync();
-                        var publisher = new AndroidPublisherService(new BaseClientService.Initializer
-                        {
-                            HttpClientInitializer = credential,
-                            ApplicationName = "JavaUp",
-                        });
-                        await publisher.Purchases.Subscriptions
-                            .Cancel(packageName, sub.ProductId, sub.PurchaseToken)
-                            .ExecuteAsync();
-                        _logger.LogInformation("Cancelled Google Play subscription for user {UserId}", userId);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    // Vẫn tiếp tục revoke trong DB dù Google Play API thất bại (token hết hạn, đã cancel, v.v.)
-                    _logger.LogWarning(ex, "Failed to cancel Google Play subscription for user {UserId}: {msg}", userId, ex.Message);
-                }
-            }
-        }
-
         sub.IsActive = false;
+        sub.WillRenew = false;
         sub.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
+        _logger.LogInformation("Admin revoked subscription for user {UserId}", userId);
     }
 }

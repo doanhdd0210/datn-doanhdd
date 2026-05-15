@@ -41,7 +41,7 @@ public class SubscriptionAdminController : ControllerBase
                 s.UserId,
                 profiles.GetValueOrDefault(s.UserId, s.UserId),
                 s.PlanType, s.ProductId, s.OrderId,
-                s.IsActive, s.PurchasedAt, s.ExpiresAt, s.Platform))
+                s.IsActive, s.WillRenew, s.PurchasedAt, s.ExpiresAt, s.Platform))
             .ToList()));
     }
 
@@ -87,13 +87,22 @@ public class SubscriptionAdminController : ControllerBase
         return Ok(ApiResponse<SubscriptionPlansConfig>.Ok(config, "Đã lưu cấu hình gói VIP."));
     }
 
-    /// <summary>Huỷ subscription của một user thủ công.</summary>
+    /// <summary>Thu hồi subscription của một user (chỉ deactivate local).</summary>
     [HttpDelete("{userId}")]
     public async Task<ActionResult<ApiResponse<object>>> Revoke(string userId)
     {
         if (!IsAdmin()) return Forbid();
         await _svc.RevokeAsync(userId);
-        return Ok(ApiResponse<object>.Ok(null, "Đã huỷ subscription."));
+        return Ok(ApiResponse<object>.Ok(null, "Đã thu hồi subscription."));
+    }
+
+    /// <summary>Cấp subscription thủ công cho user (dùng cho test/support).</summary>
+    [HttpPost("grant")]
+    public async Task<ActionResult<ApiResponse<object>>> Grant([FromBody] GrantSubscriptionRequest req)
+    {
+        if (!IsAdmin()) return Forbid();
+        await _svc.GrantAsync(req.UserId, req.PlanType, req.DurationDays);
+        return Ok(ApiResponse<object>.Ok(null, $"Đã cấp gói {req.PlanType} cho {req.UserId}."));
     }
 
     private async Task UpsertSetting(string key, string value)
@@ -113,9 +122,12 @@ public record AdminSubscriptionDto(
     string ProductId,
     string OrderId,
     bool IsActive,
+    bool WillRenew,
     DateTime PurchasedAt,
     DateTime? ExpiresAt,
     string Platform);
+
+public record GrantSubscriptionRequest(string UserId, string PlanType, int DurationDays);
 
 public record SubscriptionPlansConfig(
     string PackageName,

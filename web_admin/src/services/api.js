@@ -143,4 +143,6 @@ export const subscriptionAdminApi = {
   getPlans: () => request('GET', '/api/admin/subscriptions/plans'),
   updatePlans: (config) => request('PUT', '/api/admin/subscriptions/plans', config),
   revoke: (userId) => request('DELETE', `/api/admin/subscriptions/${userId}`),
+  grant: (userId, planType, durationDays) =>
+    request('POST', '/api/admin/subscriptions/grant', { userId, planType, durationDays }),
 }

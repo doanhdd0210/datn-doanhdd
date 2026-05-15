@@ -10,6 +10,7 @@ public class UserSubscription
     public string Platform { get; set; } = "google_play";
     public bool IsActive { get; set; } = true;
     public bool IsTrial { get; set; } = false;
+    public bool WillRenew { get; set; } = true;
     public DateTime PurchasedAt { get; set; } = DateTime.UtcNow;
     public DateTime? ExpiresAt { get; set; }
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

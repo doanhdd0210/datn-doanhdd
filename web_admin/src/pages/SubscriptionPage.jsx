@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Crown, Save, Trash2, RefreshCw, Users } from 'lucide-react'
+import { Crown, Save, Trash2, RefreshCw, Users, Gift } from 'lucide-react'
 import { subscriptionAdminApi } from '../services/api'
 
 const inp = {
@@ -124,6 +124,10 @@ export default function SubscriptionPage() {
   const [msg, setMsg] = useState(null)
   const [revoking, setRevoking] = useState(null)
   const [pkgFocused, setPkgFocused] = useState(false)
+  const [search, setSearch] = useState('')
+  const [grant, setGrant] = useState({ userId: '', planType: 'max', durationDays: 30 })
+  const [granting, setGranting] = useState(false)
+  const [grantMsg, setGrantMsg] = useState(null)
 
   useEffect(() => {
     Promise.all([
@@ -158,7 +162,29 @@ export default function SubscriptionPage() {
     }
   }
 
+  const grantSub = async () => {
+    if (!grant.userId.trim()) return
+    setGranting(true); setGrantMsg(null)
+    try {
+      await subscriptionAdminApi.grant(grant.userId.trim(), grant.planType, grant.durationDays)
+      setGrantMsg({ ok: true, text: `Đã cấp gói ${grant.planType} cho ${grant.userId.slice(0, 12)}...` })
+      // Reload subscribers
+      subscriptionAdminApi.getAll().then(d => setSubscribers(Array.isArray(d) ? d : [])).catch(() => {})
+    } catch (e) {
+      setGrantMsg({ ok: false, text: e.message })
+    } finally {
+      setGranting(false)
+      setTimeout(() => setGrantMsg(null), 4000)
+    }
+  }
+
   const activeCount = subscribers.filter(s => s.isActive).length
+  const standardCount = subscribers.filter(s => s.isActive && s.planType === 'standard').length
+  const maxCount = subscribers.filter(s => s.isActive && s.planType === 'max').length
+  const filteredSubs = subscribers.filter(s =>
+    !search || s.displayName?.toLowerCase().includes(search.toLowerCase()) ||
+    s.userId.toLowerCase().includes(search.toLowerCase())
+  )
 
   return (
     <div style={s.page}>
@@ -166,7 +192,7 @@ export default function SubscriptionPage() {
       <p style={s.sub}>Cấu hình sản phẩm Google Play và theo dõi subscriber</p>
 
       {/* Stats bar */}
-      <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
+      <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
         <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, padding: '12px 20px', display: 'flex', alignItems: 'center', gap: 10 }}>
           <Users size={16} color="#16a34a" />
           <div>
@@ -174,11 +200,25 @@ export default function SubscriptionPage() {
             <div style={{ fontSize: 11, color: '#166534' }}>subscriber active</div>
           </div>
         </div>
+        <div style={{ background: '#fefce8', border: '1px solid #fde68a', borderRadius: 10, padding: '12px 20px', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 16 }}>⭐</span>
+          <div>
+            <div style={{ fontSize: 20, fontWeight: 800, color: '#92400e', lineHeight: 1 }}>{standardCount}</div>
+            <div style={{ fontSize: 11, color: '#92400e' }}>Standard</div>
+          </div>
+        </div>
         <div style={{ background: '#faf5ff', border: '1px solid #e9d5ff', borderRadius: 10, padding: '12px 20px', display: 'flex', alignItems: 'center', gap: 10 }}>
           <Crown size={16} color="#7c3aed" />
           <div>
-            <div style={{ fontSize: 20, fontWeight: 800, color: '#7c3aed', lineHeight: 1 }}>{subscribers.length}</div>
-            <div style={{ fontSize: 11, color: '#6d28d9' }}>tổng đã mua</div>
+            <div style={{ fontSize: 20, fontWeight: 800, color: '#7c3aed', lineHeight: 1 }}>{maxCount}</div>
+            <div style={{ fontSize: 11, color: '#6d28d9' }}>Max</div>
+          </div>
+        </div>
+        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '12px 20px', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <Users size={16} color="#64748b" />
+          <div>
+            <div style={{ fontSize: 20, fontWeight: 800, color: '#374151', lineHeight: 1 }}>{subscribers.length}</div>
+            <div style={{ fontSize: 11, color: '#64748b' }}>tổng đã mua</div>
           </div>
         </div>
       </div>
@@ -269,35 +309,69 @@ export default function SubscriptionPage() {
         </div>
       </div>
 
+      {/* Grant subscription */}
+      <div style={s.section}>
+        <div style={s.sectionTitle}><Gift size={16} color="#6366f1" /> Cấp subscription thủ công</div>
+        <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 14 }}>Dùng cho test hoặc hỗ trợ user. Subscription được cấp sẽ không tự gia hạn.</div>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+          <div style={{ flex: 2, minWidth: 200 }}>
+            <div style={{ fontSize: 11, fontWeight: 600, color: '#64748b', marginBottom: 4 }}>Firebase UID</div>
+            <FocusInput value={grant.userId} placeholder="user firebase uid" onChange={e => setGrant(g => ({ ...g, userId: e.target.value }))} />
+          </div>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: '#64748b', marginBottom: 4 }}>Gói</div>
+            <select style={{ ...inp, width: 120 }} value={grant.planType} onChange={e => setGrant(g => ({ ...g, planType: e.target.value }))}>
+              <option value="max">👑 Max</option>
+              <option value="standard">⭐ Standard</option>
+            </select>
+          </div>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: '#64748b', marginBottom: 4 }}>Số ngày</div>
+            <input type="number" min={1} style={{ ...inp, width: 80 }} value={grant.durationDays}
+              onChange={e => setGrant(g => ({ ...g, durationDays: parseInt(e.target.value) || 30 }))} />
+          </div>
+          <button style={{ ...s.btn, ...s.btnPrimary }} onClick={grantSub} disabled={granting || !grant.userId.trim()}>
+            <Gift size={13} /> {granting ? 'Đang cấp...' : 'Cấp'}
+          </button>
+        </div>
+        {grantMsg && <div style={{ marginTop: 10, fontSize: 12, color: grantMsg.ok ? '#16a34a' : '#dc2626' }}>{grantMsg.text}</div>}
+      </div>
+
       {/* Subscribers list */}
       <div style={s.section}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
           <div style={s.sectionTitle}><Users size={16} /> Danh sách subscriber</div>
-          <button style={{ ...s.btn, background: '#f1f5f9', color: '#64748b' }}
-            onClick={() => subscriptionAdminApi.getAll().then(d => setSubscribers(d ?? [])).catch(() => {})}>
-            <RefreshCw size={13} /> Tải lại
-          </button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input style={{ ...inp, width: 200 }} placeholder="Tìm theo tên / UID..."
+              value={search} onChange={e => setSearch(e.target.value)} />
+            <button style={{ ...s.btn, background: '#f1f5f9', color: '#64748b' }}
+              onClick={() => subscriptionAdminApi.getAll().then(d => setSubscribers(d ?? [])).catch(() => {})}>
+              <RefreshCw size={13} /> Tải lại
+            </button>
+          </div>
         </div>
 
         {loading ? (
           <div style={{ textAlign: 'center', padding: 32, color: '#94a3b8' }}>Đang tải...</div>
-        ) : subscribers.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 32, color: '#94a3b8' }}>Chưa có subscriber nào</div>
+        ) : filteredSubs.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: 32, color: '#94a3b8' }}>
+            {search ? 'Không tìm thấy' : 'Chưa có subscriber nào'}
+          </div>
         ) : (
           <table style={s.table}>
             <thead>
               <tr>
                 <th style={s.th}>Người dùng</th>
                 <th style={s.th}>Gói</th>
-                <th style={s.th}>Order ID</th>
                 <th style={s.th}>Ngày mua</th>
                 <th style={s.th}>Hết hạn</th>
+                <th style={s.th}>Gia hạn</th>
                 <th style={s.th}>Trạng thái</th>
                 <th style={s.th}></th>
               </tr>
             </thead>
             <tbody>
-              {subscribers.map(sub => (
+              {filteredSubs.map(sub => (
                 <tr key={sub.userId}>
                   <td style={s.td}>
                     <div style={{ fontWeight: 600, fontSize: 13 }}>{sub.displayName || sub.userId.slice(0, 16) + '...'}</div>
@@ -308,21 +382,21 @@ export default function SubscriptionPage() {
                       ? <span style={s.badge('purple')}>👑 Max</span>
                       : <span style={s.badge('gold')}>⭐ Standard</span>}
                   </td>
-                  <td style={s.td} title={sub.orderId}>
-                    <span style={{ fontSize: 11, color: '#94a3b8' }}>
-                      {sub.orderId ? sub.orderId.slice(0, 20) + '...' : '-'}
-                    </span>
-                  </td>
                   <td style={s.td}>{new Date(sub.purchasedAt).toLocaleDateString('vi-VN')}</td>
                   <td style={s.td}>
                     {sub.expiresAt
                       ? new Date(sub.expiresAt).toLocaleDateString('vi-VN')
-                      : <span style={{ color: '#94a3b8' }}>Không hết hạn</span>}
+                      : <span style={{ color: '#94a3b8' }}>—</span>}
+                  </td>
+                  <td style={s.td}>
+                    {sub.willRenew
+                      ? <span style={{ fontSize: 11, color: '#16a34a', fontWeight: 600 }}>✓ Có</span>
+                      : <span style={{ fontSize: 11, color: '#f59e0b', fontWeight: 600 }}>✗ Không</span>}
                   </td>
                   <td style={s.td}>
                     {sub.isActive
                       ? <span style={s.badge('green')}>Active</span>
-                      : <span style={s.badge('')}>Đã huỷ</span>}
+                      : <span style={s.badge('')}>Đã thu hồi</span>}
                   </td>
                   <td style={s.td}>
                     {sub.isActive && (
@@ -331,7 +405,7 @@ export default function SubscriptionPage() {
                         disabled={revoking === sub.userId}
                         onClick={() => revoke(sub.userId)}>
                         <Trash2 size={12} />
-                        {revoking === sub.userId ? '...' : 'Huỷ'}
+                        {revoking === sub.userId ? '...' : 'Thu hồi'}
                       </button>
                     )}
                   </td>

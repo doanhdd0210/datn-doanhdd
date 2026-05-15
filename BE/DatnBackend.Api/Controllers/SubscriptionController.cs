@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using DatnBackend.Api.Data;
@@ -123,6 +124,34 @@ public class SubscriptionController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Nhận Google Play Real-time Developer Notification qua Cloud Pub/Sub push.
+    /// Cấu hình Google Play Console → Monetize → Real-time developer notifications → push endpoint này.
+    /// </summary>
+    [HttpPost("rtdn")]
+    [AllowAnonymous]
+    public async Task<IActionResult> Rtdn([FromBody] RtdnPushMessage body)
+    {
+        try
+        {
+            var json = System.Text.Encoding.UTF8.GetString(
+                Convert.FromBase64String(body.Message?.Data ?? ""));
+            var notification = System.Text.Json.JsonSerializer.Deserialize<RtdnPayload>(json,
+                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            var sub = notification?.SubscriptionNotification;
+            if (sub is not null)
+                await _svc.HandleRtdnAsync(sub.PurchaseToken, sub.SubscriptionId, sub.NotificationType);
+        }
+        catch (Exception ex)
+        {
+            // Pub/Sub cần 200 để không retry liên tục — log và trả về OK
+            var logger = HttpContext.RequestServices.GetRequiredService<ILogger<SubscriptionController>>();
+            logger.LogWarning(ex, "RTDN processing error");
+        }
+        return Ok();
+    }
+
     private static SubscriptionDto ToDto(UserSubscription s) => new(
         s.UserId,
         s.PlanType,
@@ -130,6 +159,7 @@ public class SubscriptionController : ControllerBase
         s.PurchaseToken,
         s.IsActive,
         s.IsTrial,
+        s.WillRenew,
         s.PurchasedAt,
         s.ExpiresAt,
         s.PlanType == SubscriptionService.PlanMax
@@ -150,9 +180,19 @@ public record SubscriptionDto(
     string PurchaseToken,
     bool IsActive,
     bool IsTrial,
+    bool WillRenew,
     DateTime PurchasedAt,
     DateTime? ExpiresAt,
     int? DailyAiLimit); // null = unlimited
+
+// Pub/Sub push message shape
+public record RtdnPushMessage(RtdnMessage? Message);
+public record RtdnMessage(string? Data);
+public record RtdnPayload(RtdnSubscriptionNotification? SubscriptionNotification);
+public record RtdnSubscriptionNotification(
+    int NotificationType,
+    string PurchaseToken,
+    string SubscriptionId);
 
 public record PublicPlansDto(
     string PackageName,

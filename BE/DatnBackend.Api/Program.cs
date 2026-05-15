@@ -252,6 +252,7 @@ using (var scope = app.Services.CreateScope())
             ""UpdatedAt""     timestamp with time zone NOT NULL DEFAULT now()
         );
         ALTER TABLE ""UserSubscriptions"" ADD COLUMN IF NOT EXISTS ""IsTrial"" boolean NOT NULL DEFAULT false;
+        ALTER TABLE ""UserSubscriptions"" ADD COLUMN IF NOT EXISTS ""WillRenew"" boolean NOT NULL DEFAULT true;
 
         INSERT INTO ""AppSettings"" (""Key"", ""Value"") VALUES
             ('subscription:package_name',        'doanhdd.javaup.mobile'),

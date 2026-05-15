@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_theme.dart';
+import '../providers/subscription_provider.dart';
 import '../providers/user_provider.dart';
 import '../services/notification_service.dart';
 import '../widgets/app_snackbar.dart';
@@ -89,10 +90,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed && mounted) {
-      // Refresh stats + poll achievements when user returns to app from background
       final provider = context.read<UserProvider>();
       provider.loadStats();
       provider.pollNewAchievements();
+      // Sync subscription status khi app lên foreground (detect gia hạn tự động)
+      context.read<SubscriptionProvider>().load();
     }
   }
 

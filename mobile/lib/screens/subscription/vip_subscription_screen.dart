@@ -405,11 +405,12 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
   }
 
   Widget _buildPlanCard(SubscriptionPlan plan, bool hasActiveSub) {
-    final isSelected = _selectedPlanId == plan.id;
+    final isSelected = !hasActiveSub && _selectedPlanId == plan.id;
     final color = _colorFor(plan);
     final priceText = _priceFor(plan);
     final sub = context.watch<SubscriptionProvider>().subscription;
     final isCurrent = sub != null && sub.isActive && sub.productId == plan.productId;
+    final highlight = isSelected || isCurrent;
 
     return Stack(
       clipBehavior: Clip.none,
@@ -423,14 +424,14 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
               color: context.surfaceColor,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: isSelected
+                color: isCurrent
                     ? color
-                    : isCurrent
-                        ? color.withValues(alpha: 0.5)
+                    : isSelected
+                        ? color
                         : context.borderColor,
-                width: isSelected ? 2 : 1,
+                width: highlight ? 2 : 1,
               ),
-              boxShadow: isSelected
+              boxShadow: highlight
                   ? [
                       BoxShadow(
                           color: color.withValues(alpha: 0.12),
@@ -449,12 +450,12 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: isSelected || isCurrent ? color : context.borderColor,
+                      color: highlight ? color : context.borderColor,
                       width: 2,
                     ),
-                    color: isSelected || isCurrent ? color : Colors.transparent,
+                    color: highlight ? color : Colors.transparent,
                   ),
-                  child: isSelected || isCurrent
+                  child: highlight
                       ? const Icon(Icons.check, size: 12, color: Colors.white)
                       : null,
                 ),

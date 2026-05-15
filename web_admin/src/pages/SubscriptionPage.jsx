@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Crown, Save, Trash2, RefreshCw, Users, Gift } from 'lucide-react'
+import { Crown, Save, RefreshCw, Users, Gift } from 'lucide-react'
 import { subscriptionAdminApi } from '../services/api'
 
 const inp = {
@@ -122,7 +122,6 @@ export default function SubscriptionPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState(null)
-  const [revoking, setRevoking] = useState(null)
   const [pkgFocused, setPkgFocused] = useState(false)
   const [search, setSearch] = useState('')
   const [grant, setGrant] = useState({ userId: '', planType: 'max', durationDays: 30 })
@@ -146,19 +145,6 @@ export default function SubscriptionPage() {
     } finally {
       setSaving(false)
       setTimeout(() => setMsg(null), 3000)
-    }
-  }
-
-  const revoke = async (userId) => {
-    if (!window.confirm(`Huỷ subscription của user ${userId}?`)) return
-    setRevoking(userId)
-    try {
-      await subscriptionAdminApi.revoke(userId)
-      setSubscribers(prev => prev.map(s => s.userId === userId ? { ...s, isActive: false } : s))
-    } catch (e) {
-      alert(e.message)
-    } finally {
-      setRevoking(null)
     }
   }
 
@@ -367,7 +353,6 @@ export default function SubscriptionPage() {
                 <th style={s.th}>Hết hạn</th>
                 <th style={s.th}>Gia hạn</th>
                 <th style={s.th}>Trạng thái</th>
-                <th style={s.th}></th>
               </tr>
             </thead>
             <tbody>
@@ -396,18 +381,7 @@ export default function SubscriptionPage() {
                   <td style={s.td}>
                     {sub.isActive
                       ? <span style={s.badge('green')}>Active</span>
-                      : <span style={s.badge('')}>Đã thu hồi</span>}
-                  </td>
-                  <td style={s.td}>
-                    {sub.isActive && (
-                      <button
-                        style={{ ...s.btn, ...s.btnDanger, padding: '4px 12px' }}
-                        disabled={revoking === sub.userId}
-                        onClick={() => revoke(sub.userId)}>
-                        <Trash2 size={12} />
-                        {revoking === sub.userId ? '...' : 'Thu hồi'}
-                      </button>
-                    )}
+                      : <span style={s.badge('')}>Đã huỷ</span>}
                   </td>
                 </tr>
               ))}

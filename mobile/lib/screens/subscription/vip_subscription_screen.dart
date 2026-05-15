@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:in_app_purchase_android/in_app_purchase_android.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_text_styles.dart';
 import '../../constants/app_theme.dart';
@@ -186,11 +185,6 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
 
   void _showError(String msg) {
     if (mounted) AppSnackBar.error(context, msg);
-  }
-
-  Future<void> _launchUrl(String url) async {
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
   @override
@@ -691,27 +685,6 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
               textAlign: TextAlign.center,
             ),
           ],
-          const SizedBox(height: 8),
-          // Terms & Privacy
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              GestureDetector(
-                onTap: () => _launchUrl('https://doanhdd.javaup.mobile/terms'),
-                child: Text('Điều khoản sử dụng',
-                    style: AppTextStyles.bodySmall
-                        .copyWith(fontSize: 10, decoration: TextDecoration.underline)),
-              ),
-              Text(' · ',
-                  style: AppTextStyles.bodySmall.copyWith(fontSize: 10)),
-              GestureDetector(
-                onTap: () => _launchUrl('https://doanhdd.javaup.mobile/privacy'),
-                child: Text('Chính sách bảo mật',
-                    style: AppTextStyles.bodySmall
-                        .copyWith(fontSize: 10, decoration: TextDecoration.underline)),
-              ),
-            ],
-          ),
         ],
       ),
     );

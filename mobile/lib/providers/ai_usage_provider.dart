@@ -11,7 +11,7 @@ class AiUsageProvider extends ChangeNotifier {
   int get limit => _limit;
   bool get loaded => _loaded;
   String? get planType => _planType;
-  bool get isUnlimited => _planType == 'max';
+  bool get isUnlimited => _planType == 'max' || _limit >= 2147483647;
   bool get isExhausted => _loaded && !isUnlimited && _used >= _limit;
 
   Future<void> load() async {

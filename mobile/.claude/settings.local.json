@@ -122,7 +122,13 @@
       "Bash(osascript)",
       "Bash(echo \"Done: $?\")",
       "Bash(xattr -d com.apple.quarantine \"/Users/doducdoanh/Downloads/DoAnTotNghiep_Pages_export.docx\")",
-      "Bash(open \"/Users/doducdoanh/Downloads/DoAnTotNghiep_Pages_export.docx\")"
+      "Bash(open \"/Users/doducdoanh/Downloads/DoAnTotNghiep_Pages_export.docx\")",
+      "Bash(find /Users/doducdoanh/StudioProjects/datn.doanhdd -type f -name \"*.ts\" -o -name \"*.js\" -o -name \"*.json\" | grep -v node_modules | grep -v \".mobile\" | head -200)",
+      "Bash(dotnet build *)",
+      "Bash(git -C /Users/doducdoanh/StudioProjects/datn.doanhdd/mobile rev-parse --git-dir)",
+      "Bash(git -C /Users/doducdoanh/StudioProjects/datn.doanhdd diff mobile/lib/screens/subscription/vip_subscription_screen.dart)",
+      "Bash(git -C /Users/doducdoanh/StudioProjects/datn.doanhdd show HEAD:mobile/lib/screens/subscription/vip_subscription_screen.dart)",
+      "Bash(git -C /Users/doducdoanh/StudioProjects/datn.doanhdd show f099f6b --stat)"
     ]
   }
 }

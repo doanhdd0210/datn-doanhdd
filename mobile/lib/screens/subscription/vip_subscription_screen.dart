@@ -36,7 +36,6 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
   String? _selectedPlanId;
   String? _purchasingId;
   bool _verifying = false;
-  bool _restoring = false;
 
   @override
   void initState() {
@@ -107,10 +106,10 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
         continue;
       }
 
-      // purchased VÀ restored đều verify với backend
-      if (purchase.status == PurchaseStatus.purchased ||
-          purchase.status == PurchaseStatus.restored) {
+      if (purchase.status == PurchaseStatus.purchased) {
         await _verifyWithBackend(purchase);
+        await _iap.completePurchase(purchase);
+      } else if (purchase.status == PurchaseStatus.restored) {
         await _iap.completePurchase(purchase);
       }
     }
@@ -118,46 +117,39 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
 
   Future<void> _verifyWithBackend(PurchaseDetails purchase) async {
     setState(() => _verifying = true);
+    final subProvider = context.read<SubscriptionProvider>();
+    final aiProvider = context.read<AiUsageProvider>();
     try {
       final token = purchase.verificationData.serverVerificationData;
-      final data = await ApiService().verifySubscription(
+      await ApiService().verifySubscription(
         purchaseToken: token,
         productId: purchase.productID,
         orderId: purchase.purchaseID ?? '',
         productType: 'subscription',
       );
 
-      final inner = data['data'];
-      if (inner != null && mounted) {
-        await context.read<SubscriptionProvider>().load();
-        await context.read<AiUsageProvider>().load();
+      if (!mounted) return;
+      await subProvider.load();
+      await aiProvider.load();
 
-        final isRestored = purchase.status == PurchaseStatus.restored;
-        if (mounted) {
-          if (isRestored) {
-            AppSnackBar.success(context, '✓ Đã khôi phục subscription thành công!');
-          } else {
-            // Mua mới → navigate sang success screen
-            final selectedPlan = _config?.plans
-                .firstWhere((p) => p.productId == purchase.productID,
-                    orElse: () => _config!.plans.first);
-            await Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (_) => SubscriptionSuccessScreen(
-                  planName: selectedPlan?.title ?? 'VIP',
-                  planIcon: selectedPlan?.icon ?? '👑',
-                  expiresAt:
-                      context.read<SubscriptionProvider>().subscription?.expiresAt,
-                  isTrial:
-                      context.read<SubscriptionProvider>().subscription?.isTrial ??
-                          false,
-                  onDone: widget.onSuccess,
-                ),
-              ),
-            );
-          }
-        }
+      if (!mounted) return;
+      if (subProvider.isPremium) {
+        final selectedPlan = _config?.plans.firstWhere(
+          (p) => p.productId == purchase.productID,
+          orElse: () => _config!.plans.first,
+        );
+        await Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => SubscriptionSuccessScreen(
+              planName: selectedPlan?.title ?? 'VIP',
+              planIcon: selectedPlan?.icon ?? '👑',
+              expiresAt: subProvider.subscription?.expiresAt,
+              isTrial: subProvider.subscription?.isTrial ?? false,
+              onDone: widget.onSuccess,
+            ),
+          ),
+        );
       }
     } catch (e) {
       _showError('Không thể xác minh giao dịch. Vui lòng thử lại.');
@@ -165,7 +157,6 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
       if (mounted) setState(() {
         _verifying = false;
         _purchasingId = null;
-        _restoring = false;
       });
     }
   }
@@ -191,17 +182,6 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
     }
 
     await _iap.buyNonConsumable(purchaseParam: param);
-  }
-
-  Future<void> _restorePurchases() async {
-    if (_restoring || _purchasingId != null || _verifying) return;
-    setState(() => _restoring = true);
-    try {
-      await _iap.restorePurchases();
-    } catch (_) {
-      setState(() => _restoring = false);
-      _showError('Không thể khôi phục. Vui lòng thử lại.');
-    }
   }
 
   void _showError(String msg) {
@@ -661,7 +641,7 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
     final product = plan != null ? _productFor(plan) : null;
     final hasTrial = (plan?.trialDays ?? 0) > 0;
     final isLoading = _purchasingId != null || _verifying;
-    final canBuy = product != null && _iapAvailable && !isLoading && !_restoring;
+    final canBuy = product != null && _iapAvailable && !isLoading;
     final priceText = plan != null ? _priceFor(plan) : '---';
     final color = plan != null ? _colorFor(plan) : AppColors.primary;
 
@@ -712,25 +692,6 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
             ),
           ],
           const SizedBox(height: 8),
-          // Restore
-          TextButton(
-            onPressed: _restoring ? null : _restorePurchases,
-            style: TextButton.styleFrom(
-                padding: EdgeInsets.zero,
-                minimumSize: const Size(0, 32)),
-            child: _restoring
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                        strokeWidth: 2, color: AppColors.primary))
-                : Text(
-                    'Khôi phục giao dịch',
-                    style: AppTextStyles.bodySmall.copyWith(
-                        decoration: TextDecoration.underline),
-                  ),
-          ),
-          const SizedBox(height: 4),
           // Terms & Privacy
           Row(
             mainAxisAlignment: MainAxisAlignment.center,

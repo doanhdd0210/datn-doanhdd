@@ -214,7 +214,6 @@ export default function CodeSnippetsPage() {
           <table style={s.table}>
             <thead>
               <tr style={s.thead}>
-                <th style={s.th}>ID</th>
                 <th style={s.th}>Chủ đề</th>
                 <th style={s.th}>Tiêu đề</th>
                 <th style={s.th}>Ngôn ngữ</th>
@@ -234,7 +233,6 @@ export default function CodeSnippetsPage() {
                 <tr key={sn.id} style={{ ...s.tr, background: idx % 2 === 0 ? '#fff' : '#f9f9f9' }}
                   onMouseEnter={e => e.currentTarget.style.background = '#f0f9eb'}
                   onMouseLeave={e => e.currentTarget.style.background = idx % 2 === 0 ? '#fff' : '#f9f9f9'}>
-                  <td style={{ ...s.td, fontSize: 11, color: '#94a3b8', fontFamily: 'monospace', maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={sn.id}>{sn.id}</td>
                   <td style={s.td}><span style={s.badge}>{topicName(sn.topicId)}</span></td>
                   <td style={s.td}><strong>{sn.title}</strong></td>
                   <td style={s.td}>

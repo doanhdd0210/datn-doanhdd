@@ -77,43 +77,52 @@ class _SplashScreen extends StatelessWidget {
   }
 }
 
-class AuthWrapper extends StatelessWidget {
+class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      // Dùng cache ngay lập tức để không bị treo khi không có mạng
-      initialData: FirebaseAuth.instance.currentUser,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting &&
-            !snapshot.hasData) {
-          return const _SplashScreen();
-        }
+  State<AuthWrapper> createState() => _AuthWrapperState();
+}
 
-        final user = snapshot.data;
-        if (user != null) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            context.read<UserProvider>().refreshStats();
-            context.read<AiUsageProvider>().load();
-            context.read<SubscriptionProvider>().load();
-            // Re-sync FCM token now that the user is confirmed authenticated
-            NotificationService().syncToken();
-          });
-          return const _OnboardingGate();
-        }
-        // Auth state → null: reset provider as safety net, then show LoginScreen.
-        // Logout handlers call reset() explicitly before signOut, but this
-        // catches any edge case (token expiry, remote sign-out, etc.).
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          context.read<UserProvider>().reset();
-          context.read<AiUsageProvider>().reset();
-          context.read<SubscriptionProvider>().clear();
-        });
-        return const LoginScreen();
-      },
-    );
+class _AuthWrapperState extends State<AuthWrapper> {
+  // Dùng currentUser ngay lập tức — không chờ stream, không bị treo offline
+  User? _user = FirebaseAuth.instance.currentUser;
+  bool _prevHadUser = FirebaseAuth.instance.currentUser != null;
+
+  @override
+  void initState() {
+    super.initState();
+    FirebaseAuth.instance.authStateChanges().listen((user) {
+      if (!mounted) return;
+      setState(() => _user = user);
+      if (user != null && !_prevHadUser) {
+        _prevHadUser = true;
+        context.read<UserProvider>().refreshStats();
+        context.read<AiUsageProvider>().load();
+        context.read<SubscriptionProvider>().load();
+        NotificationService().syncToken();
+      } else if (user == null) {
+        _prevHadUser = false;
+        context.read<UserProvider>().reset();
+        context.read<AiUsageProvider>().reset();
+        context.read<SubscriptionProvider>().clear();
+      }
+    });
+
+    if (_user != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.read<UserProvider>().refreshStats();
+        context.read<AiUsageProvider>().load();
+        context.read<SubscriptionProvider>().load();
+        NotificationService().syncToken();
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_user != null) return const _OnboardingGate();
+    return const LoginScreen();
   }
 }
 

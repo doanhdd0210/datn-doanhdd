@@ -103,7 +103,9 @@ class NotificationService {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) return;
-      final idToken = await user.getIdToken();
+      final idToken = await user.getIdToken()
+          .timeout(const Duration(seconds: 5), onTimeout: () => null);
+      if (idToken == null) return;
       await http.post(
         Uri.parse('${ApiService.baseUrl}/users/me/fcm-token'),
         headers: {
@@ -111,7 +113,7 @@ class NotificationService {
           'Authorization': 'Bearer $idToken',
         },
         body: jsonEncode({'token': token}),
-      );
+      ).timeout(const Duration(seconds: 8));
     } catch (e) {
       debugPrint('[FCM] Token upload failed: $e');
     }

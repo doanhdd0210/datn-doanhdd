@@ -48,12 +48,11 @@ class _NoInternetBannerState extends State<NoInternetBanner> {
             child: AnimatedSlide(
               offset: Offset.zero,
               duration: const Duration(milliseconds: 250),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () => AppSettings.openAppSettings(
-                      type: AppSettingsType.wireless),
-                  child: Container(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => AppSettings.openAppSettings(
+                    type: AppSettingsType.wireless),
+                child: Container(
                     width: double.infinity,
                     color: Colors.red.shade700,
                     padding: const EdgeInsets.symmetric(vertical: 8),
@@ -74,7 +73,6 @@ class _NoInternetBannerState extends State<NoInternetBanner> {
                     ),
                   ),
                 ),
-              ),
             ),
           ),
       ],

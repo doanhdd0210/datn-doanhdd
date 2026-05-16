@@ -32,16 +32,17 @@ class _NoInternetBannerState extends State<NoInternetBanner> {
   }
 
   Future<void> _openWifiSettings() async {
-    final uri = Platform.isIOS
-        ? Uri.parse('App-Prefs:WIFI')
-        : Uri.parse('android-app://com.android.settings/.Settings\$WifiSettingsActivity');
-    if (!await launchUrl(uri)) {
-      // fallback: mở Settings chung
+    try {
+      if (Platform.isIOS) {
+        await launchUrl(Uri.parse('App-Prefs:WIFI'));
+        return;
+      }
+      // Android: intent URI mở thẳng WiFi Settings
       await launchUrl(
-        Platform.isIOS ? Uri.parse('app-settings:') : Uri.parse('package:com.android.settings'),
+        Uri.parse('intent:#Intent;action=android.settings.WIFI_SETTINGS;end'),
         mode: LaunchMode.externalApplication,
       );
-    }
+    } catch (_) {}
   }
 
   @override

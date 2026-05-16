@@ -121,7 +121,7 @@ export default function QaManagementPage() {
             </button>
           ))}
         </div>
-        <button onClick={() => load(true)} style={s.btnSecondary}><RefreshCw size={14} /> Làm mới</button>
+        <button onClick={() => load(1)} style={s.btnSecondary}><RefreshCw size={14} /> Làm mới</button>
         <button onClick={handleExportJson} style={s.btnSm}>Export JSON</button>
       </div>
 

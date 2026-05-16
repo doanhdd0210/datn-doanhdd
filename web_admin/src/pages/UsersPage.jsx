@@ -30,6 +30,13 @@ async function runDeleteAll(reload) {
 
 const PROVIDER_LABEL = { 'google.com': 'Google', password: 'Email', phone: 'Phone' }
 
+const TESTER_EMAILS = new Set([
+  'vund.0709@gmail.com', 'vu_nd@amira.vn', 'vund.draft@gmail.com',
+  'namlv.work@gmail.com', 'nam.nt0910@gmail.com', 'hungto2288@gmail.com',
+  'ductuan9603@gmail.com', 'bolaosieudang26598@gmail.com', 'doanhkull511a@gmail.com',
+  'epartner64@gmail.com', 'psv.epartners@gmail.com', 'koydepzaiicloud@gmail.com',
+])
+
 function formatRelativeTime(dateStr) {
   const date = new Date(dateStr)
   const diff = Math.floor((Date.now() - date.getTime()) / 1000)
@@ -189,10 +196,16 @@ export default function UsersPage() {
         <span style={{ ...s.stat, color: '#15803d', background: '#dcfce7', padding: '2px 12px', borderRadius: 99, fontWeight: 500 }}>
           🟢 Truy cập hôm nay: <strong>{users.filter((u) => {
             if (u.isAdmin || !u.lastActiveAt) return false
-            const d = new Date(u.lastActiveAt)
-            const now = new Date()
+            const d = new Date(u.lastActiveAt), now = new Date()
             return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate()
           }).length}</strong>
+        </span>
+        <span style={{ ...s.stat, color: '#7c3aed', background: '#ede9fe', padding: '2px 12px', borderRadius: 99, fontWeight: 500 }}>
+          🧪 Tester hôm nay: <strong>{users.filter((u) => {
+            if (!u.lastActiveAt || !TESTER_EMAILS.has(u.email?.toLowerCase())) return false
+            const d = new Date(u.lastActiveAt), now = new Date()
+            return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate()
+          }).length} / {TESTER_EMAILS.size}</strong>
         </span>
       </div>
 

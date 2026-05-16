@@ -51,9 +51,8 @@ export default function QuestionsPage() {
     setSelectedLesson('')
   }, [selectedTopic])
 
-  // Load questions when lesson changes
+  // Load questions when lesson changes (empty lessonId = load all)
   const loadQuestions = useCallback(async () => {
-    if (!selectedLesson) { setQuestions([]); return }
     setLoading(true)
     setError('')
     try {
@@ -189,18 +188,16 @@ export default function QuestionsPage() {
             <ChevronDown size={16} style={{ ...s.selectArrow, color: selectedTopic ? '#64748b' : '#cbd5e1' }} />
           </div>
         </div>
-        {selectedLesson && (
-          <div style={{ alignSelf: 'flex-end', paddingBottom: 4 }}>
-            <span style={{ ...s.badge, background: '#dbeafe', color: '#1d4ed8' }}>
-              {questions.length} câu hỏi
-            </span>
-          </div>
-        )}
+        <div style={{ alignSelf: 'flex-end', paddingBottom: 4 }}>
+          <span style={{ ...s.badge, background: '#dbeafe', color: '#1d4ed8' }}>
+            {questions.length} câu hỏi
+          </span>
+        </div>
       </div>
 
       {/* Toolbar */}
       <div style={s.toolbar}>
-        <button onClick={loadQuestions} style={s.btnSecondary} disabled={!selectedLesson}><RefreshCw size={14} style={{marginRight:5,verticalAlign:"middle"}}/> Làm mới</button>
+        <button onClick={loadQuestions} style={s.btnSecondary}><RefreshCw size={14} style={{marginRight:5,verticalAlign:"middle"}}/> Làm mới</button>
         <button onClick={openCreate} style={s.btnPrimary} disabled={!selectedLesson}>+ Thêm câu hỏi</button>
         <div style={s.btnGroup}>
           <button onClick={() => importRef.current?.click()} style={s.btnSm}><Upload size={14} style={{marginRight:5,verticalAlign:"middle"}}/> Import Excel</button>
@@ -213,15 +210,10 @@ export default function QuestionsPage() {
       {importProgress && <div style={s.progressBox}>{importProgress}</div>}
       {error && <div style={s.errorBox}>{error}</div>}
 
-      {!selectedLesson ? (
-        <div style={s.empty}>
-          <div style={{ fontSize: 48 }}>❓</div>
-          <div style={{ color: '#94a3b8', marginTop: 8 }}>Chọn chủ đề và bài học để xem câu hỏi</div>
-        </div>
-      ) : loading ? (
+      {loading ? (
         <div style={s.loading}>⏳ Đang tải...</div>
       ) : questions.length === 0 ? (
-        <div style={s.empty}><div style={{ fontSize: 48 }}>❓</div><div style={{ color: '#94a3b8', marginTop: 8 }}>Chưa có câu hỏi nào cho bài học này</div></div>
+        <div style={s.empty}><div style={{ fontSize: 48 }}>❓</div><div style={{ color: '#94a3b8', marginTop: 8 }}>Chưa có câu hỏi nào</div></div>
       ) : (
         <div style={s.tableWrap}>
           <table style={s.table}>

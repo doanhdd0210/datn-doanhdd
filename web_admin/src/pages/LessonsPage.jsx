@@ -163,6 +163,7 @@ export default function LessonsPage() {
   const [toast, setToast] = useState({ msg: '', type: 'success' })
   const [importProgress, setImportProgress] = useState('')
   const [editorLang, setEditorLang] = useState('markdown')
+  const [dateSortDir, setDateSortDir] = useState('desc')
   const importRef = useRef()
   const editorRef = useRef()
 
@@ -206,10 +207,22 @@ export default function LessonsPage() {
   useEffect(() => { loadTopics() }, [loadTopics])
   useEffect(() => { load() }, [load])
 
-  const filtered = lessons.filter(l =>
-    l.title?.toLowerCase().includes(search.toLowerCase()) ||
-    l.summary?.toLowerCase().includes(search.toLowerCase())
-  )
+  const filtered = lessons
+    .filter(l =>
+      l.title?.toLowerCase().includes(search.toLowerCase()) ||
+      l.summary?.toLowerCase().includes(search.toLowerCase())
+    )
+    .sort((a, b) => {
+      const ta = new Date(a.createdAt ?? 0).getTime()
+      const tb = new Date(b.createdAt ?? 0).getTime()
+      return dateSortDir === 'desc' ? tb - ta : ta - tb
+    })
+
+  const formatDate = (d) => {
+    if (!d) return '—'
+    try { return new Date(d).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) }
+    catch { return d }
+  }
 
   const topicName = (id) => topics.find(t => t.id === id)?.title ?? id ?? '—'
 
@@ -330,6 +343,9 @@ export default function LessonsPage() {
                 <th style={s.th}>XP</th>
                 <th style={s.th}>Thứ tự</th>
                 <th style={s.th}>Trạng thái</th>
+                <th style={{ ...s.th, cursor: 'pointer', userSelect: 'none' }} onClick={() => setDateSortDir(d => d === 'desc' ? 'asc' : 'desc')}>
+                  Ngày tạo {dateSortDir === 'desc' ? '↓' : '↑'}
+                </th>
                 <th style={s.th}>Hành động</th>
               </tr>
             </thead>
@@ -357,6 +373,7 @@ export default function LessonsPage() {
                       {l.isActive ? '✓ Hiện' : '— Ẩn'}
                     </span>
                   </td>
+                  <td style={{ ...s.td, fontSize: 12, color: '#64748b' }}>{formatDate(l.createdAt)}</td>
                   <td style={s.td}>
                     <div style={s.actions}>
                       <button onClick={() => openEdit(l)} style={s.btnEdit} title="Sửa"><Pencil size={14}/></button>

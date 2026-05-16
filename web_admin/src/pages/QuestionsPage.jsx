@@ -31,6 +31,7 @@ export default function QuestionsPage() {
   const [form, setForm] = useState({})
   const [toast, setToast] = useState({ msg: '', type: 'success' })
   const [importProgress, setImportProgress] = useState('')
+  const [dateSortDir, setDateSortDir] = useState('desc')
   const importRef = useRef()
 
   const showToast = (msg, type = 'success') => {
@@ -66,6 +67,18 @@ export default function QuestionsPage() {
   }, [selectedLesson])
 
   useEffect(() => { loadQuestions() }, [loadQuestions])
+
+  const sortedQuestions = [...questions].sort((a, b) => {
+    const ta = new Date(a.createdAt ?? 0).getTime()
+    const tb = new Date(b.createdAt ?? 0).getTime()
+    return dateSortDir === 'desc' ? tb - ta : ta - tb
+  })
+
+  const formatDate = (d) => {
+    if (!d) return '—'
+    try { return new Date(d).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) }
+    catch { return d }
+  }
 
   const defaultForm = { lessonId: selectedLesson, questionText: '', options: ['', '', '', ''], correctAnswerIndex: 0, explanation: '', points: 10, order: 0 }
 
@@ -223,11 +236,14 @@ export default function QuestionsPage() {
                 <th style={s.th}>Đúng</th>
                 <th style={s.th}>Điểm</th>
                 <th style={s.th}>Thứ tự</th>
+                <th style={{ ...s.th, cursor: 'pointer', userSelect: 'none' }} onClick={() => setDateSortDir(d => d === 'desc' ? 'asc' : 'desc')}>
+                  Ngày tạo {dateSortDir === 'desc' ? '↓' : '↑'}
+                </th>
                 <th style={s.th}>Hành động</th>
               </tr>
             </thead>
             <tbody>
-              {questions.map((q, idx) => (
+              {sortedQuestions.map((q, idx) => (
                 <tr key={q.id} style={{ ...s.tr, background: idx % 2 === 0 ? '#fff' : '#f9f9f9' }}
                   onMouseEnter={e => e.currentTarget.style.background = '#f0f9eb'}
                   onMouseLeave={e => e.currentTarget.style.background = idx % 2 === 0 ? '#fff' : '#f9f9f9'}>
@@ -249,6 +265,7 @@ export default function QuestionsPage() {
                   </td>
                   <td style={{ ...s.td, textAlign: 'center', color: '#64748b' }}>{q.points ?? 10}</td>
                   <td style={{ ...s.td, textAlign: 'center', color: '#64748b' }}>{q.order ?? 0}</td>
+                  <td style={{ ...s.td, fontSize: 12, color: '#64748b' }}>{formatDate(q.createdAt)}</td>
                   <td style={s.td}>
                     <div style={s.actions}>
                       <button onClick={() => openEdit(q)} style={s.btnEdit} title="Sửa"><Pencil size={14}/></button>

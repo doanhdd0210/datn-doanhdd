@@ -35,6 +35,7 @@ export default function QaManagementPage() {
   const [modalLoading, setModalLoading] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [toast, setToast] = useState({ msg: '', type: 'success' })
+  const [dateSortDir, setDateSortDir] = useState('desc')
 
   const showToast = (msg, type = 'success') => {
     setToast({ msg, type })
@@ -61,12 +62,18 @@ export default function QaManagementPage() {
 
   const loadMore = () => load(page + 1)
 
-  const filtered = posts.filter(p => {
-    const q = search.toLowerCase()
-    const matchSearch = !q || p.title?.toLowerCase().includes(q) || p.userName?.toLowerCase().includes(q)
-    const matchStatus = statusFilter === 'all' || (statusFilter === 'solved' ? p.isSolved : !p.isSolved)
-    return matchSearch && matchStatus
-  })
+  const filtered = posts
+    .filter(p => {
+      const q = search.toLowerCase()
+      const matchSearch = !q || p.title?.toLowerCase().includes(q) || p.userName?.toLowerCase().includes(q)
+      const matchStatus = statusFilter === 'all' || (statusFilter === 'solved' ? p.isSolved : !p.isSolved)
+      return matchSearch && matchStatus
+    })
+    .sort((a, b) => {
+      const ta = new Date(a.createdAt ?? 0).getTime()
+      const tb = new Date(b.createdAt ?? 0).getTime()
+      return dateSortDir === 'desc' ? tb - ta : ta - tb
+    })
 
   const openView = async (item) => {
     setModal({ mode: 'view', item })
@@ -148,7 +155,9 @@ export default function QaManagementPage() {
                   <th style={s.th}>Tags</th>
                   <th style={s.th}>Trả lời</th>
                   <th style={s.th}>Trạng thái</th>
-                  <th style={s.th}>Ngày tạo</th>
+                  <th style={{ ...s.th, cursor: 'pointer', userSelect: 'none' }} onClick={() => setDateSortDir(d => d === 'desc' ? 'asc' : 'desc')}>
+                    Ngày tạo {dateSortDir === 'desc' ? '↓' : '↑'}
+                  </th>
                   <th style={s.th}>Hành động</th>
                 </tr>
               </thead>

@@ -50,7 +50,16 @@ class MyApp extends StatelessWidget {
           theme: buildLightTheme(),
           darkTheme: buildDarkTheme(),
           themeMode: themeProvider.mode,
-          home: const NoInternetBanner(child: AuthWrapper()),
+          home: Builder(
+            builder: (context) => NoInternetBanner(
+              onReconnected: () {
+                context.read<UserProvider>().refreshStats();
+                context.read<AiUsageProvider>().load();
+                context.read<SubscriptionProvider>().load();
+              },
+              child: const AuthWrapper(),
+            ),
+          ),
         ),
       ),
     );

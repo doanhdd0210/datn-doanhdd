@@ -5,7 +5,8 @@ import 'package:flutter/services.dart';
 
 class NoInternetBanner extends StatefulWidget {
   final Widget child;
-  const NoInternetBanner({super.key, required this.child});
+  final VoidCallback? onReconnected;
+  const NoInternetBanner({super.key, required this.child, this.onReconnected});
 
   @override
   State<NoInternetBanner> createState() => _NoInternetBannerState();
@@ -33,7 +34,10 @@ class _NoInternetBannerState extends State<NoInternetBanner> {
   void _update(List<ConnectivityResult> results) {
     final offline = results.isEmpty ||
         results.every((r) => r == ConnectivityResult.none);
-    if (mounted && offline != _offline) setState(() => _offline = offline);
+    if (mounted && offline != _offline) {
+      setState(() => _offline = offline);
+      if (!offline) widget.onReconnected?.call();
+    }
   }
 
   @override

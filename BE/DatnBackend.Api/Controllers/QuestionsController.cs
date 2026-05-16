@@ -18,13 +18,10 @@ public class QuestionsController : ControllerBase
 
     private bool IsAdmin => HttpContext.Items.TryGetValue("FirebaseIsAdmin", out var v) && v is true;
 
-    /// <summary>List questions for a lesson</summary>
+    /// <summary>List questions, optionally filtered by lessonId</summary>
     [HttpGet]
-    public async Task<ActionResult<ApiResponse<List<Question>>>> List([FromQuery] string lessonId)
+    public async Task<ActionResult<ApiResponse<List<Question>>>> List([FromQuery] string? lessonId = null)
     {
-        if (string.IsNullOrEmpty(lessonId))
-            return BadRequest(ApiResponse<List<Question>>.Fail("lessonId query parameter is required"));
-
         var questions = await _questionService.ListQuestionsAsync(lessonId);
         return Ok(ApiResponse<List<Question>>.Ok(questions, $"{questions.Count} questions"));
     }

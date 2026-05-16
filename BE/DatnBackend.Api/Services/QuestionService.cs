@@ -17,16 +17,17 @@ public class QuestionService
         _logger = logger;
     }
 
-    public async Task<List<Question>> ListQuestionsAsync(string lessonId)
+    public async Task<List<Question>> ListQuestionsAsync(string? lessonId = null)
     {
-        var cacheKey = $"questions:lesson:{lessonId}";
+        var cacheKey = string.IsNullOrEmpty(lessonId) ? "questions:all" : $"questions:lesson:{lessonId}";
         var cached = await _cache.GetAsync<List<Question>>(cacheKey);
         if (cached != null) return cached;
 
-        var questions = await _db.Questions
-            .Where(q => q.LessonId == lessonId)
-            .OrderBy(q => q.Order)
-            .ToListAsync();
+        var query = _db.Questions.AsQueryable();
+        if (!string.IsNullOrEmpty(lessonId))
+            query = query.Where(q => q.LessonId == lessonId);
+
+        var questions = await query.OrderBy(q => q.Order).ToListAsync();
 
         await _cache.SetAsync(cacheKey, questions, TimeSpan.FromMinutes(10));
         return questions;

@@ -1,7 +1,7 @@
 import 'dart:async';
-import 'package:app_settings/app_settings.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class NoInternetBanner extends StatefulWidget {
   final Widget child;
@@ -20,6 +20,14 @@ class _NoInternetBannerState extends State<NoInternetBanner> {
     super.initState();
     Connectivity().checkConnectivity().then(_update);
     _sub = Connectivity().onConnectivityChanged.listen(_update);
+  }
+
+  static const _channel = MethodChannel('doanhdd.javaup/settings');
+
+  Future<void> _openWifiSettings() async {
+    try {
+      await _channel.invokeMethod('openWifiSettings');
+    } catch (_) {}
   }
 
   void _update(List<ConnectivityResult> results) {
@@ -50,8 +58,7 @@ class _NoInternetBannerState extends State<NoInternetBanner> {
               duration: const Duration(milliseconds: 250),
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
-                onTap: () => AppSettings.openAppSettings(
-                    type: AppSettingsType.wireless),
+                onTap: _openWifiSettings,
                 child: Container(
                     width: double.infinity,
                     color: Colors.red.shade700,

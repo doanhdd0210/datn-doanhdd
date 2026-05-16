@@ -108,11 +108,18 @@ export function exportLessonsExcel(data, filename = 'lessons_export.xlsx') {
   XLSX.writeFile(wb, filename)
 }
 
+const LESSONS_IMPORT_COLS = ['title', 'summary', 'content', 'xpReward', 'estimatedMinutes', 'order', 'isActive']
+
 export function downloadLessonsSampleExcel() {
-  exportLessonsExcel([{ topicId: 'TOPIC_ID_HERE', title: 'Bài 1: Biến và kiểu dữ liệu', summary: 'Giới thiệu biến, int, String...', content: '', xpReward: 10, estimatedMinutes: 5, order: 1, isActive: true }], 'lessons_template.xlsx')
+  const sample = [{ title: 'Bài 1: Biến và kiểu dữ liệu', summary: 'Giới thiệu biến, int, String...', content: '', xpReward: 10, estimatedMinutes: 5, order: 1, isActive: true }]
+  const ws = XLSX.utils.json_to_sheet(sample, { header: LESSONS_IMPORT_COLS })
+  ws['!cols'] = [24, 30, 40, 10, 14, 8, 8].map(wch => ({ wch }))
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, 'Lessons')
+  XLSX.writeFile(wb, 'lessons_template.xlsx')
 }
 
-export function importLessonsExcel(file) {
+export function importLessonsExcel(file, topicId) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = (e) => {
@@ -120,7 +127,7 @@ export function importLessonsExcel(file) {
         const wb = XLSX.read(e.target.result, { type: 'array' })
         const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' })
         if (!rows.length) throw new Error('File Excel trống')
-        resolve(rows.map(r => ({ topicId: String(r.topicId ?? ''), title: String(r.title ?? ''), summary: String(r.summary ?? ''), content: String(r.content ?? ''), xpReward: Number(r.xpReward) || 10, estimatedMinutes: Number(r.estimatedMinutes) || 5, order: Number(r.order) || 0, isActive: String(r.isActive).toLowerCase() !== 'false' })))
+        resolve(rows.map(r => ({ topicId, title: String(r.title ?? ''), summary: String(r.summary ?? ''), content: String(r.content ?? ''), xpReward: Number(r.xpReward) || 10, estimatedMinutes: Number(r.estimatedMinutes) || 5, order: Number(r.order) || 0, isActive: String(r.isActive).toLowerCase() !== 'false' })))
       } catch (err) { reject(new Error('File Excel không hợp lệ: ' + err.message)) }
     }
     reader.readAsArrayBuffer(file)
@@ -140,11 +147,18 @@ export function exportQuestionsExcel(data, filename = 'questions_export.xlsx') {
   XLSX.writeFile(wb, filename)
 }
 
+const QUESTIONS_IMPORT_COLS = ['questionText', 'optionA', 'optionB', 'optionC', 'optionD', 'correctAnswerIndex', 'explanation', 'points', 'order']
+
 export function downloadQuestionsSampleExcel() {
-  exportQuestionsExcel([{ lessonId: 'LESSON_ID_HERE', questionText: 'Kiểu dữ liệu nào lưu số nguyên trong Java?', options: ['int', 'float', 'String', 'boolean'], correctAnswerIndex: 0, explanation: 'int là kiểu số nguyên cơ bản trong Java', points: 10, order: 1 }], 'questions_template.xlsx')
+  const sample = [{ questionText: 'Kiểu dữ liệu nào lưu số nguyên trong Java?', optionA: 'int', optionB: 'float', optionC: 'String', optionD: 'boolean', correctAnswerIndex: 0, explanation: 'int là kiểu số nguyên cơ bản trong Java', points: 10, order: 1 }]
+  const ws = XLSX.utils.json_to_sheet(sample, { header: QUESTIONS_IMPORT_COLS })
+  ws['!cols'] = [36, 20, 20, 20, 20, 16, 28, 8, 8].map(wch => ({ wch }))
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, 'Questions')
+  XLSX.writeFile(wb, 'questions_template.xlsx')
 }
 
-export function importQuestionsExcel(file, defaultLessonId = '') {
+export function importQuestionsExcel(file, lessonId) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = (e) => {
@@ -152,7 +166,7 @@ export function importQuestionsExcel(file, defaultLessonId = '') {
         const wb = XLSX.read(e.target.result, { type: 'array' })
         const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' })
         if (!rows.length) throw new Error('File Excel trống')
-        resolve(rows.map(r => ({ lessonId: String(r.lessonId || defaultLessonId), questionText: String(r.questionText ?? ''), options: [String(r.optionA ?? ''), String(r.optionB ?? ''), String(r.optionC ?? ''), String(r.optionD ?? '')], correctAnswerIndex: Number(r.correctAnswerIndex) || 0, explanation: String(r.explanation ?? ''), points: Number(r.points) || 10, order: Number(r.order) || 0 })))
+        resolve(rows.map(r => ({ lessonId, questionText: String(r.questionText ?? ''), options: [String(r.optionA ?? ''), String(r.optionB ?? ''), String(r.optionC ?? ''), String(r.optionD ?? '')], correctAnswerIndex: Number(r.correctAnswerIndex) || 0, explanation: String(r.explanation ?? ''), points: Number(r.points) || 10, order: Number(r.order) || 0 })))
       } catch (err) { reject(new Error('File Excel không hợp lệ: ' + err.message)) }
     }
     reader.readAsArrayBuffer(file)

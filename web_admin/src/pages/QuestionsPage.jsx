@@ -138,6 +138,7 @@ export default function QuestionsPage() {
     const file = e.target.files?.[0]
     if (!file) return
     e.target.value = ''
+    if (!selectedLesson) { showToast('Vui lòng chọn bài học trước khi import', 'error'); return }
     try {
       const data = await importQuestionsExcel(file, selectedLesson)
       for (let i = 0; i < data.length; i++) {
@@ -145,7 +146,7 @@ export default function QuestionsPage() {
         await questionsApi.create(data[i])
       }
       setImportProgress('')
-      showToast(`Đã import ${data.length} câu hỏi thành công`)
+      showToast(`Đã import ${data.length} câu hỏi vào bài học đã chọn`)
       await loadQuestions()
     } catch (e) {
       setImportProgress('')
@@ -200,7 +201,7 @@ export default function QuestionsPage() {
         <button onClick={loadQuestions} style={s.btnSecondary}><RefreshCw size={14} style={{marginRight:5,verticalAlign:"middle"}}/> Làm mới</button>
         <button onClick={openCreate} style={s.btnPrimary} disabled={!selectedLesson}>+ Thêm câu hỏi</button>
         <div style={s.btnGroup}>
-          <button onClick={() => importRef.current?.click()} style={s.btnSm}><Upload size={14} style={{marginRight:5,verticalAlign:"middle"}}/> Import Excel</button>
+          <button onClick={() => importRef.current?.click()} style={s.btnSm} disabled={!selectedLesson} title={!selectedLesson ? 'Chọn chủ đề và bài học trước khi import' : ''}><Upload size={14} style={{marginRight:5,verticalAlign:"middle"}}/> Import Excel</button>
           <button onClick={() => exportQuestionsExcel(questions, `questions_lesson_${selectedLesson}.xlsx`)} style={s.btnSm} disabled={!selectedLesson}><Download size={14} style={{marginRight:5,verticalAlign:"middle"}}/> Export Excel</button>
           <button onClick={downloadQuestionsSampleExcel} style={{ ...s.btnSm, color: '#1a73e8', borderColor: '#93c5fd' }}><FileDown size={14} style={{marginRight:5,verticalAlign:"middle"}}/> Tải Excel mẫu</button>
         </div>

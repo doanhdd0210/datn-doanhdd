@@ -186,6 +186,14 @@ export default function UsersPage() {
         <span style={s.stat}>Tổng: <strong>{users.filter((u) => !u.isAdmin).length}</strong></span>
         <span style={s.stat}>Đang hiển thị: <strong>{filtered.length}</strong></span>
         <span style={s.stat}>Bị khoá: <strong>{users.filter((u) => !u.isAdmin && u.disabled).length}</strong></span>
+        <span style={{ ...s.stat, color: '#15803d', background: '#dcfce7', padding: '2px 12px', borderRadius: 99, fontWeight: 500 }}>
+          🟢 Truy cập hôm nay: <strong>{users.filter((u) => {
+            if (u.isAdmin || !u.lastActiveAt) return false
+            const d = new Date(u.lastActiveAt)
+            const now = new Date()
+            return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate()
+          }).length}</strong>
+        </span>
       </div>
 
       {/* Table */}

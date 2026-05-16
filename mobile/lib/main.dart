@@ -56,6 +56,27 @@ class MyApp extends StatelessWidget {
   }
 }
 
+class _SplashScreen extends StatelessWidget {
+  const _SplashScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.asset('assets/icon/app_icon_new.png', width: 96, height: 96),
+            const SizedBox(height: 32),
+            const CircularProgressIndicator(color: AppColors.primary),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
 
@@ -63,14 +84,12 @@ class AuthWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
+      // Dùng cache ngay lập tức để không bị treo khi không có mạng
+      initialData: FirebaseAuth.instance.currentUser,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            backgroundColor: AppColors.background,
-            body: Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
-            ),
-          );
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            !snapshot.hasData) {
+          return const _SplashScreen();
         }
 
         final user = snapshot.data;
@@ -129,11 +148,7 @@ class _OnboardingGateState extends State<_OnboardingGate> {
   @override
   Widget build(BuildContext context) {
     if (_onboardingDone == null) {
-      // Đang check — hiện splash nhỏ
-      return const Scaffold(
-        backgroundColor: AppColors.background,
-        body: Center(child: CircularProgressIndicator(color: AppColors.primary)),
-      );
+      return const _SplashScreen();
     }
     if (_onboardingDone!) {
       return const MainNavigationScreen();

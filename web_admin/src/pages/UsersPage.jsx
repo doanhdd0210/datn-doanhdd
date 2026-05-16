@@ -196,6 +196,7 @@ export default function UsersPage() {
           <table style={s.table}>
             <thead>
               <tr style={s.thead}>
+                <th style={{ ...s.th, width: 48, textAlign: 'center' }}>STT</th>
                 <th style={s.th}>Người dùng</th>
                 <th style={s.th}>UID</th>
                 <th style={s.th}>Provider</th>
@@ -213,8 +214,9 @@ export default function UsersPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((u) => (
+              {filtered.map((u, idx) => (
                 <tr key={u.uid} style={s.tr}>
+                  <td style={{ ...s.td, textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>{idx + 1}</td>
                   <td style={s.td}>
                     <div style={s.userCell}>
                       <div style={s.avatar}>
@@ -278,7 +280,7 @@ export default function UsersPage() {
                 </tr>
               ))}
               {filtered.length === 0 && (
-                <tr><td colSpan={8} style={{ textAlign: 'center', padding: 40, color: '#94a3b8' }}>Không có kết quả</td></tr>
+                <tr><td colSpan={9} style={{ textAlign: 'center', padding: 40, color: '#94a3b8' }}>Không có kết quả</td></tr>
               )}
             </tbody>
           </table>

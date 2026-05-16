@@ -337,6 +337,7 @@ export default function LessonsPage() {
             <thead>
               <tr style={s.thead}>
                 <th style={s.th}>#</th>
+                <th style={s.th}>ID</th>
                 <th style={s.th}>Chủ đề</th>
                 <th style={s.th}>Tên bài học</th>
                 <th style={s.th}>Tóm tắt</th>
@@ -355,6 +356,7 @@ export default function LessonsPage() {
                   onMouseEnter={e => e.currentTarget.style.background = '#f0f9eb'}
                   onMouseLeave={e => e.currentTarget.style.background = idx % 2 === 0 ? '#fff' : '#f9f9f9'}>
                   <td style={{ ...s.td, color: '#94a3b8', fontSize: 12 }}>{idx + 1}</td>
+                  <td style={{ ...s.td, fontSize: 11, color: '#94a3b8', fontFamily: 'monospace', maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={l.id}>{l.id}</td>
                   <td style={s.td}>
                     <span style={s.badge}>{topicName(l.topicId)}</span>
                   </td>

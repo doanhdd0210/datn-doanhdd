@@ -150,6 +150,7 @@ export default function QaManagementPage() {
             <table style={s.table}>
               <thead>
                 <tr style={s.thead}>
+                  <th style={s.th}>ID</th>
                   <th style={s.th}>Người hỏi</th>
                   <th style={s.th}>Tiêu đề</th>
                   <th style={s.th}>Tags</th>
@@ -167,6 +168,7 @@ export default function QaManagementPage() {
                     onMouseEnter={e => e.currentTarget.style.background = '#f0f9eb'}
                     onMouseLeave={e => e.currentTarget.style.background = idx % 2 === 0 ? '#fff' : '#f9f9f9'}
                     onClick={() => openView(p)}>
+                    <td style={{ ...s.td, fontSize: 11, color: '#94a3b8', fontFamily: 'monospace', maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={p.id}>{p.id}</td>
                     <td style={s.td}>
                       <div style={{ fontWeight: 600, fontSize: 13, color: '#1e293b' }}>{p.userName || '—'}</div>
                     </td>

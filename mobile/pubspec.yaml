@@ -62,6 +62,9 @@ dependencies:
   # Deep links / open URL
   url_launcher: ^6.3.0
 
+  # Network connectivity
+  connectivity_plus: ^6.1.4
+
   # (AI calls go through backend — no direct Gemini SDK needed)
 
 dev_dependencies:

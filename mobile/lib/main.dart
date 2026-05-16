@@ -14,6 +14,7 @@ import 'screens/login_screen.dart';
 import 'screens/main_navigation_screen.dart';
 import 'screens/onboarding/onboarding_screen.dart';
 import 'services/notification_service.dart';
+import 'widgets/no_internet_banner.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -49,7 +50,7 @@ class MyApp extends StatelessWidget {
           theme: buildLightTheme(),
           darkTheme: buildDarkTheme(),
           themeMode: themeProvider.mode,
-          home: const AuthWrapper(),
+          home: const NoInternetBanner(child: AuthWrapper()),
         ),
       ),
     );

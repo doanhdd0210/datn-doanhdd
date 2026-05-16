@@ -32,7 +32,7 @@ const PROVIDER_LABEL = { 'google.com': 'Google', password: 'Email', phone: 'Phon
 
 const TESTER_EMAILS = new Set([
   'vund.0709@gmail.com', 'vu_nd@amira.vn', 'vund.draft@gmail.com',
-  'namlv.work@gmail.com', 'nam.nt0910@gmail.com', 'hungto2288@gmail.com',
+  'saokhuee88@gmail.com', 'nam.nt0910@gmail.com', 'hungto2288@gmail.com',
   'ductuan9603@gmail.com', 'bolaosieudang26598@gmail.com', 'doanhkull511a@gmail.com',
   'epartner64@gmail.com', 'psv.epartners@gmail.com', 'koydepzaiicloud@gmail.com',
 ])

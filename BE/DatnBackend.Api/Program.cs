@@ -285,9 +285,12 @@ using (var scope = app.Services.CreateScope())
         ON CONFLICT (""Key"") DO NOTHING;
     ");
 
-    // Add CreatedAt to Questions if not exists
+    // Add CreatedAt to Questions if not exists, default existing rows to yesterday
     await db.Database.ExecuteSqlRawAsync(@"
-        ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""CreatedAt"" timestamp with time zone NOT NULL DEFAULT now();
+        ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""CreatedAt"" timestamp with time zone;
+        UPDATE ""Questions"" SET ""CreatedAt"" = now() - interval '1 day' WHERE ""CreatedAt"" IS NULL;
+        ALTER TABLE ""Questions"" ALTER COLUMN ""CreatedAt"" SET NOT NULL;
+        ALTER TABLE ""Questions"" ALTER COLUMN ""CreatedAt"" SET DEFAULT now();
     ");
 
     // Sync IsAdmin flag from Firebase claims to UserProfiles

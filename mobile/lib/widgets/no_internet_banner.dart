@@ -1,8 +1,7 @@
 import 'dart:async';
-import 'dart:io';
+import 'package:app_settings/app_settings.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class NoInternetBanner extends StatefulWidget {
   final Widget child;
@@ -19,9 +18,7 @@ class _NoInternetBannerState extends State<NoInternetBanner> {
   @override
   void initState() {
     super.initState();
-    // Check trạng thái ban đầu
     Connectivity().checkConnectivity().then(_update);
-    // Lắng nghe thay đổi
     _sub = Connectivity().onConnectivityChanged.listen(_update);
   }
 
@@ -29,20 +26,6 @@ class _NoInternetBannerState extends State<NoInternetBanner> {
     final offline = results.isEmpty ||
         results.every((r) => r == ConnectivityResult.none);
     if (mounted && offline != _offline) setState(() => _offline = offline);
-  }
-
-  Future<void> _openWifiSettings() async {
-    try {
-      if (Platform.isIOS) {
-        await launchUrl(Uri.parse('App-Prefs:WIFI'));
-        return;
-      }
-      // Android: intent URI mở thẳng WiFi Settings
-      await launchUrl(
-        Uri.parse('intent:#Intent;action=android.settings.WIFI_SETTINGS;end'),
-        mode: LaunchMode.externalApplication,
-      );
-    } catch (_) {}
   }
 
   @override
@@ -53,19 +36,27 @@ class _NoInternetBannerState extends State<NoInternetBanner> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    return Stack(
       children: [
-        Expanded(child: widget.child),
-        AnimatedSize(
-          duration: const Duration(milliseconds: 250),
-          curve: Curves.easeInOut,
-          child: _offline
-              ? GestureDetector(
-                  onTap: _openWifiSettings,
+        widget.child,
+        if (_offline)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: bottomPadding,
+            child: AnimatedSlide(
+              offset: Offset.zero,
+              duration: const Duration(milliseconds: 250),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => AppSettings.openAppSettings(
+                      type: AppSettingsType.wireless),
                   child: Container(
                     width: double.infinity,
                     color: Colors.red.shade700,
-                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
                     child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -82,9 +73,10 @@ class _NoInternetBannerState extends State<NoInternetBanner> {
                       ],
                     ),
                   ),
-                )
-              : const SizedBox.shrink(),
-        ),
+                ),
+              ),
+            ),
+          ),
       ],
     );
   }

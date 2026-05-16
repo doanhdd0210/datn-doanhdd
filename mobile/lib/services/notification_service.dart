@@ -58,7 +58,8 @@ class NotificationService {
       debugPrint('[FCM] Token: $token');
       await _uploadToken(token);
       // Subscribe topic "all" để nhận broadcast notification
-      await _messaging.subscribeToTopic('all');
+      await _messaging.subscribeToTopic('all')
+          .timeout(const Duration(seconds: 5), onTimeout: () {});
       debugPrint('[FCM] Subscribed to topic: all');
     } catch (e) {
       debugPrint('[FCM] FCM không khả dụng (emulator / no Play Services): $e');

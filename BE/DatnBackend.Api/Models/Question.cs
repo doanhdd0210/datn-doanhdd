@@ -10,4 +10,5 @@ public class Question
     public string Explanation { get; set; } = "";
     public int Order { get; set; }
     public int Points { get; set; } = 10;
+    public DateTime CreatedAt { get; set; }
 }

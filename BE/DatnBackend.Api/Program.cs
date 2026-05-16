@@ -285,6 +285,11 @@ using (var scope = app.Services.CreateScope())
         ON CONFLICT (""Key"") DO NOTHING;
     ");
 
+    // Add CreatedAt to Questions if not exists
+    await db.Database.ExecuteSqlRawAsync(@"
+        ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""CreatedAt"" timestamp with time zone NOT NULL DEFAULT now();
+    ");
+
     // Sync IsAdmin flag from Firebase claims to UserProfiles
     try
     {

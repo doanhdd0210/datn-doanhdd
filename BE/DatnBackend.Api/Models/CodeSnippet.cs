@@ -30,4 +30,5 @@ public class CodeSnippetDto(CodeSnippet s, bool isPassed, int bestScore = 0)
     public bool IsPassed { get; } = isPassed;
     /// <summary>Điểm cao nhất user đạt được (0-100), 0 nếu chưa làm</summary>
     public int BestScore { get; } = bestScore;
+    public DateTime CreatedAt { get; } = s.CreatedAt;
 }

@@ -52,6 +52,7 @@ public class QuestionService
             Explanation = request.Explanation,
             Order = request.Order,
             Points = request.Points,
+            CreatedAt = DateTime.UtcNow,
         };
 
         _db.Questions.Add(question);

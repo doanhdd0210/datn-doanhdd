@@ -49,6 +49,7 @@ export default function UsersPage() {
   const [modal, setModal] = useState(null) // null | { mode: 'create'|'edit'|'delete'|'stats', user? }
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({})
+  const [sortByActivity, setSortByActivity] = useState(false) // false = default, true = sort desc by lastActiveAt
 
   const loadUsers = useCallback(async () => {
     setLoading(true)
@@ -69,15 +70,22 @@ export default function UsersPage() {
 
   useEffect(() => { loadUsers() }, [loadUsers])
 
-  const filtered = users.filter((u) => {
-    if (u.isAdmin) return false
-    const q = search.toLowerCase()
-    return (
-      u.email?.toLowerCase().includes(q) ||
-      u.displayName?.toLowerCase().includes(q) ||
-      u.uid?.toLowerCase().includes(q)
-    )
-  })
+  const filtered = users
+    .filter((u) => {
+      if (u.isAdmin) return false
+      const q = search.toLowerCase()
+      return (
+        u.email?.toLowerCase().includes(q) ||
+        u.displayName?.toLowerCase().includes(q) ||
+        u.uid?.toLowerCase().includes(q)
+      )
+    })
+    .sort((a, b) => {
+      if (!sortByActivity) return 0
+      const ta = a.lastActiveAt ? new Date(a.lastActiveAt).getTime() : 0
+      const tb = b.lastActiveAt ? new Date(b.lastActiveAt).getTime() : 0
+      return tb - ta
+    })
 
   const getUserStats = (uid) => leaderboard.find(l => l.uid === uid || l.userId === uid)
 
@@ -194,7 +202,13 @@ export default function UsersPage() {
                 <th style={s.th}>Trạng thái</th>
                 <th style={s.th}>Admin</th>
                 <th style={s.th}>Ngày tạo</th>
-                <th style={s.th}>Hoạt động gần nhất</th>
+                <th
+                  style={{ ...s.th, cursor: 'pointer', userSelect: 'none' }}
+                  onClick={() => setSortByActivity(v => !v)}
+                  title="Click để sắp xếp theo hoạt động gần nhất"
+                >
+                  Hoạt động gần nhất {sortByActivity ? '↓' : '↕'}
+                </th>
                 <th style={s.th}>Thao tác</th>
               </tr>
             </thead>

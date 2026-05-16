@@ -135,7 +135,9 @@
       "Bash(git -C /Users/doducdoanh/StudioProjects/datn.doanhdd add mobile/lib/screens/subscription/vip_subscription_screen.dart)",
       "Bash(git -C /Users/doducdoanh/StudioProjects/datn.doanhdd push origin main)",
       "Bash(git -C /Users/doducdoanh/StudioProjects/datn.doanhdd add mobile/pubspec.yaml)",
-      "Bash(git -C /Users/doducdoanh/StudioProjects/datn.doanhdd add mobile/lib/providers/ai_usage_provider.dart)"
+      "Bash(git -C /Users/doducdoanh/StudioProjects/datn.doanhdd add mobile/lib/providers/ai_usage_provider.dart)",
+      "Bash(find /Users/doducdoanh/StudioProjects/datn.doanhdd -type f -name \"*.dart\" | xargs grep -l \"subscription\\\\|Subscription\" 2>/dev/null | head -20)",
+      "Bash(find /Users/doducdoanh/StudioProjects/datn.doanhdd -type f -name \"*.tsx\" -o -name \"*.jsx\" | xargs grep -l \"Cấp subscription\\\\|cấp subscription\\\\|manual.*sub\\\\|grant.*sub\" 2>/dev/null | head -10)"
     ]
   }
 }

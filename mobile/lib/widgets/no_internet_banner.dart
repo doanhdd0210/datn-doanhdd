@@ -1,7 +1,8 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
-import '../constants/app_colors.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class NoInternetBanner extends StatefulWidget {
   final Widget child;
@@ -30,6 +31,19 @@ class _NoInternetBannerState extends State<NoInternetBanner> {
     if (mounted && offline != _offline) setState(() => _offline = offline);
   }
 
+  Future<void> _openWifiSettings() async {
+    final uri = Platform.isIOS
+        ? Uri.parse('App-Prefs:WIFI')
+        : Uri.parse('android-app://com.android.settings/.Settings\$WifiSettingsActivity');
+    if (!await launchUrl(uri)) {
+      // fallback: mở Settings chung
+      await launchUrl(
+        Platform.isIOS ? Uri.parse('app-settings:') : Uri.parse('package:com.android.settings'),
+        mode: LaunchMode.externalApplication,
+      );
+    }
+  }
+
   @override
   void dispose() {
     _sub.cancel();
@@ -45,24 +59,27 @@ class _NoInternetBannerState extends State<NoInternetBanner> {
           duration: const Duration(milliseconds: 250),
           curve: Curves.easeInOut,
           child: _offline
-              ? Container(
-                  width: double.infinity,
-                  color: Colors.red.shade700,
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.wifi_off, color: Colors.white, size: 16),
-                      SizedBox(width: 6),
-                      Text(
-                        'Không có kết nối mạng',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
+              ? GestureDetector(
+                  onTap: _openWifiSettings,
+                  child: Container(
+                    width: double.infinity,
+                    color: Colors.red.shade700,
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.wifi_off, color: Colors.white, size: 16),
+                        SizedBox(width: 6),
+                        Text(
+                          'Không có kết nối mạng — Nhấn để mở cài đặt',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 )
               : const SizedBox.shrink(),

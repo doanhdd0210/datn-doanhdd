@@ -7,6 +7,7 @@ import 'constants/app_colors.dart';
 import 'constants/app_theme.dart';
 import 'firebase_options.dart';
 import 'providers/ai_usage_provider.dart';
+import 'providers/network_retry_provider.dart';
 import 'providers/subscription_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/user_provider.dart';
@@ -42,6 +43,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => AiUsageProvider()),
         ChangeNotifierProvider(create: (_) => SubscriptionProvider()),
+        ChangeNotifierProvider(create: (_) => NetworkRetryProvider()),
       ],
       child: Consumer<ThemeProvider>(
         builder: (_, themeProvider, __) => MaterialApp(
@@ -56,6 +58,7 @@ class MyApp extends StatelessWidget {
                 context.read<UserProvider>().refreshStats();
                 context.read<AiUsageProvider>().load();
                 context.read<SubscriptionProvider>().load();
+                context.read<NetworkRetryProvider>().retry();
               },
               child: const AuthWrapper(),
             ),

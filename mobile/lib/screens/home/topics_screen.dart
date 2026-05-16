@@ -14,6 +14,7 @@ import '../../services/api_service.dart';
 import 'lesson_detail_screen.dart';
 import 'lessons_screen.dart';
 import '../notifications/notifications_screen.dart';
+import '../../providers/network_retry_provider.dart';
 import '../../services/notification_service.dart';
 import '../../widgets/app_snackbar.dart';
 
@@ -34,6 +35,9 @@ class _TopicsScreenState extends State<TopicsScreen> {
   void initState() {
     super.initState();
     _loadData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<NetworkRetryProvider>().addListener(_onNetworkRetry);
+    });
   }
 
   @override
@@ -45,8 +49,13 @@ class _TopicsScreenState extends State<TopicsScreen> {
     }
   }
 
+  void _onNetworkRetry() {
+    if (mounted) _loadData();
+  }
+
   @override
   void dispose() {
+    context.read<NetworkRetryProvider>().removeListener(_onNetworkRetry);
     super.dispose();
   }
 

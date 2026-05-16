@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import {
   Users, BookOpen, GraduationCap, HelpCircle, Code2, ShieldCheck, Bell, X,
   LayoutDashboard, BarChart2, Library, ClipboardList, MessagesSquare, Trophy, Star,
-  Settings, LogOut, Bot, Crown,
+  Settings, LogOut, Bot, Crown, ChevronLeft, ChevronRight,
 } from 'lucide-react'
 import logo from '../assets/logo.png'
 import { useNavigate } from 'react-router-dom'
@@ -45,6 +45,7 @@ export default function Dashboard() {
   const navigate = useNavigate()
   const [activeNav, setActiveNav] = useState('overview')
   const [showLogoutModal, setShowLogoutModal] = useState(false)
+  const [collapsed, setCollapsed] = useState(false)
 
   const handleLogout = async () => {
     await signOut()
@@ -54,47 +55,94 @@ export default function Dashboard() {
   return (
     <div style={styles.layout}>
       {/* Sidebar */}
-      <aside style={styles.sidebar}>
-        <div style={styles.sidebarHeader}>
-          <img src={logo} alt="logo" style={{ width: 28, height: 28, objectFit: 'contain', borderRadius: 6 }} />
-          <span style={styles.sidebarTitle}>JavaUp Admin</span>
+      <aside style={{ ...styles.sidebar, width: collapsed ? 64 : 240 }}>
+        <div style={{ ...styles.sidebarHeader, justifyContent: collapsed ? 'center' : 'flex-start', padding: collapsed ? '24px 0' : '24px 20px', position: 'relative' }}>
+          <img src={logo} alt="logo" style={{ width: 28, height: 28, objectFit: 'contain', borderRadius: 6, flexShrink: 0 }} />
+          {!collapsed && <span style={styles.sidebarTitle}>JavaUp Admin</span>}
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            style={{
+              position: 'absolute',
+              right: -12,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              width: 24,
+              height: 24,
+              borderRadius: '50%',
+              background: '#1a73e8',
+              border: '2px solid #1e293b',
+              color: '#fff',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 10,
+              padding: 0,
+            }}
+            title={collapsed ? 'Mở rộng' : 'Thu gọn'}
+          >
+            {collapsed
+              ? <ChevronRight size={13} strokeWidth={2.5} />
+              : <ChevronLeft size={13} strokeWidth={2.5} />}
+          </button>
         </div>
 
-        <nav style={styles.nav}>
+        <nav style={{ ...styles.nav, padding: collapsed ? '16px 8px' : '16px 12px', alignItems: collapsed ? 'center' : 'stretch' }}>
           {NAV_ITEMS.map((item) => (
             <button
               key={item.id}
               onClick={() => setActiveNav(item.id)}
+              title={collapsed ? item.label : undefined}
               style={{
                 ...styles.navItem,
                 ...(activeNav === item.id ? styles.navItemActive : {}),
+                justifyContent: collapsed ? 'center' : 'flex-start',
+                padding: collapsed ? '10px' : '10px 12px',
+                width: collapsed ? 40 : '100%',
               }}
             >
               <item.Icon size={16} strokeWidth={1.75} />
-              <span>{item.label}</span>
+              {!collapsed && <span>{item.label}</span>}
             </button>
           ))}
         </nav>
 
-        <div style={styles.sidebarFooter}>
-          <div style={styles.userInfo}>
-            <div style={styles.avatar}>
-              {user?.email?.[0]?.toUpperCase() ?? 'A'}
+        <div style={{ ...styles.sidebarFooter, justifyContent: collapsed ? 'center' : 'flex-start', padding: collapsed ? '16px 0' : '16px' }}>
+          {collapsed ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+              <div style={styles.avatar} title={user?.email}>
+                {user?.email?.[0]?.toUpperCase() ?? 'A'}
+              </div>
+              <button
+                onClick={() => setShowLogoutModal(true)}
+                style={styles.logoutBtn}
+                title="Đăng xuất"
+              >
+                <LogOut size={16} strokeWidth={1.75} color="white"/>
+              </button>
             </div>
-            <div style={styles.userText}>
-              <p style={styles.userEmail}>{user?.email}</p>
-              <p style={styles.userRole}>Administrator</p>
-            </div>
-          </div>
-          <button
-            onClick={() => setShowLogoutModal(true)}
-            style={styles.logoutBtn}
-            title="Đăng xuất"
-          >
-            <LogOut size={16} strokeWidth={1.75} color="white"/>
-          </button>
+          ) : (
+            <>
+              <div style={styles.userInfo}>
+                <div style={styles.avatar}>
+                  {user?.email?.[0]?.toUpperCase() ?? 'A'}
+                </div>
+                <div style={styles.userText}>
+                  <p style={styles.userEmail}>{user?.email}</p>
+                  <p style={styles.userRole}>Administrator</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowLogoutModal(true)}
+                style={styles.logoutBtn}
+                title="Đăng xuất"
+              >
+                <LogOut size={16} strokeWidth={1.75} color="white"/>
+              </button>
+            </>
+          )}
         </div>
-        <div style={styles.version}>v1.0.1</div>
+        {!collapsed && <div style={styles.version}>v1.0.1</div>}
       </aside>
 
       {/* Main content */}
@@ -243,7 +291,6 @@ function QuickBtn({ Icon, iconColor, label, desc, color, onClick }) {
 const styles = {
   layout: { display: 'flex', height: '100vh', fontFamily: 'system-ui, sans-serif' },
   sidebar: {
-    width: 240,
     height: '100vh',
     background: '#1e293b',
     color: '#fff',
@@ -251,6 +298,8 @@ const styles = {
     flexDirection: 'column',
     flexShrink: 0,
     overflow: 'hidden',
+    transition: 'width 0.22s ease',
+    position: 'relative',
   },
   sidebarHeader: {
     padding: '24px 20px',

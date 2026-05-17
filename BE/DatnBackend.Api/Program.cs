@@ -146,120 +146,58 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    // EnsureCreatedAsync skips table creation when the database already exists (e.g. Supabase).
-    // CreateTablesAsync always attempts to create tables; ignore errors when they already exist.
-    var creator = db.Database.GetService<Microsoft.EntityFrameworkCore.Storage.IRelationalDatabaseCreator>();
-    try { await creator.CreateTablesAsync(); } catch { }
+    var creator = db.Database.GetService<IRelationalDatabaseCreator>();
 
-    // Tạo bảng mới nếu chưa tồn tại (EnsureCreated không thêm table mới vào DB cũ)
-    await db.Database.ExecuteSqlRawAsync(@"
-        CREATE TABLE IF NOT EXISTS ""UserNotifications"" (
-            ""Id"" text NOT NULL PRIMARY KEY,
-            ""UserId"" text NOT NULL,
-            ""Type"" text NOT NULL,
-            ""Title"" text NOT NULL,
-            ""Body"" text NOT NULL,
-            ""ActorId"" text,
-            ""ActorName"" text,
-            ""ActorAvatar"" text,
-            ""RefId"" text,
-            ""IsRead"" boolean NOT NULL DEFAULT false,
-            ""CreatedAt"" timestamp with time zone NOT NULL DEFAULT now()
-        );
-        ALTER TABLE ""UserNotifications"" ADD COLUMN IF NOT EXISTS ""RefId"" text;
-        CREATE INDEX IF NOT EXISTS ""IX_UserNotifications_UserId_CreatedAt""
-            ON ""UserNotifications"" (""UserId"", ""CreatedAt"" DESC);
-    ");
+    // Check if core schema exists (UserProfiles is the central table)
+    var conn = db.Database.GetDbConnection();
+    if (conn.State != System.Data.ConnectionState.Open) await conn.OpenAsync();
+    using var checkCmd = conn.CreateCommand();
+    checkCmd.CommandText = "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public' AND table_name='UserProfiles'";
+    var schemaExists = Convert.ToInt32(await checkCmd.ExecuteScalarAsync()) > 0;
 
-    // Tạo bảng Achievements nếu chưa có
-    await db.Database.ExecuteSqlRawAsync(@"
-        CREATE TABLE IF NOT EXISTS ""Achievements"" (
-            ""Id"" text NOT NULL PRIMARY KEY,
-            ""Title"" text NOT NULL DEFAULT '',
-            ""Description"" text NOT NULL DEFAULT '',
-            ""Icon"" text NOT NULL DEFAULT '🏅',
-            ""ConditionType"" text NOT NULL DEFAULT '',
-            ""ConditionValue"" integer NOT NULL DEFAULT 0,
-            ""XpReward"" integer NOT NULL DEFAULT 0,
-            ""IsActive"" boolean NOT NULL DEFAULT true,
-            ""CreatedAt"" timestamp with time zone NOT NULL DEFAULT now()
-        );
-    ");
+    if (!schemaExists)
+    {
+        // Fresh or broken DB: drop any partially-created tables so CreateTablesAsync starts clean
+        await db.Database.ExecuteSqlRawAsync(@"
+            DROP TABLE IF EXISTS ""Achievements"" CASCADE;
+            DROP TABLE IF EXISTS ""UserAchievements"" CASCADE;
+            DROP TABLE IF EXISTS ""UserNotifications"" CASCADE;
+            DROP TABLE IF EXISTS ""DailyGoalBonusClaims"" CASCADE;
+            DROP TABLE IF EXISTS ""AppSettings"" CASCADE;
+            DROP TABLE IF EXISTS ""UserSubscriptions"" CASCADE;
+            DROP TABLE IF EXISTS ""UserAiUsages"" CASCADE;
+            DROP TABLE IF EXISTS ""UserAiLimits"" CASCADE;
+        ");
+        await creator.CreateTablesAsync();
+    }
 
-    // Tạo bảng UserAchievements nếu chưa có
-    await db.Database.ExecuteSqlRawAsync(@"
-        CREATE TABLE IF NOT EXISTS ""UserAchievements"" (
-            ""Id"" text NOT NULL PRIMARY KEY,
-            ""UserId"" text NOT NULL,
-            ""AchievementId"" text NOT NULL,
-            ""UnlockedAt"" timestamp with time zone NOT NULL DEFAULT now(),
-            ""IsNotified"" boolean NOT NULL DEFAULT false,
-            CONSTRAINT ""UQ_UserAchievements_UserId_AchievementId"" UNIQUE (""UserId"", ""AchievementId"")
-        );
-        CREATE INDEX IF NOT EXISTS ""IX_UserAchievements_UserId""
-            ON ""UserAchievements"" (""UserId"");
-    ");
-
-    // Add Level column to UserProfiles if not exists
-    await db.Database.ExecuteSqlRawAsync(@"
+    // Schema patches — each wrapped individually so one failure doesn't block others
+    try { await db.Database.ExecuteSqlRawAsync(@"
         ALTER TABLE ""UserProfiles"" ADD COLUMN IF NOT EXISTS ""Level"" text NOT NULL DEFAULT 'beginner';
         ALTER TABLE ""UserProfiles"" ADD COLUMN IF NOT EXISTS ""IsAdmin"" boolean NOT NULL DEFAULT false;
         ALTER TABLE ""UserProfiles"" ADD COLUMN IF NOT EXISTS ""LastSeenQaAt"" timestamp with time zone;
         ALTER TABLE ""UserProfiles"" ADD COLUMN IF NOT EXISTS ""DailyGoalTarget"" integer NOT NULL DEFAULT 20;
         ALTER TABLE ""UserProfiles"" ADD COLUMN IF NOT EXISTS ""LastActiveAt"" timestamp with time zone;
-    ");
+    "); } catch { }
 
-    // Tạo bảng DailyGoalBonusClaims nếu chưa có
-    await db.Database.ExecuteSqlRawAsync(@"
-        CREATE TABLE IF NOT EXISTS ""DailyGoalBonusClaims"" (
-            ""Id"" text NOT NULL PRIMARY KEY,
-            ""UserId"" text NOT NULL,
-            ""Date"" text NOT NULL,
-            ""GoalTarget"" integer NOT NULL DEFAULT 0,
-            ""BonusXp"" integer NOT NULL DEFAULT 0,
-            ""ClaimedAt"" timestamp with time zone NOT NULL DEFAULT now(),
-            CONSTRAINT ""UQ_DailyGoalBonusClaims_UserId_Date"" UNIQUE (""UserId"", ""Date"")
-        );
-        CREATE INDEX IF NOT EXISTS ""IX_DailyGoalBonusClaims_UserId_Date""
-            ON ""DailyGoalBonusClaims"" (""UserId"", ""Date"");
-    ");
+    try { await db.Database.ExecuteSqlRawAsync(@"
+        ALTER TABLE ""UserNotifications"" ADD COLUMN IF NOT EXISTS ""RefId"" text;
+        CREATE INDEX IF NOT EXISTS ""IX_UserNotifications_UserId_CreatedAt""
+            ON ""UserNotifications"" (""UserId"", ""CreatedAt"" DESC);
+    "); } catch { }
 
-    // Tạo bảng AppSettings nếu chưa có
-    await db.Database.ExecuteSqlRawAsync(@"
-        CREATE TABLE IF NOT EXISTS ""AppSettings"" (
-            ""Key"" text NOT NULL PRIMARY KEY,
-            ""Value"" text NOT NULL DEFAULT ''
-        );
-    ");
+    try { await db.Database.ExecuteSqlRawAsync(@"
+        ALTER TABLE ""UserSubscriptions"" ADD COLUMN IF NOT EXISTS ""IsTrial"" boolean NOT NULL DEFAULT false;
+        ALTER TABLE ""UserSubscriptions"" ADD COLUMN IF NOT EXISTS ""WillRenew"" boolean NOT NULL DEFAULT true;
+    "); } catch { }
 
-    // Seed giá trị mặc định daily goal bonuses nếu chưa có
-    await db.Database.ExecuteSqlRawAsync(@"
+    // Seed data — safe with ON CONFLICT DO NOTHING
+    try { await db.Database.ExecuteSqlRawAsync(@"
         INSERT INTO ""AppSettings"" (""Key"", ""Value"") VALUES
             ('dailyGoalBonus:20',  '5'),
             ('dailyGoalBonus:50',  '15'),
-            ('dailyGoalBonus:100', '35')
-        ON CONFLICT (""Key"") DO NOTHING;
-    ");
-
-    // Tạo bảng UserSubscriptions
-    await db.Database.ExecuteSqlRawAsync(@"
-        CREATE TABLE IF NOT EXISTS ""UserSubscriptions"" (
-            ""UserId""        text NOT NULL PRIMARY KEY,
-            ""PlanType""      text NOT NULL DEFAULT '',
-            ""ProductId""     text NOT NULL DEFAULT '',
-            ""PurchaseToken"" text NOT NULL DEFAULT '',
-            ""OrderId""       text NOT NULL DEFAULT '',
-            ""Platform""      text NOT NULL DEFAULT 'google_play',
-            ""IsActive""      boolean NOT NULL DEFAULT true,
-            ""IsTrial""       boolean NOT NULL DEFAULT false,
-            ""PurchasedAt""   timestamp with time zone NOT NULL DEFAULT now(),
-            ""ExpiresAt""     timestamp with time zone,
-            ""UpdatedAt""     timestamp with time zone NOT NULL DEFAULT now()
-        );
-        ALTER TABLE ""UserSubscriptions"" ADD COLUMN IF NOT EXISTS ""IsTrial"" boolean NOT NULL DEFAULT false;
-        ALTER TABLE ""UserSubscriptions"" ADD COLUMN IF NOT EXISTS ""WillRenew"" boolean NOT NULL DEFAULT true;
-
-        INSERT INTO ""AppSettings"" (""Key"", ""Value"") VALUES
+            ('dailyGoalBonus:100', '35'),
+            ('ai:default_daily_limit', '10'),
             ('subscription:package_name',        'doanhdd.javaup.mobile'),
             ('subscription:standard_product_id', 'vip_standard'),
             ('subscription:max_product_id',      'vip_max'),
@@ -269,34 +207,15 @@ using (var scope = app.Services.CreateScope())
         ON CONFLICT (""Key"") DO UPDATE
             SET ""Value"" = EXCLUDED.""Value""
             WHERE ""AppSettings"".""Value"" = '';
-    ");
-
-    // Tạo bảng AI usage tracking
-    await db.Database.ExecuteSqlRawAsync(@"
-        CREATE TABLE IF NOT EXISTS ""UserAiUsages"" (
-            ""UserId"" text NOT NULL,
-            ""Date"" date NOT NULL,
-            ""Count"" integer NOT NULL DEFAULT 0,
-            PRIMARY KEY (""UserId"", ""Date"")
-        );
-
-        CREATE TABLE IF NOT EXISTS ""UserAiLimits"" (
-            ""UserId"" text NOT NULL PRIMARY KEY,
-            ""DailyLimit"" integer NOT NULL DEFAULT 10
-        );
-
-        INSERT INTO ""AppSettings"" (""Key"", ""Value"") VALUES
-            ('ai:default_daily_limit', '10')
-        ON CONFLICT (""Key"") DO NOTHING;
-    ");
+    "); } catch { }
 
     // Add CreatedAt to Questions if not exists, default existing rows to yesterday
-    await db.Database.ExecuteSqlRawAsync(@"
+    try { await db.Database.ExecuteSqlRawAsync(@"
         ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""CreatedAt"" timestamp with time zone;
         UPDATE ""Questions"" SET ""CreatedAt"" = now() - interval '1 day' WHERE ""CreatedAt"" IS NULL;
         ALTER TABLE ""Questions"" ALTER COLUMN ""CreatedAt"" SET NOT NULL;
         ALTER TABLE ""Questions"" ALTER COLUMN ""CreatedAt"" SET DEFAULT now();
-    ");
+    "); } catch { }
 
     // Sync IsAdmin flag from Firebase claims to UserProfiles
     try

@@ -52,8 +52,8 @@ if (pgConn.StartsWith("postgresql://") || pgConn.StartsWith("postgres://"))
     var pgHost = pgUri.Host;
     var pgPort = pgUri.Port > 0 ? pgUri.Port : 5432;
     var pgDatabase = pgUri.AbsolutePath.TrimStart('/');
-    var pgUsername = pgUserInfo.Length > 0 ? pgUserInfo[0] : "";
-    var pgPassword = pgUserInfo.Length > 1 ? pgUserInfo[1] : "";
+    var pgUsername = pgUserInfo.Length > 0 ? Uri.UnescapeDataString(pgUserInfo[0]) : "";
+    var pgPassword = pgUserInfo.Length > 1 ? Uri.UnescapeDataString(pgUserInfo[1]) : "";
     pgConn = $"Host={pgHost};Port={pgPort};Database={pgDatabase};Username={pgUsername};Password={pgPassword};SSL Mode=Require;Trust Server Certificate=true";
 }
 

@@ -1,6 +1,8 @@
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Storage;
 using DatnBackend.Api.Data;
 using DatnBackend.Api.Middleware;
 using DatnBackend.Api.Services;
@@ -144,7 +146,10 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await db.Database.EnsureCreatedAsync();
+    // EnsureCreatedAsync skips table creation when the database already exists (e.g. Supabase).
+    // CreateTablesAsync always attempts to create tables; ignore errors when they already exist.
+    var creator = db.Database.GetService<Microsoft.EntityFrameworkCore.Storage.IRelationalDatabaseCreator>();
+    try { await creator.CreateTablesAsync(); } catch { }
 
     // Tạo bảng mới nếu chưa tồn tại (EnsureCreated không thêm table mới vào DB cũ)
     await db.Database.ExecuteSqlRawAsync(@"

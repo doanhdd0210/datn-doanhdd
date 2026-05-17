@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using DatnBackend.Api.Models;
 using System.Text.Json;
 
@@ -7,6 +8,16 @@ namespace DatnBackend.Api.Data;
 public class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
+
+    private static ValueComparer<List<string>> StringListComparer() => new(
+        (a, b) => a != null && b != null && a.SequenceEqual(b),
+        c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+        c => c.ToList());
+
+    private static ValueComparer<List<UserAnswer>> UserAnswerListComparer() => new(
+        (a, b) => a != null && b != null && a.Count == b.Count,
+        c => c.Count,
+        c => c.ToList());
 
     public DbSet<UserProfile> UserProfiles => Set<UserProfile>();
     public DbSet<Topic> Topics => Set<Topic>();
@@ -50,7 +61,8 @@ public class AppDbContext : DbContext
                 .HasConversion(
                     v => JsonSerializer.Serialize(v, jsonOpts),
                     v => JsonSerializer.Deserialize<List<string>>(v, jsonOpts) ?? new())
-                .HasColumnType("jsonb");
+                .HasColumnType("jsonb")
+                .Metadata.SetValueComparer(StringListComparer());
         });
 
         modelBuilder.Entity<Topic>(e => e.HasKey(t => t.Id));
@@ -64,7 +76,8 @@ public class AppDbContext : DbContext
                 .HasConversion(
                     v => JsonSerializer.Serialize(v, jsonOpts),
                     v => JsonSerializer.Deserialize<List<string>>(v, jsonOpts) ?? new())
-                .HasColumnType("jsonb");
+                .HasColumnType("jsonb")
+                .Metadata.SetValueComparer(StringListComparer());
             e.HasIndex(q => q.LessonId);
         });
 
@@ -85,7 +98,8 @@ public class AppDbContext : DbContext
                 .HasConversion(
                     v => JsonSerializer.Serialize(v, jsonOpts),
                     v => JsonSerializer.Deserialize<List<UserAnswer>>(v, jsonOpts) ?? new())
-                .HasColumnType("jsonb");
+                .HasColumnType("jsonb")
+                .Metadata.SetValueComparer(UserAnswerListComparer());
         });
 
         modelBuilder.Entity<PracticeResult>(e =>
@@ -107,7 +121,8 @@ public class AppDbContext : DbContext
                 .HasConversion(
                     v => JsonSerializer.Serialize(v, jsonOpts),
                     v => JsonSerializer.Deserialize<List<string>>(v, jsonOpts) ?? new())
-                .HasColumnType("jsonb");
+                .HasColumnType("jsonb")
+                .Metadata.SetValueComparer(StringListComparer());
         });
 
         modelBuilder.Entity<QaAnswer>(e =>

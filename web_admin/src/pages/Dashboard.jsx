@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import {
   Users, BookOpen, GraduationCap, HelpCircle, Code2, ShieldCheck, Bell, X,
   LayoutDashboard, BarChart2, Library, ClipboardList, MessagesSquare, Trophy, Star,
-  Settings, LogOut, Bot, Crown, ChevronLeft, ChevronRight,
+  Settings, LogOut, Bot, Crown, PanelLeftClose, PanelLeftOpen,
 } from 'lucide-react'
 import logo from '../assets/logo.png'
 import { useNavigate } from 'react-router-dom'
@@ -82,8 +82,8 @@ export default function Dashboard() {
             title={collapsed ? 'Mở rộng' : 'Thu gọn'}
           >
             {collapsed
-              ? <ChevronRight size={13} strokeWidth={2.5} />
-              : <ChevronLeft size={13} strokeWidth={2.5} />}
+              ? <PanelLeftOpen size={14} strokeWidth={2} />
+              : <PanelLeftClose size={14} strokeWidth={2} />}
           </button>
         </div>
 

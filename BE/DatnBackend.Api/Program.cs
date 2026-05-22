@@ -250,7 +250,7 @@ app.UseSwaggerUI(c =>
 app.UseCors();
 
 // Health check (không cần auth)
-app.MapGet("/health", () => Results.Ok(new
+app.MapMethods("/health", ["GET", "HEAD"], () => Results.Ok(new
 {
     status = "healthy",
     timestamp = DateTime.UtcNow,

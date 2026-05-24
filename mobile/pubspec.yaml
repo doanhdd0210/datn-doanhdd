@@ -1,7 +1,7 @@
 name: mobile
 description: JavaUp - Học lập trình Java theo cách thú vị
 publish_to: "none"
-version: 1.0.0+15
+version: 1.0.0+16
 
 environment:
   sdk: ">=3.0.0 <4.0.0"

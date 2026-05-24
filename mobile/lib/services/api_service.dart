@@ -121,7 +121,7 @@ class ApiService {
       final t = Stopwatch()..start();
       final response = await http
           .get(Uri.parse('$_baseUrl$path'), headers: headers)
-          .timeout(const Duration(seconds: 20));
+          .timeout(const Duration(seconds: 60));
       _log('GET', path, response, t.elapsed);
       if (response.statusCode >= 200 && response.statusCode < 300) {
         if (response.body.isEmpty) return null;
@@ -145,7 +145,7 @@ class ApiService {
             headers: headers,
             body: jsonEncode(body),
           )
-          .timeout(const Duration(seconds: 20));
+          .timeout(const Duration(seconds: 60));
       _log('POST', path, response, t.elapsed, requestBody: body);
       if (response.statusCode >= 200 && response.statusCode < 300) {
         if (response.body.isEmpty) return {};
@@ -165,7 +165,7 @@ class ApiService {
       final t = Stopwatch()..start();
       final response = await http
           .put(Uri.parse('$_baseUrl$path'), headers: headers, body: jsonEncode(body))
-          .timeout(const Duration(seconds: 20));
+          .timeout(const Duration(seconds: 60));
       _log('PUT', path, response, t.elapsed, requestBody: body);
       if (response.statusCode >= 200 && response.statusCode < 300) {
         if (response.body.isEmpty) return {};
@@ -185,7 +185,7 @@ class ApiService {
       final t = Stopwatch()..start();
       final response = await http
           .delete(Uri.parse('$_baseUrl$path'), headers: headers)
-          .timeout(const Duration(seconds: 20));
+          .timeout(const Duration(seconds: 60));
       _log('DELETE', path, response, t.elapsed);
       if (response.statusCode >= 200 && response.statusCode < 300) {
         if (response.body.isEmpty) return {};

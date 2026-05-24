@@ -30,6 +30,8 @@ class _TopicsScreenState extends State<TopicsScreen> {
   List<Topic> _topics = [];
   final Map<String, List<Lesson>> _topicLessons = {};
   bool _isLoading = true;
+  bool _isRetrying = false;
+  bool _hasError = false;
 
   @override
   void initState() {
@@ -60,27 +62,49 @@ class _TopicsScreenState extends State<TopicsScreen> {
   }
 
   Future<void> _loadData() async {
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _isRetrying = false;
+      _hasError = false;
+    });
     try {
       final topics = await _api.getTopics();
-      if (mounted) {
-        setState(() {
-          _topics = topics;
-          _isLoading = false;
-        });
-        context.read<UserProvider>().loadLevel();
-        context.read<UserProvider>().loadTopicProgress();
-        context.read<UserProvider>().loadStats();
-        _loadAllLessons(topics);
-      }
+      if (!mounted) return;
+      _onTopicsLoaded(topics);
     } catch (_) {
-      if (mounted) {
+      if (!mounted) return;
+      // Lần đầu fail → tự động retry sau 5s (cover cold start Render)
+      setState(() {
+        _isLoading = false;
+        _isRetrying = true;
+      });
+      await Future.delayed(const Duration(seconds: 5));
+      if (!mounted) return;
+      try {
+        final topics = await _api.getTopics();
+        if (!mounted) return;
+        setState(() => _isRetrying = false);
+        _onTopicsLoaded(topics);
+      } catch (_) {
+        if (!mounted) return;
         setState(() {
-          _isLoading = false;
-          _topics = _mockTopics();
+          _isRetrying = false;
+          _hasError = true;
         });
       }
     }
+  }
+
+  void _onTopicsLoaded(List<Topic> topics) {
+    setState(() {
+      _topics = topics;
+      _isLoading = false;
+      _isRetrying = false;
+    });
+    context.read<UserProvider>().loadLevel();
+    context.read<UserProvider>().loadTopicProgress();
+    context.read<UserProvider>().loadStats();
+    _loadAllLessons(topics);
   }
 
   void _goToProfile(BuildContext context) {
@@ -96,65 +120,6 @@ class _TopicsScreenState extends State<TopicsScreen> {
         }
       } catch (_) {}
     }
-  }
-
-  List<Topic> _mockTopics() {
-    return [
-      const Topic(
-          id: 'mock1',
-          title: 'Java Basics',
-          description: 'Biến, kiểu dữ liệu, toán tử',
-          icon: '☕',
-          color: '#58CC02',
-          order: 1,
-          totalLessons: 8,
-          isActive: true),
-      const Topic(
-          id: 'mock2',
-          title: 'Object-Oriented',
-          description: 'Lớp, đối tượng, kế thừa',
-          icon: '🏗️',
-          color: '#1CB0F6',
-          order: 2,
-          totalLessons: 10,
-          isActive: true),
-      const Topic(
-          id: 'mock3',
-          title: 'Data Structures',
-          description: 'Mảng, danh sách, ngăn xếp',
-          icon: '📊',
-          color: '#FF9600',
-          order: 3,
-          totalLessons: 12,
-          isActive: true),
-      const Topic(
-          id: 'mock4',
-          title: 'Algorithms',
-          description: 'Sắp xếp, tìm kiếm, đệ quy',
-          icon: '🔄',
-          color: '#CE82FF',
-          order: 4,
-          totalLessons: 8,
-          isActive: true),
-      const Topic(
-          id: 'mock5',
-          title: 'Exception Handling',
-          description: 'Try-catch, ngoại lệ tùy chỉnh',
-          icon: '⚠️',
-          color: '#FF4B4B',
-          order: 5,
-          totalLessons: 6,
-          isActive: true),
-      const Topic(
-          id: 'mock6',
-          title: 'Collections & Streams',
-          description: 'Collections Framework',
-          icon: '🌊',
-          color: '#00CD9C',
-          order: 6,
-          totalLessons: 10,
-          isActive: true),
-    ];
   }
 
   @override
@@ -179,6 +144,16 @@ class _TopicsScreenState extends State<TopicsScreen> {
                   SliverToBoxAdapter(child: _buildDailyGoalBanner()),
                   if (_isLoading)
                     const SliverToBoxAdapter(child: _PathShimmer())
+                  else if (_isRetrying)
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: _buildRetryingState(),
+                    )
+                  else if (_hasError)
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: _buildErrorState(),
+                    )
                   else
                     SliverToBoxAdapter(
                       child: _SkillPath(
@@ -205,6 +180,83 @@ class _TopicsScreenState extends State<TopicsScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildRetryingState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(
+              width: 48,
+              height: 48,
+              child: CircularProgressIndicator(
+                color: AppColors.primary,
+                strokeWidth: 3,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Server đang khởi động...',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: context.textDark,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Đang thử kết nối lại, vui lòng chờ.',
+              style: TextStyle(fontSize: 13, color: context.textSecondary),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.cloud_off_rounded, size: 64, color: context.textTertiary),
+            const SizedBox(height: 16),
+            Text(
+              'Không tải được dữ liệu',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: context.textDark,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Kiểm tra kết nối mạng và thử lại.',
+              style: TextStyle(fontSize: 13, color: context.textSecondary),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: _loadData,
+              icon: const Icon(Icons.refresh_rounded, size: 18),
+              label: const Text('Thử lại'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

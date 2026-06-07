@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
@@ -12,6 +13,31 @@ namespace DatnBackend.Api.Controllers;
 public class CodeSnippetsController : ControllerBase
 {
     private readonly CodeSnippetService _codeSnippetService;
+
+    // ── Giới hạn toàn server: tối đa 5 process đồng thời ────────────────────
+    private static readonly SemaphoreSlim _execSemaphore = new(5, 5);
+
+    // ── Rate limit: tối đa 15 lần /run mỗi phút mỗi user ────────────────────
+    private static readonly ConcurrentDictionary<string, Queue<long>> _userRateMap = new();
+    private const int RateLimitPerMinute = 15;
+
+    // ── Giới hạn kích thước ──────────────────────────────────────────────────
+    private const int MaxOutputBytes = 32_000;   // 32KB stdout+stderr
+
+    // ── Từ khóa Java nguy hiểm bị cấm ───────────────────────────────────────
+    private static readonly string[] JavaBlacklist =
+    [
+        "Runtime.getRuntime", "ProcessBuilder", "System.exit",
+        "Runtime.exec",       "Process.exec",
+        "FileWriter",         "FileOutputStream", "FileInputStream",
+        "new File(",          "Files.write",      "Files.delete",  "Files.copy",
+        "Socket(",            "ServerSocket(",     "DatagramSocket(",
+        "URL(",               "URLConnection",     "HttpURLConnection",
+        "Class.forName",      "ClassLoader",       "getClassLoader",
+        "SecurityManager",    "System.setSecurityManager",
+        "Thread.getAllStackTraces",
+        "sun.misc.Unsafe",    "java.lang.reflect",
+    ];
 
     public CodeSnippetsController(CodeSnippetService codeSnippetService)
     {
@@ -108,6 +134,39 @@ public class CodeSnippetsController : ControllerBase
     {
         if (UserId == null) return Unauthorized(ApiResponse<RunCodeResult>.Fail("Unauthorized"));
 
+        // ── 1. Rate limit per user ────────────────────────────────────────────
+        var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        var queue = _userRateMap.GetOrAdd(UserId, _ => new Queue<long>());
+        lock (queue)
+        {
+            while (queue.Count > 0 && now - queue.Peek() >= 60) queue.Dequeue();
+            if (queue.Count >= RateLimitPerMinute)
+                return StatusCode(429, ApiResponse<RunCodeResult>.Fail(
+                    $"Quá giới hạn: tối đa {RateLimitPerMinute} lần chạy code mỗi phút."));
+            queue.Enqueue(now);
+        }
+
+        // ── 2. Validate kích thước code ───────────────────────────────────────
+        if (string.IsNullOrWhiteSpace(request.Code))
+            return BadRequest(ApiResponse<RunCodeResult>.Fail("Code không được để trống."));
+
+        // ── 3. Validate từ khóa nguy hiểm (chỉ áp dụng Java) ─────────────────
+        if (request.Language == "java")
+        {
+            foreach (var keyword in JavaBlacklist)
+            {
+                if (request.Code.Contains(keyword, StringComparison.OrdinalIgnoreCase))
+                    return BadRequest(ApiResponse<RunCodeResult>.Fail(
+                        $"Code chứa từ khóa không được phép: '{keyword}'."));
+            }
+        }
+
+        // ── 4. Giới hạn concurrent process toàn server ────────────────────────
+        var acquired = await _execSemaphore.WaitAsync(TimeSpan.FromSeconds(8));
+        if (!acquired)
+            return StatusCode(503, ApiResponse<RunCodeResult>.Fail(
+                "Server đang xử lý quá nhiều yêu cầu. Vui lòng thử lại sau vài giây."));
+
         var tmpDir = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
         Directory.CreateDirectory(tmpDir);
         try
@@ -123,6 +182,7 @@ public class CodeSnippetsController : ControllerBase
         }
         finally
         {
+            _execSemaphore.Release();
             try { Directory.Delete(tmpDir, true); } catch { }
         }
     }
@@ -132,17 +192,20 @@ public class CodeSnippetsController : ControllerBase
         var srcFile = Path.Combine(tmpDir, "Main.java");
         await System.IO.File.WriteAllTextAsync(srcFile, code);
 
-        // Compile
+        // Compile (timeout 15s – javac chậm lần đầu)
         var compile = await ExecAsync("javac", $"-encoding UTF-8 \"{srcFile}\"", tmpDir, "", TimeSpan.FromSeconds(15));
         if (compile.exitCode != 0)
-            return new RunCodeResult { Stderr = compile.stderr, ExitCode = compile.exitCode, IsSuccess = false };
+            return new RunCodeResult { Stderr = Truncate(compile.stderr), ExitCode = compile.exitCode, IsSuccess = false };
 
-        // Run
-        var run = await ExecAsync("java", "-Dfile.encoding=UTF-8 -cp . Main", tmpDir, stdin, TimeSpan.FromSeconds(10));
+        // Run – giới hạn JVM 64MB heap, 10s timeout
+        var run = await ExecAsync("java",
+            "-Dfile.encoding=UTF-8 -Xmx64m -Xss512k -cp . Main",
+            tmpDir, stdin, TimeSpan.FromSeconds(10));
+
         return new RunCodeResult
         {
-            Stdout    = run.stdout,
-            Stderr    = run.stderr,
+            Stdout    = Truncate(run.stdout),
+            Stderr    = Truncate(run.stderr),
             ExitCode  = run.exitCode,
             IsSuccess = run.exitCode == 0,
         };
@@ -154,11 +217,18 @@ public class CodeSnippetsController : ControllerBase
         var run = await ExecAsync(cmd, args, tmpDir, stdin, TimeSpan.FromSeconds(10));
         return new RunCodeResult
         {
-            Stdout    = run.stdout,
-            Stderr    = run.stderr,
+            Stdout    = Truncate(run.stdout),
+            Stderr    = Truncate(run.stderr),
             ExitCode  = run.exitCode,
             IsSuccess = run.exitCode == 0,
         };
+    }
+
+    // Cắt bớt output nếu quá MaxOutputBytes để tránh OOM
+    private static string Truncate(string s)
+    {
+        if (string.IsNullOrEmpty(s) || s.Length <= MaxOutputBytes) return s;
+        return s[..MaxOutputBytes] + $"\n[... output bị cắt bớt – vượt quá {MaxOutputBytes / 1000}KB ...]";
     }
 
     private static async Task<(string stdout, string stderr, int exitCode)> ExecAsync(
@@ -176,27 +246,36 @@ public class CodeSnippetsController : ControllerBase
             RedirectStandardError   = true,
             UseShellExecute         = false,
             CreateNoWindow          = true,
-            StandardOutputEncoding  = System.Text.Encoding.UTF8,
-            StandardErrorEncoding   = System.Text.Encoding.UTF8,
+            StandardOutputEncoding  = Encoding.UTF8,
+            StandardErrorEncoding   = Encoding.UTF8,
         };
         proc.Start();
+
         if (!string.IsNullOrEmpty(stdin))
-        {
             await proc.StandardInput.WriteAsync(stdin);
-        }
         proc.StandardInput.Close();
 
-        var stdoutTask = proc.StandardOutput.ReadToEndAsync();
-        var stderrTask = proc.StandardError.ReadToEndAsync();
+        // Đọc stdout/stderr song song với timeout riêng (tránh hang sau khi kill)
+        using var readCts = new CancellationTokenSource(timeout + TimeSpan.FromSeconds(3));
+        var stdoutTask = proc.StandardOutput.ReadToEndAsync(readCts.Token).AsTask();
+        var stderrTask = proc.StandardError.ReadToEndAsync(readCts.Token).AsTask();
 
-        try { await proc.WaitForExitAsync(cts.Token); }
+        try
+        {
+            await proc.WaitForExitAsync(cts.Token);
+        }
         catch (OperationCanceledException)
         {
-            try { proc.Kill(true); } catch { }
-            return ("", "Timeout: chương trình chạy quá lâu.", -1);
+            try { proc.Kill(entireProcessTree: true); } catch { }
+            readCts.Cancel();
+            return ("", "⏱ Timeout: chương trình chạy quá 10 giây và đã bị dừng.", -1);
         }
 
-        return (await stdoutTask, await stderrTask, proc.ExitCode);
+        string stdout = "", stderr = "";
+        try { stdout = await stdoutTask; } catch { }
+        try { stderr = await stderrTask; } catch { }
+
+        return (stdout, stderr, proc.ExitCode);
     }
 
     /// <summary>Get list of snippet IDs the user has already passed</summary>

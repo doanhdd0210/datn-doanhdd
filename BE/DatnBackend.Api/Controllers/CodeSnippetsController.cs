@@ -257,8 +257,8 @@ public class CodeSnippetsController : ControllerBase
 
         // Đọc stdout/stderr song song với timeout riêng (tránh hang sau khi kill)
         using var readCts = new CancellationTokenSource(timeout + TimeSpan.FromSeconds(3));
-        var stdoutTask = proc.StandardOutput.ReadToEndAsync(readCts.Token).AsTask();
-        var stderrTask = proc.StandardError.ReadToEndAsync(readCts.Token).AsTask();
+        var stdoutTask = proc.StandardOutput.ReadToEndAsync(readCts.Token);
+        var stderrTask = proc.StandardError.ReadToEndAsync(readCts.Token);
 
         try
         {

@@ -204,12 +204,39 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
 
   String _priceFor(SubscriptionPlan plan) {
     final product = _productFor(plan);
-    return product?.price ??
-        (plan.displayPrice.isNotEmpty ? plan.displayPrice : '---');
+    final iapPrice = product?.price;
+    // Google Play returns "Free" for test/sandbox accounts — fall back to displayPrice
+    final iapPriceIsReal = iapPrice != null &&
+        iapPrice.isNotEmpty &&
+        !iapPrice.toLowerCase().contains('free') &&
+        iapPrice != r'$0.00' &&
+        iapPrice != '0';
+    if (iapPriceIsReal) return iapPrice!;
+    return plan.displayPrice.isNotEmpty ? plan.displayPrice : '---';
   }
 
   Color _colorFor(SubscriptionPlan plan) =>
       plan.id == 'max' ? const Color(0xFFFFC107) : AppColors.secondary;
+
+  /// Kiểm tra xem user có đủ điều kiện dùng thử miễn phí không.
+  /// Ưu tiên lấy từ Google Play offer thực tế (tránh show "free" với user đã dùng trial).
+  /// Fallback về config trialDays khi chưa load được product từ Play Store.
+  bool _hasTrial(SubscriptionPlan plan) {
+    final product = _productFor(plan);
+    if (product is GooglePlayProductDetails) {
+      final offers = product.productDetails.subscriptionOfferDetails;
+      if (offers != null && offers.isNotEmpty) {
+        final phases = offers.first.pricingPhases?.pricingPhaseList;
+        if (phases != null && phases.isNotEmpty) {
+          // Free trial = phase đầu tiên có giá 0
+          return phases.first.priceAmountMicros == 0;
+        }
+      }
+      return false; // product load được nhưng không có trial offer
+    }
+    // Product chưa load từ Play Store → fallback config
+    return plan.trialDays > 0;
+  }
 
   String _formatDate(DateTime dt) =>
       '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}';
@@ -270,7 +297,7 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
                 else ...[
                   _buildPlanSelector(hasActiveSub),
                   const SizedBox(height: 20),
-                  if (!hasActiveSub) _buildTrialCallout(),
+                  if (!hasActiveSub && _selectedPlan != null && _hasTrial(_selectedPlan!)) _buildTrialCallout(),
                 ],
                 const SizedBox(height: 24),
                 _buildFeatureList(),
@@ -472,7 +499,7 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
                           Text(plan.title,
                               style: AppTextStyles.labelBold
                                   .copyWith(color: color)),
-                          if (plan.trialDays > 0) ...[
+                          if (_hasTrial(plan)) ...[
                             const SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(
@@ -634,7 +661,7 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
   Widget _buildBottomCta() {
     final plan = _selectedPlan;
     final product = plan != null ? _productFor(plan) : null;
-    final hasTrial = (plan?.trialDays ?? 0) > 0;
+    final hasTrial = plan != null && _hasTrial(plan);
     final isLoading = _purchasingId != null || _verifying;
     final canBuy = product != null && _iapAvailable && !isLoading;
     final priceText = plan != null ? _priceFor(plan) : '---';

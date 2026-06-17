@@ -8,7 +8,7 @@ public class AiService
 {
     private readonly HttpClient _http;
     private readonly ILogger<AiService> _logger;
-    private readonly string _apiKey;
+    private readonly List<string> _apiKeys;
 
     private const string GroqUrl = "https://api.groq.com/openai/v1/chat/completions";
     private const string Model = "llama-3.1-8b-instant";
@@ -17,16 +17,17 @@ public class AiService
     {
         _http = http;
         _logger = logger;
-        _apiKey = Environment.GetEnvironmentVariable("GROQ_API_KEY")
-                  ?? config["Groq:ApiKey"]
-                  ?? "";
+
+        _apiKeys = new List<string>();
+        var primaryKey = Environment.GetEnvironmentVariable("GROQ_API_KEY") ?? config["Groq:ApiKey"] ?? "";
+        var backupKey = Environment.GetEnvironmentVariable("GROQ_API_KEY_BACKUP") ?? config["Groq:ApiKeyBackup"] ?? "";
+
+        if (!string.IsNullOrEmpty(primaryKey)) _apiKeys.Add(primaryKey);
+        if (!string.IsNullOrEmpty(backupKey)) _apiKeys.Add(backupKey);
     }
 
-    private async Task<string> CallGroqAsync(string prompt)
+    private async Task<string> CallGroqWithKeyAsync(string apiKey, string prompt)
     {
-        if (string.IsNullOrEmpty(_apiKey))
-            return "Chưa cấu hình GROQ_API_KEY trên server.";
-
         var body = new
         {
             model = Model,
@@ -36,35 +37,59 @@ public class AiService
         };
 
         var request = new HttpRequestMessage(HttpMethod.Post, GroqUrl);
-        request.Headers.Add("Authorization", $"Bearer {_apiKey}");
+        request.Headers.Add("Authorization", $"Bearer {apiKey}");
         request.Content = new StringContent(
             JsonSerializer.Serialize(body),
             Encoding.UTF8,
             "application/json");
 
-        try
-        {
-            var response = await _http.SendAsync(request);
-            var json = await response.Content.ReadAsStringAsync();
+        var response = await _http.SendAsync(request);
+        var json = await response.Content.ReadAsStringAsync();
 
-            if (!response.IsSuccessStatusCode)
+        if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+            throw new HttpRequestException("rate_limited");
+
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogWarning("Groq error {Status}: {Body}", response.StatusCode, json);
+            return $"AI lỗi {(int)response.StatusCode}. Thử lại sau.";
+        }
+
+        using var doc = JsonDocument.Parse(json);
+        return doc.RootElement
+            .GetProperty("choices")[0]
+            .GetProperty("message")
+            .GetProperty("content")
+            .GetString() ?? "Không có phản hồi từ AI.";
+    }
+
+    private async Task<string> CallGroqAsync(string prompt)
+    {
+        if (_apiKeys.Count == 0)
+            return "Chưa cấu hình GROQ_API_KEY trên server.";
+
+        for (var i = 0; i < _apiKeys.Count; i++)
+        {
+            try
             {
-                _logger.LogWarning("Groq error {Status}: {Body}", response.StatusCode, json);
-                return $"AI lỗi {(int)response.StatusCode}. Thử lại sau.";
+                var result = await CallGroqWithKeyAsync(_apiKeys[i], prompt);
+                return result;
             }
+            catch (HttpRequestException ex) when (ex.Message == "rate_limited")
+            {
+                _logger.LogWarning("Groq key #{Index} bị rate limit, thử key tiếp theo", i + 1);
+                if (i == _apiKeys.Count - 1)
+                    return "AI đã đạt giới hạn request. Vui lòng thử lại sau ít phút.";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Groq call failed with key #{Index}", i + 1);
+                if (i == _apiKeys.Count - 1)
+                    return "Không thể kết nối AI lúc này. Thử lại sau.";
+            }
+        }
 
-            using var doc = JsonDocument.Parse(json);
-            return doc.RootElement
-                .GetProperty("choices")[0]
-                .GetProperty("message")
-                .GetProperty("content")
-                .GetString() ?? "Không có phản hồi từ AI.";
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Groq call failed");
-            return "Không thể kết nối AI lúc này. Thử lại sau.";
-        }
+        return "Không thể kết nối AI lúc này. Thử lại sau.";
     }
 
     public async Task<string> ExplainCodeErrorAsync(AiExplainRequest req)

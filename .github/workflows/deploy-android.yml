@@ -57,6 +57,12 @@ jobs:
             "$STORE_PASSWORD" "$KEY_PASSWORD" "$KEY_ALIAS" \
             > mobile/android/key.properties
 
+      - name: Restore firebase_options.dart
+        env:
+          FIREBASE_OPTIONS_BASE64: ${{ secrets.FIREBASE_OPTIONS_BASE64 }}
+        run: |
+          echo "$FIREBASE_OPTIONS_BASE64" | base64 --decode > mobile/lib/firebase_options.dart
+
       - name: Get Flutter dependencies
         working-directory: mobile
         run: flutter pub get

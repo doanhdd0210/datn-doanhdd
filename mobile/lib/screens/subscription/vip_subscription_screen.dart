@@ -210,15 +210,15 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
     if (product is GooglePlayProductDetails) {
       final offers = product.productDetails.subscriptionOfferDetails;
       if (offers != null && offers.isNotEmpty) {
-        final phases = offers.first.pricingPhases?.pricingPhaseList;
-        if (phases != null && phases.isNotEmpty) {
+        final phases = offers.first.pricingPhases;
+        if (phases.isNotEmpty) {
           // Phase cuối = giá recurring thực (sau khi hết trial/intro)
           final recurringPhase = phases.lastWhere(
-            (p) => (p.priceAmountMicros ?? 0) > 0,
+            (p) => p.priceAmountMicros > 0,
             orElse: () => phases.last,
           );
           final formatted = recurringPhase.formattedPrice;
-          if (formatted != null && formatted.isNotEmpty) return formatted;
+          if (formatted.isNotEmpty) return formatted;
         }
       }
     }
@@ -245,8 +245,8 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
     if (product is GooglePlayProductDetails) {
       final offers = product.productDetails.subscriptionOfferDetails;
       if (offers != null && offers.isNotEmpty) {
-        final phases = offers.first.pricingPhases?.pricingPhaseList;
-        if (phases != null && phases.isNotEmpty) {
+        final phases = offers.first.pricingPhases;
+        if (phases.isNotEmpty) {
           // Free trial = phase đầu tiên có giá 0
           return phases.first.priceAmountMicros == 0;
         }

@@ -204,8 +204,27 @@ class _VipSubscriptionScreenState extends State<VipSubscriptionScreen> {
 
   String _priceFor(SubscriptionPlan plan) {
     final product = _productFor(plan);
+
+    // Ưu tiên lấy giá recurring (sau trial) từ subscriptionOfferDetails
+    // vì product.price có thể trả về "Free" khi sub có free trial
+    if (product is GooglePlayProductDetails) {
+      final offers = product.productDetails.subscriptionOfferDetails;
+      if (offers != null && offers.isNotEmpty) {
+        final phases = offers.first.pricingPhases?.pricingPhaseList;
+        if (phases != null && phases.isNotEmpty) {
+          // Phase cuối = giá recurring thực (sau khi hết trial/intro)
+          final recurringPhase = phases.lastWhere(
+            (p) => (p.priceAmountMicros ?? 0) > 0,
+            orElse: () => phases.last,
+          );
+          final formatted = recurringPhase.formattedPrice;
+          if (formatted != null && formatted.isNotEmpty) return formatted;
+        }
+      }
+    }
+
+    // Fallback: lọc "Free" / "$0" từ IAP rồi về displayPrice từ admin config
     final iapPrice = product?.price;
-    // Google Play returns "Free" for test/sandbox accounts — fall back to displayPrice
     final iapPriceIsReal = iapPrice != null &&
         iapPrice.isNotEmpty &&
         !iapPrice.toLowerCase().contains('free') &&

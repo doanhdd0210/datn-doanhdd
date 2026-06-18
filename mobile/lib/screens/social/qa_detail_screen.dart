@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import '../../../widgets/football_refresh_indicator.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../providers/ai_usage_provider.dart';
@@ -185,9 +186,8 @@ class _QaDetailScreenState extends State<QaDetailScreen> {
       body: Column(
         children: [
           Expanded(
-            child: RefreshIndicator(
+            child: FootballRefreshIndicator(
               onRefresh: _loadAnswers,
-              color: AppColors.primary,
               child: CustomScrollView(
                 slivers: [
                   // Question

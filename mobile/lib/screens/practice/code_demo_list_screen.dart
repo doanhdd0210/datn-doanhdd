@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
+import '../../../widgets/football_refresh_indicator.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_text_styles.dart';
 import '../../constants/app_theme.dart';
@@ -118,9 +119,8 @@ class _CodeDemoListScreenState extends State<CodeDemoListScreen> {
     return Scaffold(
       backgroundColor: context.bgColor,
       body: SafeArea(
-        child: RefreshIndicator(
+        child: FootballRefreshIndicator(
           onRefresh: _loadData,
-          color: AppColors.primary,
           child: CustomScrollView(
             slivers: [
               SliverToBoxAdapter(child: _buildHeader()),

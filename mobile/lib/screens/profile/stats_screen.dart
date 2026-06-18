@@ -1,5 +1,6 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import '../../../widgets/football_refresh_indicator.dart';
 import 'package:intl/intl.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_text_styles.dart';
@@ -107,9 +108,8 @@ class _StatsScreenState extends State<StatsScreen> with SingleTickerProviderStat
       ),
       body: _isLoading
           ? const AppLoadingCenter()
-          : RefreshIndicator(
+          : FootballRefreshIndicator(
               onRefresh: _loadData,
-              color: AppColors.primary,
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
                 child: Column(

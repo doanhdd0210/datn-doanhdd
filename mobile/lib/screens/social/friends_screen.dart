@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import '../../../widgets/football_refresh_indicator.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../constants/app_colors.dart';
@@ -374,9 +375,8 @@ class _FriendsScreenState extends State<FriendsScreen>
 
     final data = _showWeekly ? _weeklyLeaderboard : _leaderboard;
 
-    return RefreshIndicator(
+    return FootballRefreshIndicator(
       onRefresh: _loadAll,
-      color: AppColors.primary,
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         children: [
@@ -664,9 +664,8 @@ class _FriendsScreenState extends State<FriendsScreen>
       );
     }
 
-    return RefreshIndicator(
+    return FootballRefreshIndicator(
       onRefresh: _loadFriends,
-      color: AppColors.primary,
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
         children: [

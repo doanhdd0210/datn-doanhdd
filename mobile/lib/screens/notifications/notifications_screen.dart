@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import '../../../widgets/football_refresh_indicator.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../constants/app_colors.dart';
@@ -119,8 +120,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ? const AppLoadingCenter()
           : _notifications.isEmpty
               ? _buildEmpty(context)
-              : RefreshIndicator(
-                  color: AppColors.primary,
+              : FootballRefreshIndicator(
                   onRefresh: _load,
                   child: ListView.separated(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),

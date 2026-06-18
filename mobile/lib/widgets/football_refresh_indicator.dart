@@ -39,7 +39,8 @@ class _FootballRefreshIndicatorState extends State<FootballRefreshIndicator>
 
   void _onStateChanged(IndicatorStateChange change) {
     if (change.currentState == IndicatorState.loading) {
-      _roll.repeat();
+      // reverse: true → bóng lăn trái↔phải liên tục, không jump khi reset
+      _roll.repeat(reverse: true);
     } else if (change.currentState == IndicatorState.complete ||
         change.currentState == IndicatorState.idle) {
       _roll.stop();

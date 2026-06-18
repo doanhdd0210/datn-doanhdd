@@ -1142,23 +1142,21 @@ class _PathShimmerState extends State<_PathShimmer>
       padding: const EdgeInsets.symmetric(vertical: 24),
       child: AnimatedBuilder(
         animation: _pulse,
-        builder: (_, __) => Column(
-          children: List.generate(5, (i) {
-            final xFrac = positions[i];
-            // Stagger each ball slightly
-            final staggered = ((_pulse.value + i * 0.15) % 1.0).clamp(0.4, 1.0);
-            return LayoutBuilder(
-              builder: (context, c) {
-                final left = 16 + (c.maxWidth - 32 - 72) * xFrac;
-                return SizedBox(
-                  height: 100,
-                  child: Stack(
-                    children: [
-                      Positioned(
-                        left: left,
-                        top: 8,
-                        child: Opacity(
-                          opacity: staggered,
+        builder: (_, __) => Opacity(
+          opacity: _pulse.value,
+          child: Column(
+            children: List.generate(5, (i) {
+              final xFrac = positions[i];
+              return LayoutBuilder(
+                builder: (context, c) {
+                  final left = 16 + (c.maxWidth - 32 - 72) * xFrac;
+                  return SizedBox(
+                    height: 100,
+                    child: Stack(
+                      children: [
+                        Positioned(
+                          left: left,
+                          top: 8,
                           child: const SizedBox(
                             width: 72,
                             height: 72,
@@ -1167,13 +1165,13 @@ class _PathShimmerState extends State<_PathShimmer>
                             ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            );
-          }),
+                      ],
+                    ),
+                  );
+                },
+              );
+            }),
+          ),
         ),
       ),
     );

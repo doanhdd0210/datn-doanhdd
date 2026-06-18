@@ -27,7 +27,7 @@ class _FootballRefreshIndicatorState extends State<FootballRefreshIndicator>
     super.initState();
     _spin = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 400),
+      duration: const Duration(milliseconds: 250),
     );
   }
 

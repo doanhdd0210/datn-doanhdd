@@ -14,6 +14,7 @@ import 'providers/user_provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/main_navigation_screen.dart';
 import 'screens/onboarding/onboarding_screen.dart';
+import 'services/api_service.dart';
 import 'services/notification_service.dart';
 import 'widgets/no_internet_banner.dart';
 
@@ -163,7 +164,22 @@ class _OnboardingGateState extends State<_OnboardingGate> {
       return;
     }
     final prefs = await SharedPreferences.getInstance();
-    final done = prefs.getBool(onboardingDoneKey(uid)) ?? false;
+    var done = prefs.getBool(onboardingDoneKey(uid)) ?? false;
+
+    // Nếu chưa có flag local (cài lại app / thiết bị mới), hỏi backend
+    if (!done) {
+      try {
+        final stats = await ApiService().getUserStats();
+        final levelSet = stats['levelSet'] as bool? ?? false;
+        if (levelSet) {
+          await prefs.setBool(onboardingDoneKey(uid), true);
+          done = true;
+        }
+      } catch (_) {
+        // Network error → giữ nguyên done = false, hiển thị onboarding
+      }
+    }
+
     if (mounted) setState(() => _onboardingDone = done);
   }
 

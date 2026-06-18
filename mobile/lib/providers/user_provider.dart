@@ -180,11 +180,16 @@ class UserProvider extends ChangeNotifier {
       _lessonsCompleted = stats['lessonsCompleted'] as int? ?? 0;
       _rank = stats['rank']?.toString() ?? '-';
       final beLevel = stats['level'] as String?;
+      final levelSet = stats['levelSet'] as bool? ?? false;
       if (beLevel != null && beLevel.isNotEmpty && (beLevel != 'beginner' || _level == 'beginner')) {
         _level = beLevel;
         final uid = FirebaseAuth.instance.currentUser?.uid;
         final prefs = await SharedPreferences.getInstance();
-        if (uid != null) await prefs.setString('user_level_$uid', beLevel);
+        if (uid != null) {
+          await prefs.setString('user_level_$uid', beLevel);
+          // Auto-mark onboarding done nếu backend xác nhận user đã chọn level
+          if (levelSet) await prefs.setBool('onboarding_done_$uid', true);
+        }
       }
       // Sync daily goal target from BE (source of truth)
       final beGoal = stats['dailyGoalTarget'] as int?;

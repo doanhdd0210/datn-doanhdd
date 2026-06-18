@@ -244,6 +244,7 @@ public class ProgressService
             LongestStreak = profile?.LongestStreak ?? 0,
             Rank = profile?.Rank ?? "Beginner",
             Level = profile?.Level ?? "beginner",
+            LevelSet = profile?.Level != null,
             TodayXp = (todayProgress?.XpEarned ?? 0) + todayAchievementXp,
             DailyGoalTarget = profile?.DailyGoalTarget ?? 20,
             DailyGoalBonusClaimedToday = bonusClaimedToday,
@@ -555,6 +556,7 @@ public class UserStatsResponse
     public int LongestStreak { get; set; }
     public string Rank { get; set; } = "";
     public string Level { get; set; } = "beginner";
+    public bool LevelSet { get; set; }
     public int TodayXp { get; set; }
     public int DailyGoalTarget { get; set; } = 20;
     public bool DailyGoalBonusClaimedToday { get; set; }

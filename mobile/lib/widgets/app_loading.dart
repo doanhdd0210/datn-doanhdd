@@ -1,8 +1,6 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 
-/// Loading indicator chính toàn app — cầu thủ sút bóng.
-/// [AppLoading()] cho full-size, [AppLoading.small()] cho inline.
+/// Bouncing ⚽ với squish + shadow — dùng toàn app thay CircularProgressIndicator.
 class AppLoading extends StatefulWidget {
   final bool small;
 
@@ -16,74 +14,57 @@ class AppLoading extends StatefulWidget {
 class _AppLoadingState extends State<AppLoading>
     with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl;
-
-  // Ball X: 0 (player) → 1 (right edge) → 0 (back)
-  late final Animation<double> _ballX;
-  // Ball Y: parabolic arc up-down khi sút
   late final Animation<double> _ballY;
-  // Ball rotation
-  late final Animation<double> _ballRot;
-  // Player kick (forward lean lúc t=0→0.1, rồi return)
-  late final Animation<double> _kick;
+  late final Animation<double> _scaleX;
+  late final Animation<double> _scaleY;
+  late final Animation<double> _shadow;
 
   @override
   void initState() {
     super.initState();
     _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1100),
+      duration: const Duration(milliseconds: 550),
     )..repeat();
 
-    // Nửa đầu: bóng bay sang phải, nửa sau: lăn về
-    _ballX = TweenSequence<double>([
-      TweenSequenceItem(
-        tween: Tween(begin: 0.0, end: 1.0)
-            .chain(CurveTween(curve: Curves.easeIn)),
-        weight: 55,
-      ),
-      TweenSequenceItem(
-        tween: Tween(begin: 1.0, end: 0.0)
-            .chain(CurveTween(curve: Curves.easeOut)),
-        weight: 45,
-      ),
-    ]).animate(_ctrl);
-
-    // Bóng bay lên (arc) khi sút, lăn phẳng khi về
+    // Bóng bay lên (easeOut) rồi rơi xuống (easeIn)
     _ballY = TweenSequence<double>([
       TweenSequenceItem(
         tween: Tween(begin: 0.0, end: -1.0)
             .chain(CurveTween(curve: Curves.easeOut)),
-        weight: 27,
+        weight: 50,
       ),
       TweenSequenceItem(
         tween: Tween(begin: -1.0, end: 0.0)
             .chain(CurveTween(curve: Curves.easeIn)),
-        weight: 28,
-      ),
-      TweenSequenceItem(
-        tween: ConstantTween(0.0),
-        weight: 45,
+        weight: 50,
       ),
     ]).animate(_ctrl);
 
-    // Bóng xoay liên tục
-    _ballRot = Tween<double>(begin: 0, end: 2 * pi).animate(_ctrl);
+    // Squish khi chạm đất (cuối chu kỳ và đầu chu kỳ)
+    _scaleX = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 1.2, end: 1.0), weight: 8),
+      TweenSequenceItem(tween: ConstantTween(1.0), weight: 84),
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.2), weight: 8),
+    ]).animate(_ctrl);
 
-    // Cầu thủ: chân đá nhanh lúc đầu rồi đứng yên
-    _kick = TweenSequence<double>([
+    _scaleY = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0.8, end: 1.0), weight: 8),
+      TweenSequenceItem(tween: ConstantTween(1.0), weight: 84),
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.8), weight: 8),
+    ]).animate(_ctrl);
+
+    // Shadow: lớn khi bóng ở dưới, nhỏ khi bóng lên cao
+    _shadow = TweenSequence<double>([
       TweenSequenceItem(
-        tween: Tween(begin: 0.0, end: 0.35)
+        tween: Tween(begin: 1.0, end: 0.25)
             .chain(CurveTween(curve: Curves.easeOut)),
-        weight: 10,
+        weight: 50,
       ),
       TweenSequenceItem(
-        tween: Tween(begin: 0.35, end: 0.0)
+        tween: Tween(begin: 0.25, end: 1.0)
             .chain(CurveTween(curve: Curves.easeIn)),
-        weight: 10,
-      ),
-      TweenSequenceItem(
-        tween: ConstantTween(0.0),
-        weight: 80,
+        weight: 50,
       ),
     ]).animate(_ctrl);
   }
@@ -95,85 +76,91 @@ class _AppLoadingState extends State<AppLoading>
   }
 
   @override
-  Widget build(BuildContext context) {
-    if (widget.small) return _buildSmall();
+  Widget build(BuildContext context) => widget.small ? _small() : _full();
 
-    const w = 130.0;
-    const h = 56.0;
-    const playerSize = 34.0;
-    const ballSize = 20.0;
-    const arcHeight = 22.0;
-    // Bóng bắt đầu ngay cạnh chân cầu thủ
-    const ballStartX = playerSize - 4.0;
-    const ballTravelW = w - ballStartX - ballSize;
+  Widget _full() {
+    const ballSize = 44.0;
+    const bounceH = 44.0;
+    const shadowW = 32.0;
+    const totalH = ballSize + bounceH + 10;
 
     return AnimatedBuilder(
       animation: _ctrl,
-      builder: (_, __) {
-        final bx = ballStartX + _ballX.value * ballTravelW;
-        final by = h * 0.62 + _ballY.value * arcHeight;
-
-        return SizedBox(
-          width: w,
-          height: h,
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              // Cầu thủ
-              Positioned(
-                left: 0,
-                top: h * 0.18,
-                child: Transform.rotate(
-                  angle: _kick.value,
-                  alignment: Alignment.bottomCenter,
-                  child: const Text('🏃‍♂️',
-                      style: TextStyle(fontSize: playerSize)),
+      builder: (_, __) => SizedBox(
+        width: ballSize + 16,
+        height: totalH,
+        child: Stack(
+          alignment: Alignment.bottomCenter,
+          children: [
+            // Shadow
+            Positioned(
+              bottom: 0,
+              child: Transform.scale(
+                scaleX: _shadow.value,
+                child: Container(
+                  width: shadowW,
+                  height: 7,
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.18 * _shadow.value),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
                 ),
               ),
-              // Bóng
-              Positioned(
-                left: bx,
-                top: by,
-                child: Transform.rotate(
-                  angle: _ballRot.value,
-                  child: const Text('⚽',
-                      style: TextStyle(fontSize: ballSize)),
-                ),
+            ),
+            // Ball
+            Positioned(
+              bottom: 7 + (_ballY.value + 1) * bounceH / 2 * (-1) + bounceH,
+              child: Transform.scale(
+                scaleX: _scaleX.value,
+                scaleY: _scaleY.value,
+                child: const Text('⚽', style: TextStyle(fontSize: ballSize)),
               ),
-            ],
-          ),
-        );
-      },
+            ),
+          ],
+        ),
+      ),
     );
   }
 
-  Widget _buildSmall() {
-    // Inline nhỏ: chỉ bóng lăn qua lại
-    const w = 56.0;
-    const ballSize = 14.0;
+  Widget _small() {
+    const ballSize = 16.0;
+    const bounceH = 10.0;
+    const shadowW = 12.0;
+    const totalH = ballSize + bounceH + 6.0;
 
     return AnimatedBuilder(
       animation: _ctrl,
-      builder: (_, __) {
-        final bx = _ballX.value * (w - ballSize);
-        return SizedBox(
-          width: w,
-          height: 20,
-          child: Stack(
-            children: [
-              Positioned(
-                left: bx,
-                top: 3,
-                child: Transform.rotate(
-                  angle: _ballRot.value,
-                  child: const Text('⚽',
-                      style: TextStyle(fontSize: ballSize)),
+      builder: (_, __) => SizedBox(
+        width: ballSize + 8,
+        height: totalH,
+        child: Stack(
+          alignment: Alignment.bottomCenter,
+          children: [
+            Positioned(
+              bottom: 0,
+              child: Transform.scale(
+                scaleX: _shadow.value,
+                child: Container(
+                  width: shadowW,
+                  height: 3,
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.15 * _shadow.value),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
               ),
-            ],
-          ),
-        );
-      },
+            ),
+            Positioned(
+              bottom: 3 + (_ballY.value + 1) * bounceH / 2 * (-1) + bounceH,
+              child: Transform.scale(
+                scaleX: _scaleX.value,
+                scaleY: _scaleY.value,
+                child: const Text('⚽', style: TextStyle(fontSize: ballSize)),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -184,7 +171,5 @@ class AppLoadingCenter extends StatelessWidget {
   const AppLoadingCenter({super.key, this.color});
 
   @override
-  Widget build(BuildContext context) {
-    return const Center(child: AppLoading());
-  }
+  Widget build(BuildContext context) => const Center(child: AppLoading());
 }

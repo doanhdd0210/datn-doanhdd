@@ -1161,7 +1161,7 @@ class _PathShimmerState extends State<_PathShimmer>
                             width: 72,
                             height: 72,
                             child: Center(
-                              child: Text('⚽', style: TextStyle(fontSize: 40)),
+                              child: Text('⚽', style: TextStyle(fontSize: 52)),
                             ),
                           ),
                         ),

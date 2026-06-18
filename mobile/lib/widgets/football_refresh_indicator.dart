@@ -2,9 +2,7 @@ import 'dart:math';
 import 'package:custom_refresh_indicator/custom_refresh_indicator.dart';
 import 'package:flutter/material.dart';
 
-/// Pull-to-refresh với ⚽ lăn trên cỏ.
-/// - Kéo: bóng di chuyển theo lực kéo (0→phải)
-/// - Loading: bóng lăn liên tục bắt đầu từ đúng vị trí cuối kéo
+/// Pull-to-refresh: kéo → bóng scale dần, loading → bóng spin tại chỗ.
 class FootballRefreshIndicator extends StatefulWidget {
   final Widget child;
   final Future<void> Function() onRefresh;
@@ -22,66 +20,56 @@ class FootballRefreshIndicator extends StatefulWidget {
 
 class _FootballRefreshIndicatorState extends State<FootballRefreshIndicator>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _roll;
-  double _lastPull = 0.5; // vị trí bóng lúc nhả tay (0.0 – 1.0)
+  late final AnimationController _spin;
 
   @override
   void initState() {
     super.initState();
-    _roll = AnimationController(
+    _spin = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 900),
+      duration: const Duration(milliseconds: 650),
     );
   }
 
   @override
   void dispose() {
-    _roll.dispose();
+    _spin.dispose();
     super.dispose();
   }
 
   void _onStateChanged(IndicatorStateChange change) {
     if (change.currentState == IndicatorState.loading) {
-      // Bắt đầu từ đúng vị trí bóng lúc nhả tay → không jump
-      _roll.value = _lastPull;
-      _roll.repeat(reverse: true);
+      _spin.repeat();
     } else if (change.currentState == IndicatorState.complete ||
         change.currentState == IndicatorState.idle) {
-      _roll.stop();
-      _roll.reset();
+      _spin.stop();
+      _spin.reset();
     }
   }
 
   @override
   Widget build(BuildContext context) {
     const indicatorH = 64.0;
-    const ballSize = 28.0;
-    const grassH = 2.5;
-    const trackW = 120.0;
-    const maxBallX = trackW - ballSize;
+    const ballSize = 36.0;
 
     return CustomRefreshIndicator(
       onRefresh: widget.onRefresh,
       onStateChanged: _onStateChanged,
       builder: (context, child, controller) {
         return AnimatedBuilder(
-          animation: Listenable.merge([controller, _roll]),
+          animation: Listenable.merge([controller, _spin]),
           builder: (_, __) {
             final pull = controller.value.clamp(0.0, 1.0);
             final isLoading = controller.state == IndicatorState.loading ||
                 controller.state == IndicatorState.complete;
 
-            double ballX;
-            if (isLoading) {
-              ballX = _roll.value * maxBallX;
-            } else {
-              // Kéo: bóng đi từ trái sang phải theo pull
-              ballX = pull * maxBallX;
-              _lastPull = pull; // lưu vị trí để loading bắt đầu từ đây
-            }
+            // Khi loading: spin linear; khi kéo: xoay nhẹ theo pull
+            final angle = isLoading
+                ? _spin.value * 2 * pi
+                : pull * pi * 0.8;
 
-            // Rotation đồng bộ với vị trí — physically correct
-            final angle = (ballX / (ballSize * pi)) * 2 * pi;
+            // Scale: 0 → 1 khi kéo, giữ 1 khi loading
+            final scale = isLoading ? 1.0 : Curves.easeOut.transform(pull);
 
             return Stack(
               children: [
@@ -95,40 +83,17 @@ class _FootballRefreshIndicatorState extends State<FootballRefreshIndicator>
                   right: 0,
                   child: SizedBox(
                     height: pull * indicatorH,
-                    child: Opacity(
-                      opacity: pull.clamp(0.0, 1.0),
-                      child: Center(
-                        child: SizedBox(
-                          width: trackW,
-                          height: ballSize + grassH + 4,
-                          child: Stack(
-                            children: [
-                              // Sân cỏ
-                              Positioned(
-                                bottom: 0,
-                                left: 0,
-                                right: 0,
-                                child: Container(
-                                  height: grassH,
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF4CAF50)
-                                        .withValues(alpha: 0.5),
-                                    borderRadius: BorderRadius.circular(2),
-                                  ),
-                                ),
-                              ),
-                              // Bóng
-                              Positioned(
-                                left: ballX,
-                                bottom: grassH + 1,
-                                child: Transform.rotate(
-                                  angle: angle,
-                                  child: const Text('⚽',
-                                      style: TextStyle(
-                                          fontSize: ballSize, height: 1)),
-                                ),
-                              ),
-                            ],
+                    child: Center(
+                      child: Transform.scale(
+                        scale: scale,
+                        child: Opacity(
+                          opacity: pull,
+                          child: Transform.rotate(
+                            angle: angle,
+                            child: const Text(
+                              '⚽',
+                              style: TextStyle(fontSize: ballSize, height: 1),
+                            ),
                           ),
                         ),
                       ),

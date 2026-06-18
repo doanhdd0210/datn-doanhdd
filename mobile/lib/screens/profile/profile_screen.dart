@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import '../../widgets/football_refresh_indicator.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -31,14 +32,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
       body: SafeArea(
         child: Consumer<UserProvider>(
           builder: (context, provider, _) {
-            return CustomScrollView(
-              slivers: [
-                SliverToBoxAdapter(child: _buildHero(context, user, provider)),
-                SliverToBoxAdapter(child: _buildStatCards(provider)),
-                SliverToBoxAdapter(child: _buildWeeklyStreak(provider)),
-                SliverToBoxAdapter(child: _buildAchievementsSection(provider)),
-                SliverToBoxAdapter(child: _buildMenuSection(context)),
-              ],
+            return FootballRefreshIndicator(
+              onRefresh: () => context.read<UserProvider>().refreshStats(),
+              child: CustomScrollView(
+                slivers: [
+                  SliverToBoxAdapter(child: _buildHero(context, user, provider)),
+                  SliverToBoxAdapter(child: _buildStatCards(provider)),
+                  SliverToBoxAdapter(child: _buildWeeklyStreak(provider)),
+                  SliverToBoxAdapter(child: _buildAchievementsSection(provider)),
+                  SliverToBoxAdapter(child: _buildMenuSection(context)),
+                ],
+              ),
             );
           },
         ),

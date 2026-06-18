@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/football_refresh_indicator.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shimmer/shimmer.dart';
@@ -199,9 +200,8 @@ class _QaScreenState extends State<QaScreen> {
             Expanded(
               child: _isLoading
                   ? _buildShimmer()
-                  : RefreshIndicator(
+                  : FootballRefreshIndicator(
                       onRefresh: () => _loadPosts(reset: true),
-                      color: AppColors.primary,
                       child: _filteredPosts.isEmpty
                           ? _buildEmpty()
                           : ListView.builder(

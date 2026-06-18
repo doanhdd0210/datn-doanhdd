@@ -1,6 +1,7 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 
-/// Bouncing ⚽ với squish + shadow — dùng toàn app thay CircularProgressIndicator.
+/// ⚽ lăn trên sân cỏ từ trái sang phải — World Cup seasonal loading.
 class AppLoading extends StatefulWidget {
   final bool small;
 
@@ -14,59 +15,14 @@ class AppLoading extends StatefulWidget {
 class _AppLoadingState extends State<AppLoading>
     with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl;
-  late final Animation<double> _ballY;
-  late final Animation<double> _scaleX;
-  late final Animation<double> _scaleY;
-  late final Animation<double> _shadow;
 
   @override
   void initState() {
     super.initState();
     _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 550),
+      duration: const Duration(milliseconds: 1200),
     )..repeat();
-
-    // Bóng bay lên (easeOut) rồi rơi xuống (easeIn)
-    _ballY = TweenSequence<double>([
-      TweenSequenceItem(
-        tween: Tween(begin: 0.0, end: -1.0)
-            .chain(CurveTween(curve: Curves.easeOut)),
-        weight: 50,
-      ),
-      TweenSequenceItem(
-        tween: Tween(begin: -1.0, end: 0.0)
-            .chain(CurveTween(curve: Curves.easeIn)),
-        weight: 50,
-      ),
-    ]).animate(_ctrl);
-
-    // Squish khi chạm đất (cuối chu kỳ và đầu chu kỳ)
-    _scaleX = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 1.2, end: 1.0), weight: 8),
-      TweenSequenceItem(tween: ConstantTween(1.0), weight: 84),
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.2), weight: 8),
-    ]).animate(_ctrl);
-
-    _scaleY = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 0.8, end: 1.0), weight: 8),
-      TweenSequenceItem(tween: ConstantTween(1.0), weight: 84),
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.8), weight: 8),
-    ]).animate(_ctrl);
-
-    // Shadow: lớn khi bóng ở dưới, nhỏ khi bóng lên cao
-    _shadow = TweenSequence<double>([
-      TweenSequenceItem(
-        tween: Tween(begin: 1.0, end: 0.25)
-            .chain(CurveTween(curve: Curves.easeOut)),
-        weight: 50,
-      ),
-      TweenSequenceItem(
-        tween: Tween(begin: 0.25, end: 1.0)
-            .chain(CurveTween(curve: Curves.easeIn)),
-        weight: 50,
-      ),
-    ]).animate(_ctrl);
   }
 
   @override
@@ -76,91 +32,122 @@ class _AppLoadingState extends State<AppLoading>
   }
 
   @override
-  Widget build(BuildContext context) => widget.small ? _small() : _full();
+  Widget build(BuildContext context) =>
+      widget.small ? _SmallRollingBall(ctrl: _ctrl) : _FullRollingBall(ctrl: _ctrl);
+}
 
-  Widget _full() {
-    const ballSize = 44.0;
-    const bounceH = 44.0;
-    const shadowW = 32.0;
-    const totalH = ballSize + bounceH + 10;
+class _FullRollingBall extends StatelessWidget {
+  final AnimationController ctrl;
+  const _FullRollingBall({required this.ctrl});
 
-    return AnimatedBuilder(
-      animation: _ctrl,
-      builder: (_, __) => SizedBox(
-        width: ballSize + 16,
-        height: totalH,
-        child: Stack(
-          alignment: Alignment.bottomCenter,
-          children: [
-            // Shadow
-            Positioned(
-              bottom: 0,
-              child: Transform.scale(
-                scaleX: _shadow.value,
-                child: Container(
-                  width: shadowW,
-                  height: 7,
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.18 * _shadow.value),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
-              ),
-            ),
-            // Ball
-            Positioned(
-              bottom: 7 + (_ballY.value + 1) * bounceH / 2 * (-1) + bounceH,
-              child: Transform.scale(
-                scaleX: _scaleX.value,
-                scaleY: _scaleY.value,
-                child: const Text('⚽', style: TextStyle(fontSize: ballSize)),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _small() {
-    const ballSize = 16.0;
-    const bounceH = 10.0;
-    const shadowW = 12.0;
-    const totalH = ballSize + bounceH + 6.0;
+  @override
+  Widget build(BuildContext context) {
+    const w = 140.0;
+    const ballSize = 36.0;
+    const grassH = 3.0;
 
     return AnimatedBuilder(
-      animation: _ctrl,
-      builder: (_, __) => SizedBox(
-        width: ballSize + 8,
-        height: totalH,
-        child: Stack(
-          alignment: Alignment.bottomCenter,
-          children: [
-            Positioned(
-              bottom: 0,
-              child: Transform.scale(
-                scaleX: _shadow.value,
+      animation: ctrl,
+      builder: (_, __) {
+        // Easing: easeInOut để bóng không dừng đột ngột khi reset
+        final t = Curves.easeInOut.transform(ctrl.value);
+        final ballX = t * (w - ballSize);
+        // Bóng xoay đúng chiều lăn — 1 vòng = ballSize * π (circumference)
+        final rotations = ballX / (ballSize * pi);
+        final angle = rotations * 2 * pi;
+
+        return SizedBox(
+          width: w,
+          height: ballSize + grassH + 6,
+          child: Stack(
+            children: [
+              // Sân cỏ
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
                 child: Container(
-                  width: shadowW,
-                  height: 3,
+                  height: grassH,
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.15 * _shadow.value),
+                    color: const Color(0xFF4CAF50).withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
-            ),
-            Positioned(
-              bottom: 3 + (_ballY.value + 1) * bounceH / 2 * (-1) + bounceH,
-              child: Transform.scale(
-                scaleX: _scaleX.value,
-                scaleY: _scaleY.value,
-                child: const Text('⚽', style: TextStyle(fontSize: ballSize)),
+              // Vạch giữa sân
+              Positioned(
+                bottom: 0,
+                left: w / 2 - 1,
+                child: Container(
+                  width: 2,
+                  height: grassH + 4,
+                  color: const Color(0xFF4CAF50).withValues(alpha: 0.3),
+                ),
               ),
-            ),
-          ],
-        ),
-      ),
+              // Bóng
+              Positioned(
+                left: ballX,
+                bottom: grassH + 2,
+                child: Transform.rotate(
+                  angle: angle,
+                  child: const Text('⚽',
+                      style: TextStyle(fontSize: ballSize, height: 1)),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _SmallRollingBall extends StatelessWidget {
+  final AnimationController ctrl;
+  const _SmallRollingBall({required this.ctrl});
+
+  @override
+  Widget build(BuildContext context) {
+    const w = 64.0;
+    const ballSize = 18.0;
+
+    return AnimatedBuilder(
+      animation: ctrl,
+      builder: (_, __) {
+        final t = Curves.easeInOut.transform(ctrl.value);
+        final ballX = t * (w - ballSize);
+        final angle = (ballX / (ballSize * pi)) * 2 * pi;
+
+        return SizedBox(
+          width: w,
+          height: ballSize + 4,
+          child: Stack(
+            children: [
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Container(
+                  height: 2,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF4CAF50).withValues(alpha: 0.45),
+                    borderRadius: BorderRadius.circular(1),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: ballX,
+                bottom: 3,
+                child: Transform.rotate(
+                  angle: angle,
+                  child: const Text('⚽',
+                      style: TextStyle(fontSize: ballSize, height: 1)),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

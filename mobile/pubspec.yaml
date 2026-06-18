@@ -65,6 +65,9 @@ dependencies:
   # Network connectivity
   connectivity_plus: ^6.1.4
 
+  # Custom pull-to-refresh
+  custom_refresh_indicator: ^4.0.1
+
   # (AI calls go through backend — no direct Gemini SDK needed)
 
 dev_dependencies:

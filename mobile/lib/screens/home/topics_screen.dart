@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:custom_refresh_indicator/custom_refresh_indicator.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -134,9 +135,45 @@ class _TopicsScreenState extends State<TopicsScreen> {
         Scaffold(
           backgroundColor: context.bgColor,
           body: SafeArea(
-            child: RefreshIndicator(
+            child: CustomRefreshIndicator(
               onRefresh: _loadData,
-              color: AppColors.primary,
+              builder: (context, child, controller) {
+                return AnimatedBuilder(
+                  animation: controller,
+                  builder: (_, __) {
+                    final pull = controller.value.clamp(0.0, 1.0);
+                    return Stack(
+                      children: [
+                        // Offset content while pulling
+                        Transform.translate(
+                          offset: Offset(0, pull * 70),
+                          child: child,
+                        ),
+                        // Football indicator
+                        Positioned(
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          child: SizedBox(
+                            height: pull * 70,
+                            child: Center(
+                              child: Transform.rotate(
+                                angle: controller.value * 6.28,
+                                child: Text(
+                                  '⚽',
+                                  style: TextStyle(
+                                    fontSize: 28 * pull.clamp(0.3, 1.0),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
               child: CustomScrollView(
                 slivers: [
                   SliverToBoxAdapter(child: _buildHeader()),

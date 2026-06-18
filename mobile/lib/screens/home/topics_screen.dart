@@ -1142,42 +1142,76 @@ class _SectionDivider extends StatelessWidget {
 
 // ─── Path Shimmer ────────────────────────────────────────────────────────────
 
-class _PathShimmer extends StatelessWidget {
+class _PathShimmer extends StatefulWidget {
   const _PathShimmer();
 
   @override
+  State<_PathShimmer> createState() => _PathShimmerState();
+}
+
+class _PathShimmerState extends State<_PathShimmer>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _pulse;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat(reverse: true);
+    _pulse = Tween<double>(begin: 0.4, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    const positions = [0.5, 0.67, 0.78, 0.67, 0.5];
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 24),
-      child: Column(
-        children: List.generate(5, (i) {
-          final positions = [0.5, 0.67, 0.78, 0.67, 0.5];
-          final xFrac = positions[i];
-          return LayoutBuilder(
-            builder: (context, c) {
-              final left = 16 + (c.maxWidth - 32 - 72) * xFrac;
-              return SizedBox(
-                height: 100,
-                child: Stack(
-                  children: [
-                    Positioned(
-                      left: left,
-                      top: 8,
-                      child: Container(
-                        width: 72,
-                        height: 72,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: context.surfaceElevatedColor,
+      child: AnimatedBuilder(
+        animation: _pulse,
+        builder: (_, __) => Column(
+          children: List.generate(5, (i) {
+            final xFrac = positions[i];
+            // Stagger each ball slightly
+            final staggered = ((_pulse.value + i * 0.15) % 1.0).clamp(0.4, 1.0);
+            return LayoutBuilder(
+              builder: (context, c) {
+                final left = 16 + (c.maxWidth - 32 - 72) * xFrac;
+                return SizedBox(
+                  height: 100,
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        left: left,
+                        top: 8,
+                        child: Opacity(
+                          opacity: staggered,
+                          child: const SizedBox(
+                            width: 72,
+                            height: 72,
+                            child: Center(
+                              child: Text('⚽', style: TextStyle(fontSize: 40)),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          );
-        }),
+                    ],
+                  ),
+                );
+              },
+            );
+          }),
+        ),
       ),
     );
   }

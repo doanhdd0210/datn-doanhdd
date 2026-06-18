@@ -3,7 +3,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'constants/app_colors.dart';
 import 'constants/app_theme.dart';
 import 'firebase_options.dart';
 import 'providers/ai_usage_provider.dart';
@@ -70,8 +69,40 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class _SplashScreen extends StatelessWidget {
+class _SplashScreen extends StatefulWidget {
   const _SplashScreen();
+
+  @override
+  State<_SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<_SplashScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _bounceAnim;
+  late Animation<double> _shadowAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    )..repeat(reverse: true);
+
+    _bounceAnim = Tween<double>(begin: 0, end: -40).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+    _shadowAnim = Tween<double>(begin: 1.0, end: 0.4).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -82,8 +113,31 @@ class _SplashScreen extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Image.asset('assets/icon/app_icon_new.png', width: 96, height: 96),
-            const SizedBox(height: 32),
-            const CircularProgressIndicator(color: AppColors.primary),
+            const SizedBox(height: 40),
+            AnimatedBuilder(
+              animation: _controller,
+              builder: (_, __) => Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Transform.translate(
+                    offset: Offset(0, _bounceAnim.value),
+                    child: const Text('⚽', style: TextStyle(fontSize: 40)),
+                  ),
+                  const SizedBox(height: 8),
+                  Transform.scale(
+                    scaleX: _shadowAnim.value,
+                    child: Container(
+                      width: 32,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),

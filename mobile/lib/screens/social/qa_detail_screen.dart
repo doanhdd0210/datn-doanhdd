@@ -325,7 +325,7 @@ class _QaDetailScreenState extends State<QaDetailScreen> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  AppLoading.small(color: Color(0xFF3949AB)),
+                  const AppLoading.small(),
                   SizedBox(width: 10),
                   Text('AI đang soạn câu trả lời...', style: TextStyle(fontSize: 12, color: Color(0xFF3949AB))),
                 ],

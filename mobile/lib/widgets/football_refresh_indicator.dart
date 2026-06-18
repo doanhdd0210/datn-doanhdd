@@ -2,7 +2,9 @@ import 'dart:math';
 import 'package:custom_refresh_indicator/custom_refresh_indicator.dart';
 import 'package:flutter/material.dart';
 
-/// Pull-to-refresh: kéo xuống thì bóng lăn vào từ trên, đang load thì lăn liên tục.
+/// Pull-to-refresh với ⚽ lăn trên cỏ.
+/// - Kéo: bóng di chuyển theo lực kéo (0→phải)
+/// - Loading: bóng lăn liên tục bắt đầu từ đúng vị trí cuối kéo
 class FootballRefreshIndicator extends StatefulWidget {
   final Widget child;
   final Future<void> Function() onRefresh;
@@ -21,13 +23,14 @@ class FootballRefreshIndicator extends StatefulWidget {
 class _FootballRefreshIndicatorState extends State<FootballRefreshIndicator>
     with SingleTickerProviderStateMixin {
   late final AnimationController _roll;
+  double _lastPull = 0.5; // vị trí bóng lúc nhả tay (0.0 – 1.0)
 
   @override
   void initState() {
     super.initState();
     _roll = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1000),
+      duration: const Duration(milliseconds: 900),
     );
   }
 
@@ -39,7 +42,8 @@ class _FootballRefreshIndicatorState extends State<FootballRefreshIndicator>
 
   void _onStateChanged(IndicatorStateChange change) {
     if (change.currentState == IndicatorState.loading) {
-      // reverse: true → bóng lăn trái↔phải liên tục, không jump khi reset
+      // Bắt đầu từ đúng vị trí bóng lúc nhả tay → không jump
+      _roll.value = _lastPull;
       _roll.repeat(reverse: true);
     } else if (change.currentState == IndicatorState.complete ||
         change.currentState == IndicatorState.idle) {
@@ -53,6 +57,8 @@ class _FootballRefreshIndicatorState extends State<FootballRefreshIndicator>
     const indicatorH = 64.0;
     const ballSize = 28.0;
     const grassH = 2.5;
+    const trackW = 120.0;
+    const maxBallX = trackW - ballSize;
 
     return CustomRefreshIndicator(
       onRefresh: widget.onRefresh,
@@ -65,18 +71,17 @@ class _FootballRefreshIndicatorState extends State<FootballRefreshIndicator>
             final isLoading = controller.state == IndicatorState.loading ||
                 controller.state == IndicatorState.complete;
 
-            // Khi loading: bóng lăn trái→phải; khi kéo: bóng ở giữa scale dần
             double ballX;
-            double angle;
-            const trackW = 120.0;
             if (isLoading) {
-              final t = Curves.easeInOut.transform(_roll.value);
-              ballX = t * (trackW - ballSize);
-              angle = (ballX / (ballSize * pi)) * 2 * pi;
+              ballX = _roll.value * maxBallX;
             } else {
-              ballX = (trackW - ballSize) / 2;
-              angle = pull * pi; // xoay nhẹ khi kéo
+              // Kéo: bóng đi từ trái sang phải theo pull
+              ballX = pull * maxBallX;
+              _lastPull = pull; // lưu vị trí để loading bắt đầu từ đây
             }
+
+            // Rotation đồng bộ với vị trí — physically correct
+            final angle = (ballX / (ballSize * pi)) * 2 * pi;
 
             return Stack(
               children: [
@@ -88,10 +93,10 @@ class _FootballRefreshIndicatorState extends State<FootballRefreshIndicator>
                   top: 0,
                   left: 0,
                   right: 0,
-                  child: Opacity(
-                    opacity: pull,
-                    child: SizedBox(
-                      height: pull * indicatorH,
+                  child: SizedBox(
+                    height: pull * indicatorH,
+                    child: Opacity(
+                      opacity: pull.clamp(0.0, 1.0),
                       child: Center(
                         child: SizedBox(
                           width: trackW,

@@ -24,16 +24,20 @@ public class ProgressService
         _notifService = notifService;
     }
 
-    /// <summary>Tạo UserProfile từ Firebase nếu chưa tồn tại trong DB.</summary>
-    private async Task EnsureProfileAsync(string userId)
+    /// <summary>
+    /// Tạo UserProfile từ Firebase nếu chưa tồn tại.
+    /// Trả về true nếu profile vừa được tạo mới (user chưa từng dùng app).
+    /// </summary>
+    private async Task<bool> EnsureProfileAsync(string userId)
     {
         var profile = await _db.UserProfiles.FirstOrDefaultAsync(p => p.Uid == userId);
+        var isNew = profile == null;
         try
         {
             var firebaseUser = await FirebaseAuth.DefaultInstance.GetUserAsync(userId);
             var name = firebaseUser.DisplayName ?? firebaseUser.Email?.Split('@')[0] ?? "User";
 
-            if (profile == null)
+            if (isNew)
             {
                 profile = new UserProfile
                 {
@@ -50,7 +54,7 @@ public class ProgressService
                 _db.UserProfiles.Add(profile);
                 await _db.SaveChangesAsync();
             }
-            else if (string.IsNullOrEmpty(profile.DisplayName))
+            else if (string.IsNullOrEmpty(profile!.DisplayName))
             {
                 profile.DisplayName = name;
                 if (profile.PhotoUrl == null && firebaseUser.PhotoUrl != null)
@@ -62,6 +66,8 @@ public class ProgressService
         {
             _logger.LogWarning(ex, "EnsureProfile failed for {UserId}", userId);
         }
+
+        return isNew;
     }
 
     public async Task<List<UserProgress>> GetTopicProgressAsync(string userId)
@@ -220,7 +226,7 @@ public class ProgressService
         var cached = await _cache.GetAsync<UserStatsResponse>(cacheKey);
         if (cached != null) return cached;
 
-        await EnsureProfileAsync(userId);
+        var isNewProfile = await EnsureProfileAsync(userId);
         var profile = await _db.UserProfiles.FirstOrDefaultAsync(p => p.Uid == userId);
 
         var todayId = $"{userId}_{DateTime.UtcNow:yyyy-MM-dd}";
@@ -244,7 +250,7 @@ public class ProgressService
             LongestStreak = profile?.LongestStreak ?? 0,
             Rank = profile?.Rank ?? "Beginner",
             Level = profile?.Level ?? "beginner",
-            LevelSet = profile?.Level != null,
+            LevelSet = profile?.Level != null || !isNewProfile,
             TodayXp = (todayProgress?.XpEarned ?? 0) + todayAchievementXp,
             DailyGoalTarget = profile?.DailyGoalTarget ?? 20,
             DailyGoalBonusClaimedToday = bonusClaimedToday,

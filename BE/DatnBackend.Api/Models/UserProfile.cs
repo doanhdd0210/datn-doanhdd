@@ -10,7 +10,7 @@ public class UserProfile
     public int LongestStreak { get; set; }
     public int LessonsCompleted { get; set; }
     public string Rank { get; set; } = "Beginner";
-    public string Level { get; set; } = "beginner";  // beginner | intermediate | advanced
+    public string? Level { get; set; }  // null = chưa chọn level | beginner | intermediate | advanced
     public int DailyGoalTarget { get; set; } = 20;
     public bool IsAdmin { get; set; }
     public List<string> FcmTokens { get; set; } = new();

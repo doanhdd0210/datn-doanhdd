@@ -173,11 +173,18 @@ using (var scope = app.Services.CreateScope())
 
     // Schema patches — each wrapped individually so one failure doesn't block others
     try { await db.Database.ExecuteSqlRawAsync(@"
-        ALTER TABLE ""UserProfiles"" ADD COLUMN IF NOT EXISTS ""Level"" text NOT NULL DEFAULT 'beginner';
+        ALTER TABLE ""UserProfiles"" ADD COLUMN IF NOT EXISTS ""Level"" text;
         ALTER TABLE ""UserProfiles"" ADD COLUMN IF NOT EXISTS ""IsAdmin"" boolean NOT NULL DEFAULT false;
         ALTER TABLE ""UserProfiles"" ADD COLUMN IF NOT EXISTS ""LastSeenQaAt"" timestamp with time zone;
         ALTER TABLE ""UserProfiles"" ADD COLUMN IF NOT EXISTS ""DailyGoalTarget"" integer NOT NULL DEFAULT 20;
         ALTER TABLE ""UserProfiles"" ADD COLUMN IF NOT EXISTS ""LastActiveAt"" timestamp with time zone;
+    "); } catch { }
+
+    // Level phải nullable để phân biệt user mới (null) với user đã chọn level.
+    // Existing rows giữ nguyên giá trị, chỉ drop constraint NOT NULL và DEFAULT.
+    try { await db.Database.ExecuteSqlRawAsync(@"
+        ALTER TABLE ""UserProfiles"" ALTER COLUMN ""Level"" DROP NOT NULL;
+        ALTER TABLE ""UserProfiles"" ALTER COLUMN ""Level"" DROP DEFAULT;
     "); } catch { }
 
     try { await db.Database.ExecuteSqlRawAsync(@"

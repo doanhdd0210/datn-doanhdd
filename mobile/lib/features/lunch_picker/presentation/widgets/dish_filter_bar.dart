@@ -29,9 +29,11 @@ class DishFilterBar extends StatelessWidget {
         counts[c] = (counts[c] ?? 0) + 1;
       }
     }
-    final present = DishCategory.values
-        .where((c) => counts.containsKey(c))
-        .toList();
+    final present =
+        DishCategory.values.where((c) => counts.containsKey(c)).toList();
+    final labelStyle = Theme.of(context).textTheme.labelSmall;
+    final radius =
+        filter.radiusMeters.clamp(kMinRadiusMeters, kMaxRadiusMeters);
 
     return Card(
       margin: EdgeInsets.zero,
@@ -40,7 +42,7 @@ class DishFilterBar extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('THÈM MÓN GÌ', style: Theme.of(context).textTheme.labelSmall),
+            Text('THÈM MÓN GÌ', style: labelStyle),
             const SizedBox(height: 10),
             Wrap(
               spacing: 8,
@@ -55,33 +57,30 @@ class DishFilterBar extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
-            Wrap(
-              spacing: 12,
-              runSpacing: 8,
-              crossAxisAlignment: WrapCrossAlignment.center,
+            Row(
               children: [
-                SegmentedButton<int>(
-                  segments: [
-                    for (final r in kRadiusChoicesMeters)
-                      ButtonSegment(value: r, label: Text('${r}m')),
-                  ],
-                  selected: {filter.radiusMeters},
-                  onSelectionChanged: (s) => onRadiusChanged(s.first),
-                  showSelectedIcon: false,
+                Text('Bán kính', style: labelStyle),
+                const Spacer(),
+                Text(
+                  '${radius}m',
+                  style: labelStyle?.copyWith(fontWeight: FontWeight.w700),
                 ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Đang mở',
-                      style: Theme.of(context).textTheme.labelSmall,
-                    ),
-                    Switch(
-                      value: filter.openNowOnly,
-                      onChanged: onOpenNowChanged,
-                    ),
-                  ],
-                ),
+              ],
+            ),
+            Slider(
+              value: radius.toDouble(),
+              min: kMinRadiusMeters.toDouble(),
+              max: kMaxRadiusMeters.toDouble(),
+              divisions:
+                  (kMaxRadiusMeters - kMinRadiusMeters) ~/ kRadiusStepMeters,
+              label: '${radius}m',
+              onChanged: (v) => onRadiusChanged(v.round()),
+            ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Đang mở', style: labelStyle),
+                Switch(value: filter.openNowOnly, onChanged: onOpenNowChanged),
               ],
             ),
           ],

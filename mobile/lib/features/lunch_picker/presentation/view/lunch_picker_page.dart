@@ -53,8 +53,8 @@ class _LunchPickerView extends StatelessWidget {
             tooltip: 'Làm mới vị trí',
             icon: const Icon(Icons.my_location),
             onPressed: () => context.read<LunchPickerBloc>().add(
-              const LocationRefreshRequested(),
-            ),
+                  const LocationRefreshRequested(),
+                ),
           ),
         ],
       ),
@@ -84,8 +84,8 @@ class _LunchPickerView extends StatelessWidget {
                     const SizedBox(height: 12),
                     FilledButton(
                       onPressed: () => context.read<LunchPickerBloc>().add(
-                        const LunchPickerStarted(),
-                      ),
+                            const LunchPickerStarted(),
+                          ),
                       child: const Text('Thử lại'),
                     ),
                   ],

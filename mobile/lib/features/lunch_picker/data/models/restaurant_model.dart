@@ -50,8 +50,7 @@ class RestaurantModel extends Restaurant {
         amenity: amenity,
       ),
       address: street,
-      phone:
-          (tags['phone'] as String?) ??
+      phone: (tags['phone'] as String?) ??
           (tags['contact:phone'] as String?) ??
           '',
       openingHours: OpeningHours((tags['opening_hours'] as String?) ?? ''),

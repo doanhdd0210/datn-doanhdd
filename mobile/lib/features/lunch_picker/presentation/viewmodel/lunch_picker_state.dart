@@ -46,12 +46,12 @@ class LunchPickerState extends Equatable {
 
   @override
   List<Object?> get props => [
-    status,
-    origin,
-    allRestaurants,
-    filter,
-    pick,
-    isSpinning,
-    errorMessage,
-  ];
+        status,
+        origin,
+        allRestaurants,
+        filter,
+        pick,
+        isSpinning,
+        errorMessage,
+      ];
 }

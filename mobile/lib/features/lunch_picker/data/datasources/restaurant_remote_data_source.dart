@@ -60,9 +60,8 @@ class RestaurantOverpassDataSource implements RestaurantRemoteDataSource {
   Future<DataMap> _post(String endpoint, String query) async {
     final http.Response response;
     try {
-      response = await _client
-          .post(Uri.parse(endpoint), body: {'data': query})
-          .timeout(const Duration(seconds: 25));
+      response = await _client.post(Uri.parse(endpoint),
+          body: {'data': query}).timeout(const Duration(seconds: 25));
     } on SocketException {
       throw const NetworkException();
     }

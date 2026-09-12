@@ -20,10 +20,10 @@ class LunchPickerBloc extends Bloc<LunchPickerEvent, LunchPickerState> {
     required GetNearbyRestaurants getNearbyRestaurants,
     required PickRandomRestaurant pickRandomRestaurant,
     required LocationService locationService,
-  }) : _getNearbyRestaurants = getNearbyRestaurants,
-       _pickRandomRestaurant = pickRandomRestaurant,
-       _locationService = locationService,
-       super(const LunchPickerState()) {
+  })  : _getNearbyRestaurants = getNearbyRestaurants,
+        _pickRandomRestaurant = pickRandomRestaurant,
+        _locationService = locationService,
+        super(const LunchPickerState()) {
     on<LunchPickerStarted>(_onStarted);
     on<LocationRefreshRequested>(_onStarted);
     on<RadiusChanged>(_onRadiusChanged);
@@ -62,11 +62,11 @@ class LunchPickerBloc extends Bloc<LunchPickerEvent, LunchPickerState> {
       return;
     }
 
-    // Always fetch at the widest radius choice; smaller radii are then a
-    // client-side narrowing via LunchFilter — no need to re-hit the API
-    // every time the user taps a smaller radius chip.
+    // Always fetch at the widest possible slider value; every smaller
+    // radius the user drags to is then a client-side narrowing via
+    // LunchFilter — no need to re-hit the API on every slider tick.
     final result = await _getNearbyRestaurants(
-      GetNearbyParams(origin: origin, radiusMeters: kRadiusChoicesMeters.last),
+      GetNearbyParams(origin: origin, radiusMeters: kMaxRadiusMeters),
     );
 
     result.fold(

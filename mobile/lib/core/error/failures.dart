@@ -36,5 +36,5 @@ class LocationFailure extends Failure {
 /// from — every candidate was filtered out.
 class EmptySelectionFailure extends Failure {
   const EmptySelectionFailure()
-    : super('Không có quán nào khớp bộ lọc — nới bán kính hoặc bỏ bớt món.');
+      : super('Không có quán nào khớp bộ lọc — nới bán kính hoặc bỏ bớt món.');
 }

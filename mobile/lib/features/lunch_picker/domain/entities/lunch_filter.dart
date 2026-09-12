@@ -51,7 +51,8 @@ class LunchFilter extends Equatable {
         return false;
       }
       return true;
-    }).toList()..sort((a, b) => a.distanceMeters.compareTo(b.distanceMeters));
+    }).toList()
+      ..sort((a, b) => a.distanceMeters.compareTo(b.distanceMeters));
     return matches;
   }
 

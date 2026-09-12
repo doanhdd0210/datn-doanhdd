@@ -16,8 +16,7 @@ class GeoPoint extends Equatable {
   double distanceTo(GeoPoint other) {
     final dLat = _radians(other.lat - lat);
     final dLon = _radians(other.lon - lon);
-    final a =
-        math.sin(dLat / 2) * math.sin(dLat / 2) +
+    final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
         math.cos(_radians(lat)) *
             math.cos(_radians(other.lat)) *
             math.sin(dLon / 2) *

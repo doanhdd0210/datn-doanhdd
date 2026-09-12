@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Mobile</string>
+	<string>Trưa Nay Ăn Gì</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -45,5 +45,9 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<!-- Chỉ cần khi bật GeolocatorLocationService thật cho tính năng "Ăn trưa"
+	     (mặc định đang dùng FixedLocationService, không cần quyền này) -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Dùng vị trí của bạn để tìm quán ăn trưa gần đây.</string>
 </dict>
 </plist>

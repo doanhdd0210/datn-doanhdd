@@ -8,6 +8,7 @@ import '../providers/subscription_provider.dart';
 import '../providers/user_provider.dart';
 import '../services/notification_service.dart';
 import '../widgets/app_snackbar.dart';
+import '../features/lunch_picker/presentation/view/lunch_picker_page.dart';
 import 'home/topics_screen.dart';
 import 'practice/code_demo_list_screen.dart';
 import 'social/qa_screen.dart';
@@ -29,6 +30,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
   StreamSubscription<Map<String, dynamic>>? _dataSub;
 
   final List<Widget> _screens = const [
+    LunchPickerPage(),
     TopicsScreen(),
     CodeDemoListScreen(),
     QaScreen(),
@@ -37,6 +39,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
   ];
 
   static const _navItems = [
+    _NavItem(icon: Icons.ramen_dining_rounded, label: 'Ăn trưa'),
     _NavItem(icon: Icons.auto_stories_rounded, label: 'Học'),
     _NavItem(icon: Icons.code_rounded, label: 'Thực hành'),
     _NavItem(icon: Icons.forum_rounded, label: 'Cộng đồng'),
@@ -45,11 +48,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
   ];
 
   static const _screenIndex = {
-    'lessons': 0,
-    'practice': 1,
-    'qa': 2,
-    'friends': 3,
-    'profile': 4,
+    'lunch': 0,
+    'lessons': 1,
+    'practice': 2,
+    'qa': 3,
+    'friends': 4,
+    'profile': 5,
   };
 
   @override
@@ -141,7 +145,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
         builder: (context, unreadCount, _) => _QuizzoBottomNav(
           currentIndex: _currentIndex,
           items: _navItems,
-          badgeCounts: {2: unreadCount},
+          badgeCounts: {3: unreadCount}, // index của tab 'Cộng đồng' (qa)
           onTap: (index) => setState(() => _currentIndex = index),
         ),
       ),

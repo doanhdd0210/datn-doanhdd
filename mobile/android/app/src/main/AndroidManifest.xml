@@ -4,9 +4,13 @@
     <uses-permission android:name="android.permission.INTERNET"/>
     <!-- Google Play Billing (required for in-app purchases / subscriptions) -->
     <uses-permission android:name="com.android.vending.BILLING"/>
+    <!-- Chỉ cần khi bật GeolocatorLocationService thật cho tính năng "Ăn trưa"
+         (mặc định đang dùng FixedLocationService, không cần quyền này) -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
 
     <application
-        android:label="JavaUp"
+        android:label="Trưa Nay Ăn Gì"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
